@@ -25,6 +25,7 @@ function setup() {
     createCanvas(CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
     frameRate(CONFIG.FPS);
     
+    
     // gameManager = new GameManager();
     // gameManager.init();
     

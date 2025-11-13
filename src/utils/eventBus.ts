@@ -181,7 +181,12 @@ export const GameEvents = {
     // Resource events
     RESOURCE_LOADED: 'resource:loaded',
     RESOURCES_COMPLETE: 'resources:complete',
-    RESOURCE_ERROR: 'resource:error'
+    RESOURCE_ERROR: 'resource:error',
+    
+    // Rendering events
+    LAYER_DIRTY: 'render:layer:dirty',
+    CAMERA_MOVE: 'render:camera:move',
+    SPRITE_LOADED: 'render:sprite:loaded'
 } as const;
 
 // Type for event names

@@ -85,6 +85,13 @@ docs/
 
 ## Key Conventions
 
+### Code Quality Principles
+- **Minimize redundancy:** Extract reusable patterns into helper functions/utilities
+- **DRY (Don't Repeat Yourself):** If code appears twice, refactor into shared function. Alwyas scan the code base for similar code before making something new.
+- **Single Responsiblity Principle:** A class or module should have only one responsibility, which translates to having only one reason to change. 
+- **Test helpers:** Create reusable test stubs/mocks in `test/helpers/` for repeated patterns
+- **Shared utilities:** Add common operations to `src/utils/helpers.ts`
+
 ### Configuration
 - All game constants in `CONFIG` object (`src/config.ts`)
 - Colors as hex strings, speeds/physics as numbers
@@ -118,6 +125,7 @@ EventBus.off(GameEvents.EVENT_NAME, callback);
 - Strict mode enabled - no implicit any, unused variables/parameters cause errors
 - Use interfaces for data structures (see `GridCell`, `WorldPosition` in helpers)
 - p5.js globals must be declared: `declare const mouseX: any;`
+- **No fallbacks unless absolutely necessary** - ask user before adding fallback logic/default values
 
 ## Development Workflow
 
