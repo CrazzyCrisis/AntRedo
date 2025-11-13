@@ -16,3 +16,6 @@ export { LAYER_CONFIGS, LayerConfig } from './LayerConfig';
 // Components
 export { SpriteComponent } from './components/SpriteComponent';
 export { MultiPartComponent, SpritePart } from './components/MultiPartComponent';
+export { AnimatedSpriteComponent } from './components/AnimatedSpriteComponent';
+export { ButtonComponent } from './components/ButtonComponent';
+export { UIContainer } from './components/UIContainer';

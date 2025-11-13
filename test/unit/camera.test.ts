@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
-import { Camera } from '../src/rendering/Camera';
+import { Camera } from '../../src/rendering/Camera';
 
 describe('Camera', () => {
     let camera: Camera;
@@ -270,3 +270,5 @@ describe('Camera', () => {
         });
     });
 });
+
+

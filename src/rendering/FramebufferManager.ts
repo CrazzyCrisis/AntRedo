@@ -97,4 +97,21 @@ export class FramebufferManager {
             fb.clear();
         });
     }
+
+    /**
+     * Update dimensions and recreate framebuffers (for window resize)
+     */
+    updateDimensions(width: number, height: number): void {
+        this.width = width;
+        this.height = height;
+        
+        // Remove old framebuffers
+        this.framebuffers.forEach(fb => {
+            fb.remove();
+        });
+        this.framebuffers.clear();
+        
+        // Recreate with new dimensions
+        this.initializeFramebuffers();
+    }
 }
