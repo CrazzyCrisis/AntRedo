@@ -98,6 +98,92 @@ docs/
 - Colors as hex strings, speeds/physics as numbers
 - Update `CONFIG.DEBUG_MODE` for debug features
 
+### UI Layout Configuration (CRITICAL PATTERN)
+**All UI positioning and styling MUST use centralized config files** - Never hardcode positions, scales, or animation values in UI components or scenes.
+
+**Pattern:** Create layout config files in `src/config/` for each UI system:
+- `menuLayout.ts` - Menu button positions, scales, animations
+- Future: `hudLayout.ts`, `dialogLayout.ts`, etc.
+
+**Normalized Coordinate System (-1 to 1 scale):**
+- **offsetX:** `-1` (left edge) to `1` (right edge), `0` is center
+- **offsetY:** `-1` (bottom edge) to `1` (top edge), `0` is center
+- **Resolution-independent:** Automatically scales with canvas size
+- **Conversion:** `pixelX = centerX + (offsetX * halfWidth)`, `pixelY = centerY - (offsetY * halfHeight)`
+
+**Structure:**
+```typescript
+// Example: src/config/menuLayout.ts
+export const MAIN_MENU_LAYOUT = {
+    PLAY_BUTTON: {
+        offsetX: 0,      // Centered horizontally
+        offsetY: 0.05    // Slightly above center
+    },
+    // ... more elements
+} as const;
+
+export const MENU_SCALES = {
+    TITLE: 0.6,
+    BUTTON: 0.2
+} as const;
+
+export const MENU_ANIMATIONS = {
+    TITLE_SPEED: 0.05,
+    TITLE_AMPLITUDE: 8
+} as const;
+```
+
+**Implementation in Scenes:**
+```typescript
+import { MAIN_MENU_LAYOUT, MENU_SCALES } from '../config/menuLayout';
+
+// Convert normalized coordinates to pixels
+const centerX = this.canvasWidth / 2;
+const centerY = this.canvasHeight / 2;
+const halfWidth = this.canvasWidth / 2;
+const halfHeight = this.canvasHeight / 2;
+
+this.playButton = new ButtonComponent(
+    image,
+    centerX + (MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX * halfWidth),
+    centerY - (MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetY * halfHeight),  // Note: subtract for Y
+    'play_button'
+);
+this.playButton.scale = MENU_SCALES.BUTTON;
+```
+
+**Testing Integration:**
+```typescript
+// test/helpers/[system]TestConfig.ts imports actual config
+import { MAIN_MENU_LAYOUT } from '../../src/config/menuLayout';
+
+const centerX = TEST_CANVAS.WIDTH / 2;
+const halfWidth = TEST_CANVAS.WIDTH / 2;
+
+export const MAIN_MENU_BUTTONS = {
+    PLAY: {
+        x: centerX + (MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX * halfWidth),
+        y: centerY - (MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetY * halfHeight)
+    }
+};
+// Tests use these calculated positions - stay in sync automatically
+```
+
+**Benefits:**
+- Single source of truth - change layout in one place
+- Resolution-independent - works on any screen size
+- Tests automatically stay in sync
+- No magic numbers in code
+- Easy to experiment with different layouts
+- Clear, maintainable code
+
+**ALWAYS use this pattern for:**
+- Button positions and spacing
+- UI element scales
+- Animation speeds and amplitudes
+- Padding and margins
+- Any positioning or styling value
+
 ### Utilities (`helpers.ts`)
 - 50+ tested pure functions - **always check here before implementing common math/collision/array operations**
 - Grid/tile helpers: `worldToGrid()`, `gridToWorld()`, `getNeighbors4/8()`

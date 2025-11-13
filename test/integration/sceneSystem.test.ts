@@ -62,8 +62,9 @@ describe('Scene System Integration', () => {
             expect(() => sceneManager.update()).to.not.throw();
 
             // PHASE 4: User Interaction (Mouse Input)
-            const playButtonX = 400;
-            const playButtonY = 270; // centerY (300) - 30
+            // Use test config for proper button position (normalized coordinates)
+            const playButtonX = MAIN_MENU_BUTTONS.PLAY.x;
+            const playButtonY = MAIN_MENU_BUTTONS.PLAY.y;
             
             // Hover over button
             menuScene.handleMouseMove(playButtonX, playButtonY);

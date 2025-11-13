@@ -78,12 +78,15 @@ export class MenuScene implements IScene {
     enter(): void {
         const centerX = this.canvasWidth / 2;
         const centerY = this.canvasHeight / 2;
+        const halfWidth = this.canvasWidth / 2;
+        const halfHeight = this.canvasHeight / 2;
         
         // Create animated title (persists across menu states)
+        // Convert normalized coordinates (-1 to 1) to pixel positions
         this.titleSprite = new AnimatedSpriteComponent(
             this.titleImg,
-            centerX + MAIN_MENU_LAYOUT.TITLE.offsetX,
-            centerY + MAIN_MENU_LAYOUT.TITLE.offsetY
+            centerX + (MAIN_MENU_LAYOUT.TITLE.offsetX * halfWidth),
+            centerY - (MAIN_MENU_LAYOUT.TITLE.offsetY * halfHeight)
         );
         this.titleSprite.setAnimationSpeed(MENU_ANIMATIONS.TITLE_SPEED);
         this.titleSprite.setAmplitude(MENU_ANIMATIONS.TITLE_AMPLITUDE);
@@ -103,12 +106,15 @@ export class MenuScene implements IScene {
         
         const centerX = this.canvasWidth / 2;
         const centerY = this.canvasHeight / 2;
+        const halfWidth = this.canvasWidth / 2;
+        const halfHeight = this.canvasHeight / 2;
 
         // Create main menu buttons using layout config
+        // Convert normalized coordinates (-1 to 1) to pixel positions
         this.playButton = new ButtonComponent(
             this.playButtonImg,
-            centerX + MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX,
-            centerY + MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetY,
+            centerX + (MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX * halfWidth),
+            centerY - (MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetY * halfHeight),
             'play_button'
         );
         this.playButton.depth = 10;
@@ -119,8 +125,8 @@ export class MenuScene implements IScene {
 
         this.optionsButton = new ButtonComponent(
             this.optionsButtonImg,
-            centerX + MAIN_MENU_LAYOUT.OPTIONS_BUTTON.offsetX,
-            centerY + MAIN_MENU_LAYOUT.OPTIONS_BUTTON.offsetY,
+            centerX + (MAIN_MENU_LAYOUT.OPTIONS_BUTTON.offsetX * halfWidth),
+            centerY - (MAIN_MENU_LAYOUT.OPTIONS_BUTTON.offsetY * halfHeight),
             'options_button'
         );
         this.optionsButton.depth = 10;
@@ -131,8 +137,8 @@ export class MenuScene implements IScene {
 
         this.exitButton = new ButtonComponent(
             this.exitButtonImg,
-            centerX + MAIN_MENU_LAYOUT.EXIT_BUTTON.offsetX,
-            centerY + MAIN_MENU_LAYOUT.EXIT_BUTTON.offsetY,
+            centerX + (MAIN_MENU_LAYOUT.EXIT_BUTTON.offsetX * halfWidth),
+            centerY - (MAIN_MENU_LAYOUT.EXIT_BUTTON.offsetY * halfHeight),
             'exit_button'
         );
         this.exitButton.depth = 10;
@@ -156,12 +162,15 @@ export class MenuScene implements IScene {
         
         const centerX = this.canvasWidth / 2;
         const centerY = this.canvasHeight / 2;
+        const halfWidth = this.canvasWidth / 2;
+        const halfHeight = this.canvasHeight / 2;
 
         // Create options submenu buttons using layout config
+        // Convert normalized coordinates (-1 to 1) to pixel positions
         this.videoSettingsButton = new ButtonComponent(
             this.videoSettingsButtonImg,
-            centerX + OPTIONS_MENU_LAYOUT.VIDEO_SETTINGS_BUTTON.offsetX,
-            centerY + OPTIONS_MENU_LAYOUT.VIDEO_SETTINGS_BUTTON.offsetY,
+            centerX + (OPTIONS_MENU_LAYOUT.VIDEO_SETTINGS_BUTTON.offsetX * halfWidth),
+            centerY - (OPTIONS_MENU_LAYOUT.VIDEO_SETTINGS_BUTTON.offsetY * halfHeight),
             'video_settings_button'
         );
         this.videoSettingsButton.depth = 10;
@@ -172,8 +181,8 @@ export class MenuScene implements IScene {
 
         this.audioSettingsButton = new ButtonComponent(
             this.audioSettingsButtonImg,
-            centerX + OPTIONS_MENU_LAYOUT.AUDIO_SETTINGS_BUTTON.offsetX,
-            centerY + OPTIONS_MENU_LAYOUT.AUDIO_SETTINGS_BUTTON.offsetY,
+            centerX + (OPTIONS_MENU_LAYOUT.AUDIO_SETTINGS_BUTTON.offsetX * halfWidth),
+            centerY - (OPTIONS_MENU_LAYOUT.AUDIO_SETTINGS_BUTTON.offsetY * halfHeight),
             'audio_settings_button'
         );
         this.audioSettingsButton.depth = 10;
@@ -184,8 +193,8 @@ export class MenuScene implements IScene {
 
         this.controlsButton = new ButtonComponent(
             this.controlsButtonImg,
-            centerX + OPTIONS_MENU_LAYOUT.CONTROLS_BUTTON.offsetX,
-            centerY + OPTIONS_MENU_LAYOUT.CONTROLS_BUTTON.offsetY,
+            centerX + (OPTIONS_MENU_LAYOUT.CONTROLS_BUTTON.offsetX * halfWidth),
+            centerY - (OPTIONS_MENU_LAYOUT.CONTROLS_BUTTON.offsetY * halfHeight),
             'controls_button'
         );
         this.controlsButton.depth = 10;
@@ -197,8 +206,8 @@ export class MenuScene implements IScene {
         // Create back button
         this.backButton = new ButtonComponent(
             this.backButtonImg,
-            centerX + OPTIONS_MENU_LAYOUT.BACK_BUTTON.offsetX,
-            centerY + OPTIONS_MENU_LAYOUT.BACK_BUTTON.offsetY,
+            centerX + (OPTIONS_MENU_LAYOUT.BACK_BUTTON.offsetX * halfWidth),
+            centerY - (OPTIONS_MENU_LAYOUT.BACK_BUTTON.offsetY * halfHeight),
             'back_button'
         );
         this.backButton.depth = 10;

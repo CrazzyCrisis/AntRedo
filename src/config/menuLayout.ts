@@ -2,50 +2,55 @@
  * Menu Layout Configuration
  * Single source of truth for menu UI positioning
  * Both MenuScene and tests import from here to stay in sync
+ * 
+ * NORMALIZED COORDINATE SYSTEM:
+ * - offsetX: -1 (left edge) to 1 (right edge), 0 is center
+ * - offsetY: -1 (bottom edge) to 1 (top edge), 0 is center
+ * - Resolution-independent: scales with canvas size
  */
 
 /**
- * Main Menu Button Offsets (relative to canvas center)
+ * Main Menu Button Offsets (normalized -1 to 1 scale)
  * Adjust these values to change the menu layout
  */
 export const MAIN_MENU_LAYOUT = {
     TITLE: {
-        offsetX: 0,      // Centered horizontally
-        offsetY: -200    // Above center
+        offsetX: 0,       // Centered horizontally
+        offsetY: 0.5      // Upper half of screen
     },
     PLAY_BUTTON: {
         offsetX: 0,
-        offsetY: -30
+        offsetY: 0.05
     },
     OPTIONS_BUTTON: {
         offsetX: 0,
-        offsetY: 70
+        offsetY: -0.20
     },
     EXIT_BUTTON: {
         offsetX: 0,
-        offsetY: 170
+        offsetY: -0.45
     }
 } as const;
 
 /**
- * Options Submenu Button Offsets (relative to canvas center)
+ * Options Submenu Button Offsets (normalized -1 to 1 scale)
  */
 export const OPTIONS_MENU_LAYOUT = {
     VIDEO_SETTINGS_BUTTON: {
         offsetX: 0,
-        offsetY: -50
+        offsetY: 0.05
     },
     AUDIO_SETTINGS_BUTTON: {
         offsetX: 0,
-        offsetY: 40
+        offsetY: -0.20
     },
     CONTROLS_BUTTON: {
         offsetX: 0,
-        offsetY: 140
+        offsetY: -0.45
     },
     BACK_BUTTON: {
-        offsetX: 500,
-        offsetY: 220
+        offsetX: -0.85,   // Near left edge
+        offsetY: -0.75    // Near bottom
     }
 } as const;
 
