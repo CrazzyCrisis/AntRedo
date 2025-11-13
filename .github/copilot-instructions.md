@@ -3,7 +3,8 @@
 ## Project Overview
 TypeScript game built with p5.js in **global mode**. Game logic compiles to `dist/`, loaded as ES module in browser. Heavy use of centralized EventBus pattern for decoupled communication.
 
-**Architecture Pattern:** MVC (Model-View-Controller) with EventBus for cross-component communication
+**Architecture Pattern:** MVC (Model-View-Controller) with EventBus + Factory Pattern for entity creation
+**Rendering System:** Layer-based framebuffer rendering with automatic depth sorting
 **World Generation:** Tile-based procedural generation using Perlin noise, overlaid with handmade assets
 **Development Approach:** Test-Driven Development (TDD) - write tests first, then implementation
 
@@ -20,7 +21,21 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - Use `GameEvents` constants, not magic strings: `EventBus.emit(GameEvents.PLAYER_MOVE, x, y)`
 - All input handling flows through EventBus (see `sketch.ts` keyPressed/mousePressed)
 - Components subscribe in constructors, emit state changes
-- Example pattern in `EVENTBUS_EXAMPLES.md`
+- Example pattern in `docs/examples/EVENTBUS_EXAMPLES.md`
+
+### Factory Pattern for Entity Creation
+- Use Factory classes to create entities with rendering automatically handled
+- Factories register renderables with the Renderer, developers don't touch rendering code
+- Example: `PlayerFactory.create()` returns Player model and handles all rendering setup
+- See `docs/codeExamples/FACTORY_PATTERN.md` for implementation details
+
+### Rendering System
+- **Layer-based rendering** with p5.js framebuffers (`createGraphics`)
+- **7 layers:** Background, Ground, Ground Decorations, Entities, Above Entities, UI, Debug
+- **Automatic depth sorting** by Y-coordinate within entity layers
+- **Dirty flag system** - only redraws changed layers for performance
+- **EventBus integration** - state changes trigger layer redraws automatically
+- See `docs/codeExamples/RENDERING_ARCHITECTURE.md` for full details
 
 ### Project Structure
 ```
@@ -32,13 +47,41 @@ src/
     helpers.ts      # 50+ pure utility functions (math, grid, vectors, etc.)
   classes/          # Game entities (MODEL layer)
   managers/         # System managers (CONTROLLER layer - audio, level, etc.)
+  factories/        # Entity factories (hide rendering complexity)
+  rendering/        # Rendering system (Renderer, Camera, Layers, Components)
   scenes/           # Scene management (CONTROLLER layer)
 assets/
   images/
     16x16 Tiles/    # Tile spritesheet for procedural generation overlay
   spriteSheets/     # Handmade asset overlays
 test/               # Mocha/Chai tests - write tests BEFORE implementation
+docs/               # Documentation structure (see below)
 ```
+
+## Documentation Structure
+
+All documentation follows this organized structure:
+
+```
+docs/
+  architecture/     # System design documents
+    RENDERING_SYSTEM_CODE.md      # Code snippets for rendering
+    FACTORY_PATTERN.md             # Factory pattern examples
+  checklists/       # Implementation checklists
+    RENDERING_CHECKLIST.md         # Phased rendering implementation
+  codeExamples/     # Pattern examples and guides
+    RENDERING_ARCHITECTURE.md      # Rendering architecture decisions
+    FACTORY_PATTERN.md             # Factory pattern implementation
+  examples/         # Usage examples
+    EVENTBUS_EXAMPLES.md           # EventBus usage patterns
+```
+
+**Documentation Guidelines:**
+- **Checklists** in `docs/checklists/` - Clean, actionable items with phase breakdowns
+- **Architecture** in `docs/architecture/` - Design decisions and code snippets
+- **Examples** in `docs/examples/` or `docs/codeExamples/` - Usage patterns and best practices
+- Keep checklists clean - reference code snippets, don't embed large code blocks
+- Update relevant docs when adding new patterns or systems
 
 ## Key Conventions
 
@@ -101,12 +144,24 @@ npm run test:watch # Watch mode
 
 ## Common Patterns
 
-### Adding New Game Classes
-1. Create in `src/classes/` or `src/managers/`
-2. Import EventBus and helpers: `import { EventBus, GameEvents } from '../utils/eventBus'`
-3. Subscribe to events in constructor
-4. Emit events for state changes
-5. Add event constants to `GameEvents` if needed
+### Adding New Game Entities (Factory Pattern)
+1. Create Model in `src/classes/` (data only, no rendering)
+2. Create Factory in `src/factories/`
+3. Factory creates model + renderable components
+4. Factory registers with Renderer automatically
+5. Return model to calling code
+
+**Example:**
+```typescript
+// Developer just calls this:
+const player = PlayerFactory.create(x, y);
+
+// Factory handles all rendering internally:
+// - Creates sprite components
+// - Registers with renderer
+// - Sets up proper layers
+// - Developer never touches rendering code
+```
 
 ### Input Handling
 Don't override p5 input functions directly in game code. Instead:
@@ -130,13 +185,13 @@ if (state.is('playing')) { /* ... */ }
 - **Example:** `Player`, `Enemy`, `Tile`, `WorldModel`
 
 ### View (Presentation Layer)
-- **Location:** `sketch.ts` draw loop, rendering methods in managers
+- **Location:** `src/rendering/` components
 - **Responsibilities:** p5.js drawing, visual representation only
 - **Pattern:** Subscribe to EventBus events, read from Models, never modify state
-- **Example:** Draw player sprite based on `PLAYER_MOVE` event
+- **Hidden from developers:** Factory pattern abstracts rendering away
 
 ### Controller (Logic Layer)
-- **Location:** `src/managers/`, `src/scenes/`
+- **Location:** `src/managers/`, `src/scenes/`, `src/factories/`
 - **Responsibilities:** Game logic, input processing, system coordination
 - **Pattern:** Listen to EventBus events, update Models, emit new events
 - **Example:** `LevelManager`, `InputController`, `CollisionManager`
@@ -144,7 +199,8 @@ if (state.is('playing')) { /* ... */ }
 ### Cross-Layer Communication
 - Models emit events when data changes: `EventBus.emit(GameEvents.PLAYER_MOVE, x, y)`
 - Controllers listen and orchestrate: `EventBus.on(GameEvents.INPUT_KEY_PRESS, ...)`
-- Views subscribe and render: `EventBus.on(GameEvents.PLAYER_MOVE, () => this.render())`
+- Views subscribe and render: `EventBus.on(GameEvents.PLAYER_MOVE, () => this.markDirty())`
+- Factories bridge Models and Views transparently
 
 ## Tile-Based Procedural Generation
 
@@ -217,7 +273,8 @@ describe('FeatureName', () => {
 - **Models:** Data integrity, state changes, event emissions
 - **Controllers:** Logic flows, event handling, coordination between systems
 - **Utilities:** Pure functions (see `test/helpers.test.ts` for examples)
-- **Procedural Generation:** Deterministic output with same seed, tile type distributions
+- **Factories:** Entity creation, proper registration with renderer
+- **Rendering:** Layer sorting, dirty flags, camera transforms
 - **EventBus interactions:** Events emitted/received correctly
 
 ### Running Tests
@@ -274,10 +331,12 @@ it('should update player position on input', () => {
 
 ## Critical Notes
 - **TDD First:** Write tests before implementation - no exceptions
+- **Factory Pattern:** Use factories for entity creation - hide rendering complexity from game code
+- **EventBus Integration:** Use selectively - not for every frame operations
 - Never use p5 instance mode - global mode only
-- Always use EventBus for component communication - avoid direct references
 - MVC separation: Models = data, Views = rendering, Controllers = logic
 - Procedural generation must be deterministic (same seed = same output)
 - Use `helpers.ts` grid functions for tile coordinate conversions
 - Update `GameEvents` constants when adding new event types
+- Follow documentation structure in `docs/` - keep checklists clean
 - Asset overlays reference `assets/images/16x16 Tiles/` for tile sprites
