@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
-import { Renderer } from '../src/rendering/Renderer';
-import { Camera } from '../src/rendering/Camera';
-import { RenderLayer } from '../src/rendering/RenderLayer';
-import { SpriteComponent } from '../src/rendering/components/SpriteComponent';
-import { MultiPartComponent, SpritePart } from '../src/rendering/components/MultiPartComponent';
-import { createMockP5 } from './helpers/renderingMocks';
+import { Renderer } from '../../src/rendering/Renderer';
+import { Camera } from '../../src/rendering/Camera';
+import { RenderLayer } from '../../src/rendering/RenderLayer';
+import { SpriteComponent } from '../../src/rendering/components/SpriteComponent';
+import { MultiPartComponent, SpritePart } from '../../src/rendering/components/MultiPartComponent';
+import { createMockP5 } from '../helpers/renderingMocks';
 
 describe('Rendering System Integration', () => {
     let renderer: Renderer;

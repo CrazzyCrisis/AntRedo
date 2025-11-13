@@ -43,7 +43,7 @@ import {
     uniqueArray,
     sumArray,
     averageArray
-} from '../src/utils/helpers';
+} from '../../src/utils/helpers';
 
 describe('Math Utilities', () => {
     describe('randomInt()', () => {
@@ -484,3 +484,5 @@ describe('Classes', () => {
         });
     });
 });
+
+

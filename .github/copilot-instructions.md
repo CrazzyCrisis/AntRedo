@@ -1,12 +1,13 @@
 # AntRedo Copilot Instructions
 
 ## Project Overview
-TypeScript game built with p5.js in **global mode**. Game logic compiles to `dist/`, loaded as ES module in browser. Heavy use of centralized EventBus pattern for decoupled communication.
+TypeScript game built with p5.js in **global mode**. Game logic compiles to `dist/` as CommonJS, then bundled with **esbuild** to browser-compatible IIFE format. Heavy use of centralized EventBus pattern for decoupled communication.
 
 **Architecture Pattern:** MVC (Model-View-Controller) with EventBus + Factory Pattern for entity creation
 **Rendering System:** Layer-based framebuffer rendering with automatic depth sorting
 **World Generation:** Tile-based procedural generation using Perlin noise, overlaid with handmade assets
 **Development Approach:** Test-Driven Development (TDD) - write tests first, then implementation
+**Build System:** TypeScript → CommonJS → esbuild bundler → Single browser-ready IIFE file
 
 ## Architecture
 
@@ -14,7 +15,7 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - p5.js runs in **global mode** (not instance mode) - functions like `createCanvas()`, `background()` attached to `window`
 - `sketch.ts` must expose functions to window: `(window as any).setup = setup`
 - Never import p5 - use global declarations: `declare const createCanvas: any;`
-- Compiled JS loaded as `type="module"` in `index.html`
+- Build process: TypeScript compiles to CommonJS → esbuild bundles to IIFE → Browser loads `bundle.js`
 
 ### Event-Driven Design
 - **EventBus** (`src/utils/eventBus.ts`) is the primary inter-component communication mechanism
@@ -131,10 +132,23 @@ EventBus.off(GameEvents.EVENT_NAME, callback);
 
 ### Build & Run
 ```bash
-npm run watch      # Auto-recompile on changes (main development command)
-npm run build      # One-time compile
+npm run build      # TypeScript → CommonJS → esbuild bundle (production)
+npm run watch      # Auto-rebuild on changes (development)
+npm run dev        # Alias for watch
 ```
-Then open `index.html` in browser or use local server (no hot reload).
+
+**Build Process:**
+1. TypeScript compiles `src/` to `dist/` (CommonJS format)
+2. esbuild bundles `dist/sketch.js` → `dist/bundle.js` (IIFE format)
+3. `index.html` loads `dist/bundle.js` (browser-ready, no module system)
+
+**Why this setup?**
+- TypeScript outputs CommonJS for Node.js compatibility (tests)
+- esbuild bundles to IIFE for browser compatibility (no `exports`/`require` errors)
+- Tests use CommonJS directly in Node.js (fast, no bundling needed)
+- Browser gets single bundled file with all dependencies
+
+Then open `index.html` in browser or use local server.
 
 ### Testing
 ```bash
@@ -147,10 +161,134 @@ npm run test:watch # Watch mode
 
 ### Debugging
 - Use `CONFIG.DEBUG_MODE = true` flag
-- Browser console for runtime (no source maps currently in tsconfig)
-- Check `npm run watch` terminal for TypeScript errors
+- Browser console for runtime
+- TypeScript source maps enabled for debugging compiled code
+- Check `npm run watch` terminal for TypeScript/bundling errors
+- `dist/bundle.js` is the final output loaded by browser
 
 ## Common Patterns
+
+### Scene System (NEW - Scene-Based Architecture)
+**Pattern:** IScene interface + SceneManager singleton for game state management (menus, gameplay, pause, etc.)
+
+**Creating a Scene:**
+1. Implement `IScene` interface (`src/scenes/IScene.ts`)
+2. Implement lifecycle methods: `enter()`, `exit()`, `update()`, `handleMouseClick()`, `handleMouseMove()`
+3. Register UI components with Renderer in `enter()`, unregister in `exit()`
+4. Switch scenes using `SceneManager.getInstance().switchScene(scene, 'SceneName')`
+
+**Example MenuScene Pattern:**
+```typescript
+export class MenuScene implements IScene {
+    private renderer: Renderer;
+    private buttons: ButtonComponent[] = [];
+    private unregisterFunctions: Array<() => void> = [];
+
+    constructor(renderer: Renderer) {
+        this.renderer = renderer;
+    }
+
+    enter(): void {
+        // Create UI components
+        const playButton = new ButtonComponent(sprite, 400, 300, 'play_button');
+        playButton.onClick(() => EventBus.emit(GameEvents.MENU_PLAY_CLICKED));
+        
+        // Register with renderer (store unregister functions)
+        this.unregisterFunctions.push(this.renderer.register(playButton));
+        this.buttons.push(playButton);
+    }
+
+    exit(): void {
+        // Cleanup: unregister all components
+        this.unregisterFunctions.forEach(unregister => unregister());
+        this.unregisterFunctions = [];
+        this.buttons = [];
+    }
+
+    update(): void {
+        // Update animations
+        this.buttons.forEach(button => button.update());
+    }
+
+    handleMouseClick(x: number, y: number): void {
+        this.buttons.forEach(button => button.handleClick(x, y));
+    }
+
+    handleMouseMove(x: number, y: number): void {
+        this.buttons.forEach(button => {
+            button.setHovered(button.isMouseOver(x, y));
+        });
+    }
+}
+```
+
+**SceneManager Integration (sketch.ts):**
+```typescript
+// Minimal additions to sketch.ts - keep it clean!
+import { SceneManager } from './managers/SceneManager';
+
+function draw() {
+    background(CONFIG.COLORS.BACKGROUND);
+    SceneManager.getInstance().update(); // One line
+}
+
+function mousePressed() {
+    EventBus.emit(GameEvents.INPUT_MOUSE_CLICK, mouseX, mouseY, mouseButton);
+    SceneManager.getInstance().handleMouseClick(mouseX, mouseY); // One line
+}
+
+function mouseMoved() {
+    EventBus.emit(GameEvents.INPUT_MOUSE_MOVE, mouseX, mouseY);
+    SceneManager.getInstance().handleMouseMove(mouseX, mouseY); // One line
+}
+```
+
+### Reusable UI Components (NEW)
+**Location:** `src/rendering/components/`
+
+1. **AnimatedSpriteComponent** - Animated floating/hovering sprites (titles, banners)
+   - `setAnimationSpeed(speed)` - radians per frame
+   - `setAmplitude(amplitude)` - vertical movement range
+   - `update()` - call every frame
+   - Automatically oscillates with sine wave
+
+2. **ButtonComponent** - Interactive buttons with hover pulse
+   - `isMouseOver(x, y)` - bounds checking
+   - `setHovered(hovered)` - hover state
+   - `onClick(callback)` - click callback
+   - `handleClick(x, y)` - process click
+   - `setPulseSpeed(speed)` - animation speed
+   - `update()` - call every frame for pulse effect
+
+3. **UIContainer** - Layout manager for UI elements
+   - `addChild(component, relativeX, relativeY)` - add with relative positioning
+   - `removeChild(component)` - remove component
+   - `setPosition(x, y)` - move container and all children
+   - `centerHorizontally(canvasWidth)` - center on screen
+
+**Example Usage:**
+```typescript
+// Animated title
+const title = new AnimatedSpriteComponent(titleSprite, 400, 150);
+title.setAnimationSpeed(0.05);
+title.setAmplitude(8);
+renderer.register(title);
+
+// Interactive button
+const button = new ButtonComponent(buttonSprite, 400, 300, 'play_button');
+button.onClick(() => EventBus.emit(GameEvents.MENU_PLAY_CLICKED));
+renderer.register(button);
+
+// In update loop
+title.update();
+button.update();
+
+// In mouse handlers
+if (button.isMouseOver(mouseX, mouseY)) {
+    button.setHovered(true);
+}
+button.handleClick(mouseX, mouseY);
+```
 
 ### Adding New Game Entities (Factory Pattern)
 1. Create Model in `src/classes/` (data only, no rendering)

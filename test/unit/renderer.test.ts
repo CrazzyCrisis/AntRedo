@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
-import { Renderer } from '../src/rendering/Renderer';
-import { RenderLayer } from '../src/rendering/RenderLayer';
-import { createMockP5, MockRenderable } from './helpers/renderingMocks';
+import { Renderer } from '../../src/rendering/Renderer';
+import { RenderLayer } from '../../src/rendering/RenderLayer';
+import { createMockP5, MockRenderable } from '../helpers/renderingMocks';
 
 describe('Renderer', () => {
     let renderer: Renderer;
@@ -256,3 +256,5 @@ describe('Renderer', () => {
         });
     });
 });
+
+

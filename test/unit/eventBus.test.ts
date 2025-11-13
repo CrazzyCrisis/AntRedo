@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { EventBus, GameEvents } from '../src/utils/eventBus';
+import { EventBus, GameEvents } from '../../src/utils/eventBus';
 
 describe('EventBus', () => {
     beforeEach(() => {
@@ -305,3 +305,5 @@ describe('EventBus', () => {
         });
     });
 });
+
+

@@ -186,7 +186,15 @@ export const GameEvents = {
     // Rendering events
     LAYER_DIRTY: 'render:layer:dirty',
     CAMERA_MOVE: 'render:camera:move',
-    SPRITE_LOADED: 'render:sprite:loaded'
+    SPRITE_LOADED: 'render:sprite:loaded',
+    
+    // Menu events
+    MENU_PLAY_CLICKED: 'menu:play:clicked',
+    MENU_OPTIONS_CLICKED: 'menu:options:clicked',
+    MENU_EXIT_CLICKED: 'menu:exit:clicked',
+    
+    // Scene events
+    SCENE_CHANGE: 'scene:change'
 } as const;
 
 // Type for event names

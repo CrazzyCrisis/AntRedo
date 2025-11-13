@@ -29,12 +29,18 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
             this._translateX = x;
             this._translateY = y;
         },
+        scale: function(x: number, y: number) {
+            this._scaleX = x;
+            this._scaleY = y;
+        },
         _cleared: false,
         _imageDrawn: false,
         _pushCalled: false,
         _popCalled: false,
         _translateX: 0,
-        _translateY: 0
+        _translateY: 0,
+        _scaleX: 1,
+        _scaleY: 1
     };
 }
 
@@ -58,6 +64,8 @@ export function resetMockGraphics(graphics: any): void {
     graphics._popCalled = false;
     graphics._translateX = 0;
     graphics._translateY = 0;
+    graphics._scaleX = 1;
+    graphics._scaleY = 1;
 }
 
 /**

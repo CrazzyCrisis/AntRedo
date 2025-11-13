@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
-import { RenderLayer } from '../src/rendering/RenderLayer';
-import { FramebufferManager } from '../src/rendering/FramebufferManager';
-import { createMockP5, MockRenderable } from './helpers/renderingMocks';
+import { RenderLayer } from '../../src/rendering/RenderLayer';
+import { FramebufferManager } from '../../src/rendering/FramebufferManager';
+import { createMockP5, MockRenderable } from '../helpers/renderingMocks';
 
 describe('Rendering System', () => {
     describe('RenderLayer Enum', () => {
@@ -191,3 +191,5 @@ describe('Rendering System', () => {
         });
     });
 });
+
+

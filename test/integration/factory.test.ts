@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import { PlayerFactory } from '../src/factories/PlayerFactory';
-import { Renderer } from '../src/rendering/Renderer';
-import { EventBus, GameEvents } from '../src/utils/eventBus';
-import { createMockP5 } from './helpers/renderingMocks';
+import { PlayerFactory } from '../../src/factories/PlayerFactory';
+import { Renderer } from '../../src/rendering/Renderer';
+import { EventBus, GameEvents } from '../../src/utils/eventBus';
+import { createMockP5 } from '../helpers/renderingMocks';
 
 describe('PlayerFactory', () => {
     let renderer: Renderer;

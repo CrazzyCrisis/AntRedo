@@ -4,6 +4,7 @@
 
 import { CONFIG } from './config';
 import { EventBus, GameEvents } from './utils/eventBus';
+import { SceneManager } from './managers/SceneManager';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -35,6 +36,9 @@ function setup() {
 function draw() {
     background(CONFIG.COLORS.BACKGROUND);
     
+    // Update current scene
+    SceneManager.getInstance().update();
+    
     // if (gameManager) {
     //     gameManager.update();
     //     gameManager.render();
@@ -60,6 +64,9 @@ function keyReleased() {
 function mousePressed() {
     EventBus.emit(GameEvents.INPUT_MOUSE_CLICK, mouseX, mouseY, mouseButton);
     
+    // Forward to current scene
+    SceneManager.getInstance().handleMouseClick(mouseX, mouseY);
+    
     // if (gameManager) {
     //     gameManager.handleMousePressed();
     // }
@@ -67,6 +74,9 @@ function mousePressed() {
 
 function mouseMoved() {
     EventBus.emit(GameEvents.INPUT_MOUSE_MOVE, mouseX, mouseY);
+    
+    // Forward to current scene
+    SceneManager.getInstance().handleMouseMove(mouseX, mouseY);
 }
 
 // Make functions available to p5.js
