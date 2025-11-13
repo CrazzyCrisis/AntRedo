@@ -5,6 +5,8 @@
 import { CONFIG } from './config';
 import { EventBus, GameEvents } from './utils/eventBus';
 import { SceneManager } from './managers/SceneManager';
+import { Renderer } from './rendering/Renderer';
+import { MenuScene } from './scenes/MenuScene';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -15,20 +17,42 @@ declare const key: any;
 declare const mouseX: any;
 declare const mouseY: any;
 declare const mouseButton: any;
+declare const resizeCanvas: any;
+declare const loadImage: any;
 
-// let gameManager: any; // Uncomment when GameManager class is created
+// Global renderer instance
+let renderer: Renderer;
+
+// Preloaded menu images
+let menuImages: {
+    title: any;
+    playButton: any;
+    optionsButton: any;
+    exitButton: any;
+} | null = null;
 
 function preload() {
-    // Load assets (images, sounds, etc.)
+    // Load menu assets
+    menuImages = {
+        title: loadImage('assets/images/menu/ant_logo3.png'),
+        playButton: loadImage('assets/images/menu/play_button.png'),
+        optionsButton: loadImage('assets/images/menu/options_button.png'),
+        exitButton: loadImage('assets/images/menu/exit_button.png')
+    };
 }
 
 function setup() {
-    createCanvas(CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    createCanvas(window.innerWidth, window.innerHeight);
     frameRate(CONFIG.FPS);
     
+    // Create renderer
+    renderer = new Renderer(window as any, window.innerWidth, window.innerHeight);
     
-    // gameManager = new GameManager();
-    // gameManager.init();
+    // Create and set menu scene
+    if (menuImages) {
+        const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
+        SceneManager.getInstance().switchScene(menuScene, 'Menu');
+    }
     
     EventBus.emit(GameEvents.GAME_START);
 }
@@ -39,10 +63,8 @@ function draw() {
     // Update current scene
     SceneManager.getInstance().update();
     
-    // if (gameManager) {
-    //     gameManager.update();
-    //     gameManager.render();
-    // }
+    // Render all layers
+    renderer.render();
 }
 
 function keyPressed() {
@@ -79,6 +101,20 @@ function mouseMoved() {
     SceneManager.getInstance().handleMouseMove(mouseX, mouseY);
 }
 
+function windowResized() {
+    resizeCanvas(window.innerWidth, window.innerHeight);
+    
+    // Update renderer dimensions
+    renderer.updateDimensions(window.innerWidth, window.innerHeight);
+    
+    // Recreate menu scene with new dimensions (if in menu)
+    const currentScene = SceneManager.getInstance().getCurrentScene();
+    if (currentScene instanceof MenuScene && menuImages) {
+        const newMenuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
+        SceneManager.getInstance().switchScene(newMenuScene, 'Menu');
+    }
+}
+
 // Make functions available to p5.js
 (window as any).preload = preload;
 (window as any).setup = setup;
@@ -87,3 +123,4 @@ function mouseMoved() {
 (window as any).keyReleased = keyReleased;
 (window as any).mousePressed = mousePressed;
 (window as any).mouseMoved = mouseMoved;
+(window as any).windowResized = windowResized;

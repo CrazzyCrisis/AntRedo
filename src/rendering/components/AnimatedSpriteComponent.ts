@@ -13,6 +13,7 @@ export class AnimatedSpriteComponent implements Renderable {
     public sprite: any;
     public animationSpeed: number = 0.05;
     public amplitude: number = 5;
+    public scale: number = 1.0;
     
     private animationTime: number = 0;
 
@@ -59,16 +60,21 @@ export class AnimatedSpriteComponent implements Renderable {
     }
 
     /**
-     * Render sprite with animation offset
+     * Render sprite with animation offset and scale
      */
     render(graphics: any): void {
         const offset = this.getAnimationOffset();
         const renderY = this.y + offset;
         
+        const scaledWidth = this.sprite.width * this.scale;
+        const scaledHeight = this.sprite.height * this.scale;
+        
         graphics.image(
             this.sprite,
-            this.x - this.sprite.width / 2,
-            renderY - this.sprite.height / 2
+            this.x - scaledWidth / 2,
+            renderY - scaledHeight / 2,
+            scaledWidth,
+            scaledHeight
         );
     }
 }

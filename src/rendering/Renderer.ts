@@ -27,6 +27,14 @@ export class Renderer {
     }
 
     /**
+     * Update renderer dimensions (for window resize)
+     */
+    updateDimensions(width: number, height: number): void {
+        this.framebufferManager.updateDimensions(width, height);
+        this.markAllLayersDirty();
+    }
+
+    /**
      * Register a renderable on its designated layer.
      * Returns an unregister function.
      */

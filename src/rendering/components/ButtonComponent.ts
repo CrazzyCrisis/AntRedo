@@ -14,6 +14,7 @@ export class ButtonComponent implements Renderable {
     public id: string;
     public isHovered: boolean = false;
     public pulseSpeed: number = 0.1;
+    public scale: number = 1.0;
     
     private pulseTime: number = 0;
     private clickCallback?: () => void;
@@ -29,8 +30,8 @@ export class ButtonComponent implements Renderable {
      * Check if mouse is over button
      */
     isMouseOver(mouseX: number, mouseY: number): boolean {
-        const halfWidth = this.sprite.width / 2;
-        const halfHeight = this.sprite.height / 2;
+        const halfWidth = (this.sprite.width * this.scale) / 2;
+        const halfHeight = (this.sprite.height * this.scale) / 2;
         
         return (
             mouseX >= this.x - halfWidth &&
@@ -103,14 +104,15 @@ export class ButtonComponent implements Renderable {
     }
 
     /**
-     * Render button with pulse scale
+     * Render button with scale and pulse effect
      */
     render(graphics: any): void {
-        const scale = this.getPulseScale();
+        const pulseScale = this.getPulseScale();
+        const totalScale = this.scale * pulseScale;
         
         graphics.push();
         graphics.translate(this.x, this.y);
-        graphics.scale(scale, scale);
+        graphics.scale(totalScale, totalScale);
         graphics.image(
             this.sprite,
             -this.sprite.width / 2,
