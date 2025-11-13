@@ -1,0 +1,79 @@
+/**
+ * Reusable test helpers and mocks for rendering system tests.
+ * Minimizes redundant code across test files.
+ */
+
+import { Renderable } from '../../src/rendering/Renderable';
+import { RenderLayer } from '../../src/rendering/RenderLayer';
+
+/**
+ * Creates a mock p5.Graphics object with tracking capabilities
+ */
+export function createMockGraphics(width: number = 800, height: number = 600) {
+    return {
+        width,
+        height,
+        clear: function() { 
+            this._cleared = true; 
+        },
+        image: function() { 
+            this._imageDrawn = true; 
+        },
+        push: function() { 
+            this._pushCalled = true; 
+        },
+        pop: function() { 
+            this._popCalled = true; 
+        },
+        translate: function(x: number, y: number) {
+            this._translateX = x;
+            this._translateY = y;
+        },
+        _cleared: false,
+        _imageDrawn: false,
+        _pushCalled: false,
+        _popCalled: false,
+        _translateX: 0,
+        _translateY: 0
+    };
+}
+
+/**
+ * Creates a mock p5 instance with createGraphics method
+ */
+export function createMockP5(_width: number = 800, _height: number = 600) {
+    return {
+        createGraphics: (w: number, h: number) => createMockGraphics(w, h),
+        image: function() {}
+    };
+}
+
+/**
+ * Reset tracking flags on a mock graphics object
+ */
+export function resetMockGraphics(graphics: any): void {
+    graphics._cleared = false;
+    graphics._imageDrawn = false;
+    graphics._pushCalled = false;
+    graphics._popCalled = false;
+    graphics._translateX = 0;
+    graphics._translateY = 0;
+}
+
+/**
+ * Mock Renderable implementation for testing
+ */
+export class MockRenderable implements Renderable {
+    public renderCalled = false;
+    
+    constructor(
+        public layer: RenderLayer,
+        public depth: number,
+        public x: number = 0,
+        public y: number = 0
+    ) {}
+    
+    render(_graphics: any): void {
+        this.renderCalled = true;
+    }
+}
