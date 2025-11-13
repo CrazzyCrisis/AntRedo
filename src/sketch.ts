@@ -29,6 +29,10 @@ let menuImages: {
     playButton: any;
     optionsButton: any;
     exitButton: any;
+    videoSettingsButton: any;
+    audioSettingsButton: any;
+    controlsButton: any;
+    backButton: any;
 } | null = null;
 
 function preload() {
@@ -37,7 +41,11 @@ function preload() {
         title: loadImage('assets/images/menu/ant_logo3.png'),
         playButton: loadImage('assets/images/menu/play_button.png'),
         optionsButton: loadImage('assets/images/menu/options_button.png'),
-        exitButton: loadImage('assets/images/menu/exit_button.png')
+        exitButton: loadImage('assets/images/menu/exit_button.png'),
+        videoSettingsButton: loadImage('assets/images/menu/vs_button.png'),
+        audioSettingsButton: loadImage('assets/images/menu/as_button.png'),
+        controlsButton: loadImage('assets/images/menu/controls_button.png'),
+        backButton: loadImage('assets/images/menu/back_button.png')
     };
 }
 

@@ -5,6 +5,7 @@ import { MenuScene } from '../../src/scenes/MenuScene';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { Renderer } from '../../src/rendering/Renderer';
 import { createMockP5 } from '../helpers/renderingMocks';
+import { createMockImages, TEST_CANVAS, MAIN_MENU_BUTTONS } from '../helpers/menuTestConfig';
 
 /**
  * Integration Test Suite: Complete Scene System
@@ -34,10 +35,10 @@ describe('Scene System Integration', () => {
         EventBus.clear();
         
         // Create fresh renderer
-        renderer = new Renderer(mockP5 as any, 800, 600);
+        renderer = new Renderer(mockP5 as any, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT);
         
-        // Create menu scene (constructor only takes renderer)
-        menuScene = new MenuScene(renderer);
+        // Create menu scene
+        menuScene = new MenuScene(renderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
     });
 
     describe('End-to-End Scene Lifecycle', () => {
@@ -62,7 +63,7 @@ describe('Scene System Integration', () => {
 
             // PHASE 4: User Interaction (Mouse Input)
             const playButtonX = 400;
-            const playButtonY = 300;
+            const playButtonY = 270; // centerY (300) - 30
             
             // Hover over button
             menuScene.handleMouseMove(playButtonX, playButtonY);
@@ -152,7 +153,7 @@ describe('Scene System Integration', () => {
             sceneManager.switchScene(menuScene, 'Menu');
             
             // Buttons should be positioned vertically with spacing
-            const playButtonY = 300;
+            const playButtonY = 270; // centerY (300) - 30
             const optionsButtonY = 370;
             const exitButtonY = 440;
             
@@ -168,20 +169,16 @@ describe('Scene System Integration', () => {
             sceneManager.switchScene(menuScene, 'Menu');
             
             let playClicked = false;
-            let optionsClicked = false;
             let exitClicked = false;
             
             EventBus.on(GameEvents.MENU_PLAY_CLICKED, () => playClicked = true);
-            EventBus.on(GameEvents.MENU_OPTIONS_CLICKED, () => optionsClicked = true);
             EventBus.on(GameEvents.MENU_EXIT_CLICKED, () => exitClicked = true);
             
-            // Click each button
-            menuScene.handleMouseClick(400, 300); // Play
-            menuScene.handleMouseClick(400, 370); // Options
-            menuScene.handleMouseClick(400, 440); // Exit
+            // Click play and exit buttons (options now opens submenu, doesn't emit event)
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.EXIT.x, MAIN_MENU_BUTTONS.EXIT.y);
             
             expect(playClicked).to.be.true;
-            expect(optionsClicked).to.be.true;
             expect(exitClicked).to.be.true;
         });
 
@@ -198,7 +195,7 @@ describe('Scene System Integration', () => {
             sceneManager.switchScene(menuScene, 'Menu');
             
             // Hover over button
-            menuScene.handleMouseMove(400, 300);
+            menuScene.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             
             // Update should apply pulse animation
             for (let i = 0; i < 5; i++) {
@@ -218,7 +215,7 @@ describe('Scene System Integration', () => {
             });
             
             sceneManager.switchScene(menuScene, 'Menu');
-            menuScene.handleMouseClick(400, 300); // Click play button
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y); // Click play button
             
             expect(gameStarted).to.be.true;
         });
@@ -240,7 +237,7 @@ describe('Scene System Integration', () => {
             });
             
             // User clicks play button
-            menuScene.handleMouseClick(400, 300);
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             
             // Should have transitioned to game scene
             expect(sceneManager.getCurrentSceneName()).to.equal('Game');
@@ -248,7 +245,7 @@ describe('Scene System Integration', () => {
 
         it('should support multiple scene transitions', () => {
             const menuScene1 = menuScene;
-            const menuScene2 = new MenuScene(renderer);
+            const menuScene2 = new MenuScene(renderer, 800, 600, createMockImages());
             
             sceneManager.switchScene(menuScene1, 'Menu1');
             expect(sceneManager.getCurrentSceneName()).to.equal('Menu1');
@@ -306,8 +303,8 @@ describe('Scene System Integration', () => {
             expect(() => sceneManager.update()).to.not.throw();
             
             // No scene for mouse events
-            expect(() => sceneManager.handleMouseClick(400, 300)).to.not.throw();
-            expect(() => sceneManager.handleMouseMove(400, 300)).to.not.throw();
+            expect(() => sceneManager.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y)).to.not.throw();
+            expect(() => sceneManager.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y)).to.not.throw();
         });
     });
 
@@ -335,7 +332,7 @@ describe('Scene System Integration', () => {
             
             // Create and destroy scenes multiple times
             for (let i = 0; i < 5; i++) {
-                const scene = new MenuScene(renderer);
+                const scene = new MenuScene(renderer, 800, 600, createMockImages());
                 
                 sceneManager.switchScene(scene, `Menu${i}`);
                 scene.exit();
@@ -355,7 +352,7 @@ describe('Scene System Integration', () => {
             expect(sceneManager.getCurrentSceneName()).to.equal('Menu');
             
             // 2. Player hovers over buttons
-            menuScene.handleMouseMove(400, 300);
+            menuScene.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             menuScene.update(); // Pulse animation
             
             // 3. Player clicks play
@@ -363,7 +360,7 @@ describe('Scene System Integration', () => {
             EventBus.on(GameEvents.MENU_PLAY_CLICKED, () => {
                 shouldStartGame = true;
             });
-            menuScene.handleMouseClick(400, 300);
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             expect(shouldStartGame).to.be.true;
             
             // 4. Transition to game scene
@@ -401,3 +398,6 @@ describe('Scene System Integration', () => {
         });
     });
 });
+
+
+

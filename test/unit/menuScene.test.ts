@@ -8,6 +8,7 @@ import { expect } from 'chai';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { createMockGraphics } from '../helpers/renderingMocks';
 import { MenuScene } from '../../src/scenes/MenuScene';
+import { createMockImages, TEST_CANVAS, MAIN_MENU_BUTTONS } from '../helpers/menuTestConfig';
 
 // Mock Renderer for testing
 class MockRenderer {
@@ -20,6 +21,10 @@ class MockRenderer {
         return () => {
             this.unregisteredComponents.push(component);
         };
+    }
+
+    markLayerDirty(layer: any): void {
+        // Mock implementation
     }
 
     clear(): void {
@@ -38,7 +43,7 @@ describe('MenuScene', () => {
 
     describe('Scene Lifecycle', () => {
         it('should implement IScene interface', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             
             expect(scene.enter).to.be.a('function');
             expect(scene.exit).to.be.a('function');
@@ -48,7 +53,7 @@ describe('MenuScene', () => {
         });
 
         it('should load assets on enter()', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -59,7 +64,7 @@ describe('MenuScene', () => {
         });
 
         it('should register UI components with renderer on enter()', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -68,7 +73,7 @@ describe('MenuScene', () => {
         });
 
         it('should unregister components on exit()', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             const registeredCount = mockRenderer.registeredComponents.length;
@@ -79,7 +84,7 @@ describe('MenuScene', () => {
         });
 
         it('should clean up event listeners on exit()', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -99,7 +104,7 @@ describe('MenuScene', () => {
 
     describe('Button Creation', () => {
         it('should create play button', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -108,7 +113,7 @@ describe('MenuScene', () => {
         });
 
         it('should create options button', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -117,7 +122,7 @@ describe('MenuScene', () => {
         });
 
         it('should create exit button', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -126,7 +131,7 @@ describe('MenuScene', () => {
         });
 
         it('should position buttons vertically', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -136,21 +141,20 @@ describe('MenuScene', () => {
         });
 
         it('should center buttons horizontally', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             
             scene.enter();
             
-            // // All buttons should be centered (assuming 800px canvas)
-            const centerX = 400;
-            expect(scene.playButton.x).to.equal(centerX);
-            expect(scene.optionsButton.x).to.equal(centerX);
-            expect(scene.exitButton.x).to.equal(centerX);
+            // All buttons should be centered using config values
+            expect(scene.playButton.x).to.equal(MAIN_MENU_BUTTONS.PLAY.x);
+            expect(scene.optionsButton.x).to.equal(MAIN_MENU_BUTTONS.OPTIONS.x);
+            expect(scene.exitButton.x).to.equal(MAIN_MENU_BUTTONS.EXIT.x);
         });
     });
 
     describe('Title Animation', () => {
         it('should create animated title', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -159,7 +163,7 @@ describe('MenuScene', () => {
         });
 
         it('should update title animation each frame', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -174,7 +178,7 @@ describe('MenuScene', () => {
         });
 
         it('should position title at top of screen', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -186,22 +190,22 @@ describe('MenuScene', () => {
 
     describe('Mouse Interaction', () => {
         it('should detect hover on play button', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             
             scene.enter();
             
-            // // Assume play button at (400, 300) with size (100, 50)
-            scene.handleMouseMove(450, 325); // Inside button
+            // Use config position for play button
+            scene.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             
             expect(scene.playButton.isHovered).to.be.true;
         });
 
         it('should detect hover exit', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             
             scene.enter();
             
-            scene.handleMouseMove(450, 325); // Hover button
+            scene.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y); // Hover button
             expect(scene.playButton.isHovered).to.be.true;
             
             scene.handleMouseMove(100, 100); // Move away
@@ -209,46 +213,49 @@ describe('MenuScene', () => {
         });
 
         it('should emit MENU_PLAY_CLICKED on play button click', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             scene.enter();
             
             let eventEmitted = false;
             EventBus.on(GameEvents.MENU_PLAY_CLICKED, () => { eventEmitted = true; });
             
-            // Click inside play button bounds
-            scene.handleMouseClick(450, 325);
+            // Click play button using config position
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             
             expect(eventEmitted).to.be.true;
         });
 
-        it('should emit MENU_OPTIONS_CLICKED on options button click', () => {
-            const scene = new MenuScene(mockRenderer);
+        it('should switch to options submenu on options button click', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             scene.enter();
             
-            let eventEmitted = false;
-            EventBus.on(GameEvents.MENU_OPTIONS_CLICKED, () => { eventEmitted = true; });
+            // Initially should have main menu buttons registered (title + 3 buttons = 4)
+            const initialCount = mockRenderer.registeredComponents.length;
             
-            // Click inside options button bounds (adjust Y position)
-            scene.handleMouseClick(450, 400);
+            // Click options button using config position
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.OPTIONS.x, MAIN_MENU_BUTTONS.OPTIONS.y);
             
-            expect(eventEmitted).to.be.true;
+            // Should have unregistered old buttons and registered new ones
+            // Title stays, but buttons change (3 old buttons out, 4 new submenu buttons in)
+            expect(mockRenderer.unregisteredComponents.length).to.be.greaterThan(0);
+            expect(mockRenderer.registeredComponents.length).to.be.greaterThan(initialCount);
         });
 
         it('should emit MENU_EXIT_CLICKED on exit button click', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             scene.enter();
             
             let eventEmitted = false;
             EventBus.on(GameEvents.MENU_EXIT_CLICKED, () => { eventEmitted = true; });
             
-            // Click inside exit button bounds (adjust Y position)
-            scene.handleMouseClick(450, 475);
+            // Click exit button using config position
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.EXIT.x, MAIN_MENU_BUTTONS.EXIT.y);
             
             expect(eventEmitted).to.be.true;
         });
 
         it('should not emit events when clicking empty space', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             scene.enter();
             
             let playClicked = false;
@@ -270,7 +277,7 @@ describe('MenuScene', () => {
 
     describe('Update Loop', () => {
         it('should update all animated components', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -289,7 +296,7 @@ describe('MenuScene', () => {
         });
 
         it('should update button pulse animations', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, 800, 600, createMockImages());
             
             scene.enter();
             
@@ -307,22 +314,23 @@ describe('MenuScene', () => {
 
     describe('Multiple Button Hover', () => {
         it('should only hover one button at a time', () => {
-            const scene = new MenuScene(mockRenderer);
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
             
             scene.enter();
             
-            // Hover play button
-            scene.handleMouseMove(450, 325);
+            // Hover play button using config
+            scene.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
             expect(scene.playButton.isHovered).to.be.true;
             expect(scene.optionsButton.isHovered).to.be.false;
             
-            // Move to options button
-            scene.handleMouseMove(450, 400);
+            // Move to options button using config
+            scene.handleMouseMove(MAIN_MENU_BUTTONS.OPTIONS.x, MAIN_MENU_BUTTONS.OPTIONS.y);
             expect(scene.playButton.isHovered).to.be.false;
             expect(scene.optionsButton.isHovered).to.be.true;
         });
     });
 });
+
 
 
 
