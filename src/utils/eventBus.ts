@@ -305,7 +305,11 @@ export const GameEvents = {
     // Inventory events
     ITEM_ADDED: 'item:added',
     ITEM_REMOVED: 'item:removed',
-    INVENTORY_FULL: 'inventory:full'
+    INVENTORY_FULL: 'inventory:full',
+    
+    // Vision events
+    ENTITY_DETECTED: 'entity:detected',
+    ENTITY_LOST: 'entity:lost'
 } as const;
 
 // Type for event names
