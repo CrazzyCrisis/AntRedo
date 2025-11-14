@@ -223,7 +223,83 @@ export const GameEvents = {
     WORLDGEN_REGENERATE: 'worldgen:regenerate',
     
     // Scene events
-    SCENE_CHANGE: 'scene:change'
+    SCENE_CHANGE: 'scene:change',
+    
+    // ========================================================================
+    // ENTITY SYSTEM EVENTS
+    // ========================================================================
+    
+    // Entity lifecycle events
+    ENTITY_ADDED: 'entity:added',
+    ENTITY_REMOVED: 'entity:removed',
+    ENTITY_MOVED: 'entity:moved',
+    ENTITY_DESTROYED: 'entity:destroyed',
+    ENTITY_UPDATED: 'entity:updated',
+    
+    // Ant events
+    ANT_SPAWNED: 'ant:spawned',
+    ANT_STATE_CHANGED: 'ant:state:changed',
+    ANT_DIED: 'ant:died',
+    ANT_ATTACKED: 'ant:attacked',
+    ANT_JOB_CHANGED: 'ant:job:changed',
+    ANT_HUNGER_CHANGED: 'ant:hunger:changed',
+    ANT_HUNGER_CRITICAL: 'ant:hunger:critical',
+    ANT_STARVED: 'ant:starved',
+    ANT_TARGET_ACQUIRED: 'ant:target:acquired',
+    ANT_TARGET_LOST: 'ant:target:lost',
+    
+    // Queen events
+    QUEEN_SPAWNED: 'queen:spawned',
+    QUEEN_COMMAND_ISSUED: 'queen:command:issued',
+    QUEEN_DIED: 'queen:died',
+    QUEEN_POWER_USED: 'queen:power:used',
+    QUEEN_POWER_UNLOCKED: 'queen:power:unlocked',
+    QUEEN_POWER_UPGRADED: 'queen:power:upgraded',
+    QUEEN_POWER_COOLDOWN_READY: 'queen:power:cooldown:ready',
+    
+    // Boss events
+    BOSS_SPAWNED: 'boss:spawned',
+    BOSS_ATTACKED: 'boss:attacked',
+    BOSS_DIED: 'boss:died',
+    BOSS_TARGET_CHANGED: 'boss:target:changed',
+    BOSS_PROJECTILE_FIRED: 'boss:projectile:fired',
+    BOSS_STATE_CHANGED: 'boss:state:changed',
+    BOSS_VISION_DETECTED: 'boss:vision:detected',
+    
+    // Resource events (extended)
+    RESOURCE_SPAWNED: 'resource:spawned',
+    RESOURCE_COLLECTED: 'resource:collected',
+    RESOURCE_DEPOSITED: 'resource:deposited',
+    RESOURCE_DEPLETED: 'resource:depleted',
+    RESOURCE_SMELLED: 'resource:smelled',
+    
+    // Building events
+    BUILDING_PLACED: 'building:placed',
+    BUILDING_CONSTRUCTION_STARTED: 'building:construction:started',
+    BUILDING_CONSTRUCTION_PROGRESS: 'building:construction:progress',
+    BUILDING_COMPLETED: 'building:completed',
+    BUILDING_DESTROYED: 'building:destroyed',
+    BUILDING_LEVELED_UP: 'building:leveled_up',
+    BUILDING_DAMAGED: 'building:damaged',
+    
+    // Projectile events
+    PROJECTILE_SPAWNED: 'projectile:spawned',
+    PROJECTILE_HIT: 'projectile:hit',
+    PROJECTILE_DESTROYED: 'projectile:destroyed',
+    
+    // Power effect events
+    LIGHTNING_STRIKE: 'power:lightning:strike',
+    FIREBALL_EXPLODE: 'power:fireball:explode',
+    BLACKHOLE_PULL: 'power:blackhole:pull',
+    TIDALWAVE_PUSH: 'power:tidalwave:push',
+    FINALFLASH_ACTIVATED: 'power:finalflash:activated',
+    SOOT_STAIN_CREATED: 'power:soot:created',
+    BURN_EFFECT_APPLIED: 'power:burn:applied',
+    
+    // Combat events
+    COMBAT_DAMAGE_DEALT: 'combat:damage:dealt',
+    COMBAT_KNOCKBACK_APPLIED: 'combat:knockback:applied',
+    COMBAT_KILL: 'combat:kill'
 } as const;
 
 // Type for event names

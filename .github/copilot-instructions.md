@@ -1,5 +1,24 @@
 # AntRedo Copilot Instructions
 
+## ⚠️ CRITICAL: Read Instructions First (ALWAYS)
+**BEFORE starting ANY task, work, or responding to requests:**
+1. **READ these instructions COMPLETELY** - Don't skip or assume you remember
+2. **Verify current patterns and conventions** - Check architecture, naming, file structure
+3. **Review relevant documentation** in `docs/` for the specific system you're working on
+4. **Check existing similar implementations** to maintain consistency
+
+**This is MANDATORY, not optional.** Instructions contain critical patterns that MUST be followed:
+- MVC architecture separation
+- Config-first philosophy
+- TDD workflow (tests before implementation)
+- Helper reuse (never reinvent existing utilities)
+- EventBus patterns
+- Naming conventions
+
+**Treat these instructions as the source of truth.** They are regularly updated with project-specific patterns that are essential for code quality and maintainability.
+
+---
+
 ## Project Overview
 TypeScript game built with p5.js in **global mode**. Game logic compiles to `dist/` as CommonJS, then bundled with **esbuild** to browser-compatible IIFE format. Heavy use of centralized EventBus pattern for decoupled communication.
 
