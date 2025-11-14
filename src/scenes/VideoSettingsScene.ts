@@ -1,5 +1,6 @@
 import { IScene } from './IScene';
 import { Renderer } from '../rendering/Renderer';
+import { RenderLayer } from '../rendering/RenderLayer';
 import { SliderComponent } from '../rendering/components/SliderComponent';
 import { ToggleComponent } from '../rendering/components/ToggleComponent';
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
@@ -86,6 +87,28 @@ export class VideoSettingsScene implements IScene {
         if (this.cameraSmoothingSlider['dragging']) {
             this.cameraSmoothingSlider.handleMouseDrag(x, y);
         }
+    }
+    
+    handleMouseUp(_x: number, _y: number): void {
+        // Release slider
+        this.cameraSmoothingSlider.handleMouseUp();
+    }
+    
+    onResize(width: number, height: number): void {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        
+        // Recreate components with new positions
+        // First, unregister old components
+        this.unregisterFunctions.forEach(unregister => unregister());
+        this.unregisterFunctions = [];
+        this.components = [];
+        
+        // Recreate with new dimensions
+        this.createComponents();
+        
+        // Mark UI layer as dirty to trigger redraw with new dimensions
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
     
     /**

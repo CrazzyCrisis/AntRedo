@@ -1,5 +1,6 @@
 import { IScene } from './IScene';
 import { Renderer } from '../rendering/Renderer';
+import { RenderLayer } from '../rendering/RenderLayer';
 import { KeybindComponent } from '../rendering/components/KeybindComponent';
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
@@ -132,6 +133,27 @@ export class ControlsScene implements IScene {
         if (this.resetButton) {
             this.resetButton.setHovered(this.resetButton.isMouseOver(x, y));
         }
+    }
+
+    handleMouseUp(_x: number, _y: number): void {
+        // Controls scene doesn't need mouse up handling currently
+    }
+    
+    onResize(width: number, height: number): void {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        
+        // Recreate components with new positions
+        // First, unregister old components
+        this.unregisterFunctions.forEach(unregister => unregister());
+        this.unregisterFunctions = [];
+        this.keybindComponents = [];
+        
+        // Recreate with new dimensions
+        this.createComponents();
+        
+        // Mark UI layer as dirty to trigger redraw with new dimensions
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
 
     private createComponents(): void {

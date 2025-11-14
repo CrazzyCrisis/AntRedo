@@ -7,6 +7,21 @@ import { Renderable } from '../../src/rendering/Renderable';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 
 /**
+ * Setup global window mock for p5.js constants
+ */
+export function setupWindowMock() {
+    if (typeof (global as any).window === 'undefined') {
+        (global as any).window = {
+            CENTER: 'center',
+            TOP: 'top',
+            BOTTOM: 'bottom',
+            LEFT: 'left',
+            RIGHT: 'right'
+        };
+    }
+}
+
+/**
  * Creates a mock p5.Graphics object with tracking capabilities
  */
 export function createMockGraphics(width: number = 800, height: number = 600) {
@@ -33,6 +48,30 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
             this._scaleX = x;
             this._scaleY = y;
         },
+        fill: function() {
+            this._fillSet = true;
+        },
+        stroke: function() {
+            this._strokeSet = true;
+        },
+        strokeWeight: function() {
+            this._strokeWeightSet = true;
+        },
+        noStroke: function() {
+            this._noStrokeCalled = true;
+        },
+        rect: function() {
+            this._rectDrawn = true;
+        },
+        text: function() {
+            this._textDrawn = true;
+        },
+        textSize: function() {
+            this._textSizeSet = true;
+        },
+        textAlign: function() {
+            this._textAlignSet = true;
+        },
         _cleared: false,
         _imageDrawn: false,
         _pushCalled: false,
@@ -40,7 +79,15 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         _translateX: 0,
         _translateY: 0,
         _scaleX: 1,
-        _scaleY: 1
+        _scaleY: 1,
+        _fillSet: false,
+        _strokeSet: false,
+        _strokeWeightSet: false,
+        _noStrokeCalled: false,
+        _rectDrawn: false,
+        _textDrawn: false,
+        _textSizeSet: false,
+        _textAlignSet: false
     };
 }
 
@@ -66,6 +113,14 @@ export function resetMockGraphics(graphics: any): void {
     graphics._translateY = 0;
     graphics._scaleX = 1;
     graphics._scaleY = 1;
+    graphics._fillSet = false;
+    graphics._strokeSet = false;
+    graphics._strokeWeightSet = false;
+    graphics._noStrokeCalled = false;
+    graphics._rectDrawn = false;
+    graphics._textDrawn = false;
+    graphics._textSizeSet = false;
+    graphics._textAlignSet = false;
 }
 
 /**

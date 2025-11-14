@@ -382,4 +382,31 @@ export class MenuScene implements IScene {
             button.setHovered(isOver);
         });
     }
+
+    /**
+     * Handle mouse up (required by IScene)
+     */
+    handleMouseUp(_x: number, _y: number): void {
+        // Menu doesn't need mouse up handling currently
+    }
+    
+    onResize(width: number, height: number): void {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        
+        // Recreate current menu with new dimensions
+        if (this.playButton && this.optionsButton && this.exitButton) {
+            // Main menu is active
+            this.showMainMenu();
+        } else if (this.videoSettingsButton && this.audioSettingsButton && this.controlsButton) {
+            // Options menu is active
+            this.showOptionsMenu();
+        } else if (this.devRoomButton && this.startGameButton && this.levelEditorButton) {
+            // Level select menu is active
+            this.showLevelSelectMenu();
+        }
+        
+        // Mark UI layer as dirty to trigger redraw with new dimensions
+        this.renderer.markLayerDirty(RenderLayer.UI);
+    }
 }

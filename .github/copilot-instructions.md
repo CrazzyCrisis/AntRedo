@@ -481,6 +481,20 @@ EventBus.on(GameEvents.WORLD_GENERATED, (tiles) => {
 3. **Refactor:** Improve code while keeping tests passing
 4. **Repeat:** Never write production code without a failing test
 
+### Regression Testing (CRITICAL)
+**ALWAYS perform regression testing after ANY code changes:**
+1. **Manual Testing:** Test all related features in browser after each change
+2. **Common Regressions to Check:**
+   - UI component interactions (clicks, hovers, drags)
+   - Window resize behavior (all UI should scale/reposition)
+   - Component positioning after state changes
+   - Event handler chains (input → scene → component)
+   - Config/state synchronization between systems
+3. **Before Marking Complete:** Verify ALL existing functionality still works
+4. **When Bugs Found:** Add test coverage to prevent future regressions
+
+**Pattern:** After every edit, mentally ask "What could this break?" and test those areas.
+
 ### Testing Patterns
 ```typescript
 // Test file structure

@@ -178,18 +178,21 @@ function mouseMoved() {
     SceneManager.getInstance().handleMouseMove(mouseX, mouseY);
 }
 
+function mouseReleased() {
+    EventBus.emit(GameEvents.INPUT_MOUSE_RELEASE, mouseX, mouseY, mouseButton);
+    
+    // Forward to current scene
+    SceneManager.getInstance().handleMouseUp(mouseX, mouseY);
+}
+
 function windowResized() {
     resizeCanvas(window.innerWidth, window.innerHeight);
     
     // Update renderer dimensions
     renderer.updateDimensions(window.innerWidth, window.innerHeight);
     
-    // Recreate menu scene with new dimensions (if in menu)
-    const currentScene = SceneManager.getInstance().getCurrentScene();
-    if (currentScene instanceof MenuScene && menuImages) {
-        const newMenuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
-        SceneManager.getInstance().switchScene(newMenuScene, 'Menu');
-    }
+    // Forward resize to current scene
+    SceneManager.getInstance().handleResize(window.innerWidth, window.innerHeight);
 }
 
 // Make functions available to p5.js
@@ -200,4 +203,5 @@ function windowResized() {
 (window as any).keyReleased = keyReleased;
 (window as any).mousePressed = mousePressed;
 (window as any).mouseMoved = mouseMoved;
+(window as any).mouseReleased = mouseReleased;
 (window as any).windowResized = windowResized;

@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
 import { SceneManager } from '../../src/managers/SceneManager';
 import { MenuScene } from '../../src/scenes/MenuScene';
+import { IScene } from '../../src/scenes/IScene';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { Renderer } from '../../src/rendering/Renderer';
 import { createMockP5 } from '../helpers/renderingMocks';
@@ -85,7 +86,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             
             sceneManager.switchScene(nextScene, 'NextScene');
@@ -132,7 +135,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             
             sceneManager.switchScene(emptyScene, 'Empty');
@@ -237,7 +242,9 @@ describe('Scene System Integration', () => {
                     exit: () => {},
                     update: () => {},
                     handleMouseClick: (_x: number, _y: number) => {},
-                    handleMouseMove: (_x: number, _y: number) => {}
+                    handleMouseMove: (_x: number, _y: number) => {},
+                    handleMouseUp: (_x: number, _y: number) => {},
+                    onResize: (_width: number, _height: number) => {}
                 };
                 
                 sceneManager.switchScene(gameScene, 'Game');
@@ -272,7 +279,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             
             // Switch scenes many times
@@ -371,12 +380,14 @@ describe('Scene System Integration', () => {
             expect(shouldStartGame).to.be.true;
             
             // 4. Transition to game scene
-            const gameScene = {
+            const gameScene: IScene = {
                 enter: () => {},
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             sceneManager.switchScene(gameScene, 'Game');
             
@@ -391,7 +402,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             sceneManager.switchScene(gameScene, 'Game');
             

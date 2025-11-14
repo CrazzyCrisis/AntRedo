@@ -180,6 +180,7 @@ export const GameEvents = {
     INPUT_KEY_RELEASE: 'input:key:release',
     INPUT_MOUSE_CLICK: 'input:mouse:click',
     INPUT_MOUSE_MOVE: 'input:mouse:move',
+    INPUT_MOUSE_RELEASE: 'input:mouse:release',
     
     // Audio events
     AUDIO_PLAY: 'audio:play',

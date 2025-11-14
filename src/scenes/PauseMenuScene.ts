@@ -63,10 +63,14 @@ export class PauseMenuScene implements IScene {
             layer: RenderLayer.UI,
             depth: 1,
             render: (graphics: any) => {
+                // Recalculate center on every render to handle window resize
+                const currentCenterX = this.canvasWidth / 2;
+                const currentCenterY = this.canvasHeight / 2;
+                
                 const panelWidth = 600;
                 const panelHeight = 500;
-                const panelX = centerX - panelWidth / 2;
-                const panelY = centerY - panelHeight / 2;
+                const panelX = currentCenterX - panelWidth / 2;
+                const panelY = currentCenterY - panelHeight / 2;
 
                 // Panel background
                 graphics.fill(40, 40, 50);
@@ -79,7 +83,7 @@ export class PauseMenuScene implements IScene {
                 graphics.noStroke();
                 graphics.textAlign((window as any).CENTER, (window as any).TOP);
                 graphics.textSize(32);
-                graphics.text('PAUSE MENU', centerX, panelY + 20);
+                graphics.text('PAUSE MENU', currentCenterX, panelY + 20);
 
                 // Section: Save Current World
                 graphics.textSize(20);
@@ -97,7 +101,7 @@ export class PauseMenuScene implements IScene {
                     graphics.textSize(16);
                     graphics.fill(150);
                     graphics.textAlign((window as any).CENTER, (window as any).TOP);
-                    graphics.text('No saved presets', centerX, listY + 80);
+                    graphics.text('No saved presets', currentCenterX, listY + 80);
                 } else {
                     graphics.textSize(14);
                     graphics.textAlign((window as any).LEFT, (window as any).TOP);
@@ -145,7 +149,7 @@ export class PauseMenuScene implements IScene {
                 const deleteKeys = this.inputManager.getKeyBinding('deleteWorld').map(k => k.toUpperCase()).join('/');
                 
                 graphics.text(`${pauseKeys}: Resume | ${saveKeys}: Save | Click preset then ${loadKeys}: Load | ${deleteKeys}: Delete`, 
-                    centerX, panelY + panelHeight - 35);
+                    currentCenterX, panelY + panelHeight - 35);
                 
                 // World Gen Config Toggle
                 graphics.textSize(14);
@@ -313,5 +317,25 @@ export class PauseMenuScene implements IScene {
             }
             return;
         }
+    }
+
+    handleMouseUp(_x: number, _y: number): void {
+        // Pause menu doesn't need mouse up handling currently
+    }
+    
+    onResize(width: number, height: number): void {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        
+        // Update toggle position to match new center
+        if (this.worldGenToggle) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            this.worldGenToggle.x = centerX - 180;
+            this.worldGenToggle.y = centerY + 180;
+        }
+        
+        // Mark UI layer as dirty to trigger redraw with new dimensions
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
 }

@@ -267,13 +267,6 @@ export class WorldGenConfigMenu implements Renderable {
         graphics.textAlign((window as any).CENTER, (window as any).TOP);
         graphics.text('World Generation Config', this.x + this.width / 2, this.y + 15);
         
-        // Regenerating indicator
-        if (this.isRegenerating) {
-            graphics.fill(255, 200, 0);
-            graphics.textSize(12);
-            graphics.text('⚡ Regenerating...', this.x + this.width / 2, this.y + 38);
-        }
-        
         // Noise Scale section
         graphics.textSize(14);
         graphics.textAlign((window as any).LEFT, (window as any).TOP);
@@ -294,25 +287,37 @@ export class WorldGenConfigMenu implements Renderable {
             const toggle = this.tileEnabledToggles.get(index);
             if (toggle) toggle.render(graphics);
             
-            // Tile name
-            graphics.fill(threshold.enabled ? 255 : 120);
-            graphics.text(tileTypeName, this.x + 70, this.y + yOffset - 5);
-            
-            // Threshold value
-            graphics.text(threshold.threshold.toFixed(2), this.x + 250, this.y + yOffset - 5);
-            
-            // Render slider
+            // Render slider first (behind text)
             const slider = this.tileThresholdSliders.get(index);
             if (slider && threshold.enabled) {
                 slider.render(graphics);
             }
+            
+            // Render tile name on top of slider (centered in slider area)
+            graphics.textAlign((window as any).CENTER, (window as any).TOP);
+            graphics.fill(threshold.enabled ? 255 : 120);
+            graphics.stroke(0);
+            graphics.strokeWeight(3);
+            graphics.text(tileTypeName, this.x + 175, this.y + yOffset - 5);
+            
+            // Render threshold value on right side
+            graphics.textAlign((window as any).LEFT, (window as any).TOP);
+            graphics.noStroke();
+            graphics.fill(threshold.enabled ? 255 : 120);
+            graphics.text(threshold.threshold.toFixed(2), this.x + 280, this.y + yOffset - 5);
         });
         
-        // Regenerate button hint
-        graphics.fill(200);
-        graphics.textSize(12);
+        // Status message at bottom
         graphics.textAlign((window as any).CENTER, (window as any).TOP);
-        graphics.text('Changes apply on next world generation', this.x + this.width / 2, this.y + this.height - 25);
+        if (this.isRegenerating) {
+            graphics.fill(255, 200, 0);
+            graphics.textSize(14);
+            graphics.text('⚡ Regenerating world...', this.x + this.width / 2, this.y + this.height - 30);
+        } else {
+            graphics.fill(200);
+            graphics.textSize(12);
+            graphics.text('Changes debounced by 300ms', this.x + this.width / 2, this.y + this.height - 25);
+        }
     }
     
     /**

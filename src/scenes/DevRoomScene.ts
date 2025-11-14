@@ -318,6 +318,24 @@ export class DevRoomScene implements IScene {
         }
     }
     
+    handleMouseUp(_x: number, _y: number): void {
+        // Forward to pause menu if paused
+        if (this.isPaused && this.pauseMenu) {
+            // Pause menu doesn't need mouse up currently
+            return;
+        }
+        
+        // Forward to world gen config menu if visible
+        if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
+            this.worldGenConfigMenu.handleMouseUp();
+        }
+    }
+    
+    onResize(_width: number, _height: number): void {
+        // Dev room doesn't need special resize handling currently
+        // World gen config menu uses fixed positioning
+    }
+    
     handleKeyPress(key: string | number): void {
         // Forward to pause menu if paused (except pause key)
         if (this.isPaused && this.pauseMenu && !this.inputManager.isKeyBoundToAction(key.toString(), 'pause')) {
@@ -416,6 +434,11 @@ export class DevRoomScene implements IScene {
             this.unregisterFunctions = [];
             this.createBackButton();
             this.createTileRenderer(tileGrid);
+        }
+        
+        // Sync WorldGenConfigMenu with loaded preset config
+        if (this.worldGenConfigMenu) {
+            this.worldGenConfigMenu.setConfig(this.worldGenerator.getConfig());
         }
     }
     
