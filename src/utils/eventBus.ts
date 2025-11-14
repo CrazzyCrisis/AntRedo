@@ -316,7 +316,13 @@ export const GameEvents = {
     AI_BEHAVIOR_CHANGED: 'ai:behavior:changed',
     AI_BEHAVIOR_COMPLETE: 'ai:behavior:complete',
     AI_TARGET_ACQUIRED: 'ai:target:acquired',
-    AI_TARGET_LOST: 'ai:target:lost'
+    AI_TARGET_LOST: 'ai:target:lost',
+    
+    // Job system events
+    JOB_ASSIGNED: 'job:assigned',
+    JOB_PRIORITIES_CHANGED: 'job:priorities:changed',
+    TASK_ASSIGNED: 'task:assigned',
+    TASK_COMPLETED: 'task:completed'
 } as const;
 
 // Type for event names
