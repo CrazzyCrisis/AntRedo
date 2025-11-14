@@ -79,5 +79,13 @@ export const DEV_ROOM_CONFIG = {
         SHOW_COORDS: false,      // Show tile coordinates
         SHOW_COSTS: false,       // Show movement costs
         SHOW_INFO: true          // Show world info text
+    },
+
+    // Grid overlay settings
+    GRID_OVERLAY: {
+        ENABLED: true,           // Show grid lines over tiles
+        COLOR: '#0c5b1bff',        // Grid line color (black)
+        ALPHA: 100,               // Transparency (0-255, lower = more transparent)
+        LINE_WEIGHT: 1           // Line thickness in pixels
     }
 } as const;

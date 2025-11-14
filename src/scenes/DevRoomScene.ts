@@ -45,21 +45,21 @@ export class DevRoomScene implements IScene {
     }
 
     enter(): void {
-        console.log('DevRoomScene: Entering...');
-
         // Generate world using config parameters
-        console.log('DevRoomScene: Generating world...');
         this.worldGenerator.setNoiseScale(DEV_ROOM_CONFIG.WORLD.NOISE_SCALE);
+        
+        // Use system time as seed for random world generation
+        const seed = Date.now();
+        
         const worldData = this.worldGenerator.generate(
             DEV_ROOM_CONFIG.WORLD.WIDTH,
             DEV_ROOM_CONFIG.WORLD.HEIGHT,
-            DEV_ROOM_CONFIG.WORLD.SEED
+            seed
         );
         const tileGrid = new TileGrid(worldData);
         
         // Store in game state
         this.gameState.setTileGrid(tileGrid);
-        console.log(`DevRoomScene: World loaded - ${tileGrid.getWidth()}x${tileGrid.getHeight()} tiles`);
 
         // Create back button using ButtonComponent
         this.createBackButton();
@@ -88,7 +88,6 @@ export class DevRoomScene implements IScene {
         this.backButton.scale = DEV_ROOM_CONFIG.SCALES.BUTTON;
         this.backButton.setPulseSpeed(DEV_ROOM_CONFIG.ANIMATIONS.BUTTON_PULSE_SPEED);
         this.backButton.onClick(() => {
-            console.log('DevRoomScene: Back button clicked');
             EventBus.emit(GameEvents.MENU_BACK_CLICKED);
         });
         
@@ -150,11 +149,49 @@ export class DevRoomScene implements IScene {
 
         this.unregisterFunctions.push(this.renderer.register(tileRenderable));
         this.renderer.markLayerDirty(RenderLayer.GROUND);
+        
+        // Add grid overlay on top of tiles
+        if (DEV_ROOM_CONFIG.GRID_OVERLAY.ENABLED) {
+            this.createGridOverlay(tileGrid);
+        }
+    }
+    
+    private createGridOverlay(tileGrid: TileGrid): void {
+        const grid = tileGrid.getGrid();
+        const gridWidth = grid[0].length * TILE_SIZE;
+        const gridHeight = grid.length * TILE_SIZE;
+        
+        const gridRenderable = {
+            id: 'tile_grid_overlay',
+            layer: RenderLayer.GROUND_DECORATIONS,
+            depth: 1000,  // Render on top of everything else in this layer
+            render: (graphics: any) => {
+                graphics.stroke(DEV_ROOM_CONFIG.GRID_OVERLAY.COLOR);
+                graphics.strokeWeight(DEV_ROOM_CONFIG.GRID_OVERLAY.LINE_WEIGHT);
+                (graphics as any).drawingContext.globalAlpha = DEV_ROOM_CONFIG.GRID_OVERLAY.ALPHA / 255;
+                
+                // Draw vertical lines
+                for (let col = 0; col <= grid[0].length; col++) {
+                    const x = col * TILE_SIZE;
+                    graphics.line(x, 0, x, gridHeight);
+                }
+                
+                // Draw horizontal lines
+                for (let row = 0; row <= grid.length; row++) {
+                    const y = row * TILE_SIZE;
+                    graphics.line(0, y, gridWidth, y);
+                }
+                
+                // Reset alpha
+                (graphics as any).drawingContext.globalAlpha = 1.0;
+            }
+        };
+        
+        this.unregisterFunctions.push(this.renderer.register(gridRenderable));
+        this.renderer.markLayerDirty(RenderLayer.GROUND_DECORATIONS);
     }
 
     exit(): void {
-        console.log('DevRoomScene: Exiting...');
-        
         // Unregister all renderables
         this.unregisterFunctions.forEach(unregister => unregister());
         this.unregisterFunctions = [];
@@ -167,6 +204,8 @@ export class DevRoomScene implements IScene {
         // Update button animations
         if (this.backButton) {
             this.backButton.update();
+            // Mark UI layer dirty so button hover effects are visible
+            this.renderer.markLayerDirty(RenderLayer.UI);
         }
     }
 
