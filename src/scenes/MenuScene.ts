@@ -16,15 +16,15 @@ export class MenuScene implements IScene {
     // private currentState: MenuState = 'main'; // For future use if needed
     
     // Main menu buttons
-    private playButton: ButtonComponent | null = null;
-    private optionsButton: ButtonComponent | null = null;
-    private exitButton: ButtonComponent | null = null;
+    public playButton: ButtonComponent | null = null;
+    public optionsButton: ButtonComponent | null = null;
+    public exitButton: ButtonComponent | null = null;
     
     // Options submenu buttons
-    private videoSettingsButton: ButtonComponent | null = null;
-    private audioSettingsButton: ButtonComponent | null = null;
-    private controlsButton: ButtonComponent | null = null;
-    private backButton: ButtonComponent | null = null;
+    public videoSettingsButton: ButtonComponent | null = null;
+    public audioSettingsButton: ButtonComponent | null = null;
+    public controlsButton: ButtonComponent | null = null;
+    public backButton: ButtonComponent | null = null;
     
     // Level select submenu buttons
     public devRoomButton: ButtonComponent | null = null;
@@ -134,6 +134,7 @@ export class MenuScene implements IScene {
         this.playButton.depth = 10;
         this.playButton.scale = MENU_SCALES.BUTTON;
         this.playButton.onClick(() => {
+            EventBus.emit(GameEvents.MENU_PLAY_CLICKED);
             this.showLevelSelectMenu();
         });
 
@@ -146,6 +147,7 @@ export class MenuScene implements IScene {
         this.optionsButton.depth = 10;
         this.optionsButton.scale = MENU_SCALES.BUTTON;
         this.optionsButton.onClick(() => {
+            EventBus.emit(GameEvents.MENU_OPTIONS_CLICKED);
             this.showOptionsMenu();
         });
 
@@ -315,7 +317,7 @@ export class MenuScene implements IScene {
         this.buttonUnregisterFunctions = [];
         this.buttons = [];
         
-        // Clear button references
+        // Clear all button references (main menu, options, and level select)
         this.playButton = null;
         this.optionsButton = null;
         this.exitButton = null;
@@ -323,6 +325,9 @@ export class MenuScene implements IScene {
         this.audioSettingsButton = null;
         this.controlsButton = null;
         this.backButton = null;
+        this.devRoomButton = null;
+        this.startGameButton = null;
+        this.levelEditorButton = null;
     }
 
     /**

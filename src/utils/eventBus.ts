@@ -199,6 +199,13 @@ export const GameEvents = {
     MENU_START_GAME_CLICKED: 'menu:start_game:clicked',
     MENU_LEVEL_EDITOR_CLICKED: 'menu:level_editor:clicked',
     
+    // Settings events
+    SETTING_AUDIO_CHANGED: 'settings:audio:changed',
+    SETTING_VIDEO_CHANGED: 'settings:video:changed',
+    SETTING_KEYBIND_CHANGED: 'settings:keybind:changed',
+    SETTING_ACCESSIBILITY_CHANGED: 'settings:accessibility:changed',
+    SETTINGS_RESET: 'settings:reset',
+    
     // Scene events
     SCENE_CHANGE: 'scene:change'
 } as const;

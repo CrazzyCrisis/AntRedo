@@ -421,10 +421,11 @@ describe('MenuScene', () => {
             
             // Now in level select menu
             expect(scene.devRoomButton).to.not.be.null;
+            expect(scene.backButton).to.not.be.null;
             
-            // Click back button (bottom left corner)
-            const backX = TEST_CANVAS.WIDTH * 0.15; // Near left edge
-            const backY = TEST_CANVAS.HEIGHT * 0.875; // Near bottom
+            // Click back button using actual button position
+            const backX = scene.backButton!.x;
+            const backY = scene.backButton!.y;
             
             mockRenderer.clear();
             scene.handleMouseClick(backX, backY);

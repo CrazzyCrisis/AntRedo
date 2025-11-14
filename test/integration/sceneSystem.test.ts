@@ -175,11 +175,17 @@ describe('Scene System Integration', () => {
             EventBus.on(GameEvents.MENU_PLAY_CLICKED, () => playClicked = true);
             EventBus.on(GameEvents.MENU_EXIT_CLICKED, () => exitClicked = true);
             
-            // Click play and exit buttons (options now opens submenu, doesn't emit event)
+            // Click play button (will switch to level select menu)
             menuScene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
-            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.EXIT.x, MAIN_MENU_BUTTONS.EXIT.y);
-            
             expect(playClicked).to.be.true;
+            
+            // Go back to main menu
+            if (menuScene.backButton) {
+                menuScene.handleMouseClick(menuScene.backButton.x, menuScene.backButton.y);
+            }
+            
+            // Now click exit button
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.EXIT.x, MAIN_MENU_BUTTONS.EXIT.y);
             expect(exitClicked).to.be.true;
         });
 
