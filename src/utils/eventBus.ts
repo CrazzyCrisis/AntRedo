@@ -322,7 +322,13 @@ export const GameEvents = {
     JOB_ASSIGNED: 'job:assigned',
     JOB_PRIORITIES_CHANGED: 'job:priorities:changed',
     TASK_ASSIGNED: 'task:assigned',
-    TASK_COMPLETED: 'task:completed'
+    TASK_COMPLETED: 'task:completed',
+    
+    // Hunger events
+    ENTITY_HUNGRY: 'entity:hungry',
+    ENTITY_STARVING: 'entity:starving',
+    ENTITY_ATE: 'entity:ate',
+    STARVATION_DAMAGE: 'starvation:damage'
 } as const;
 
 // Type for event names
