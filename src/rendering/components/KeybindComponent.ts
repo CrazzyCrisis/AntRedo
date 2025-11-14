@@ -172,7 +172,7 @@ export class KeybindComponent implements Renderable {
      */
     handleClick(mouseX: number, mouseY: number): void {
         if (this.isMouseOver(mouseX, mouseY)) {
-            this.startListening();
+            this.toggleListening();
         }
     }
 

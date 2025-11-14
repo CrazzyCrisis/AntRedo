@@ -86,23 +86,25 @@ export class ControlsScene implements IScene {
     }
 
     handleMouseClick(x: number, y: number): void {
-
-        // Check keybind clicks
-        this.keybindComponents.forEach(keybind => {
-            keybind.handleClick(x, y);
-        });
-
-        // If a new keybind started listening, stop all others
-        this.keybindComponents.forEach(kb => {
-            if (kb.isListening()) {
-                // Stop all other keybinds
-                this.keybindComponents.forEach(other => {
-                    if (other !== kb && other.isListening()) {
-                        other.stopListening();
-                    }
-                });
+        // Find which keybind was clicked (if any)
+        let clickedKeybind = null;
+        for (const keybind of this.keybindComponents) {
+            if (keybind.isMouseOver(x, y)) {
+                clickedKeybind = keybind;
+                break;
             }
-        });
+        }
+
+        // If a keybind was clicked, stop all others before toggling the clicked one
+        if (clickedKeybind) {
+            this.keybindComponents.forEach(kb => {
+                if (kb !== clickedKeybind && kb.isListening()) {
+                    kb.stopListening();
+                }
+            });
+            // Now toggle the clicked keybind
+            clickedKeybind.handleClick(x, y);
+        }
 
         // Check back button
         if (this.backButton.isMouseOver(x, y)) {
