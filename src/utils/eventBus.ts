@@ -152,6 +152,8 @@ export const GameEvents = {
     // World events
     WORLD_LOADED: 'world:loaded',
     WORLD_GENERATED: 'world:generated',
+    SAVE_WORLD_PRESET: 'world:save_preset',
+    LOAD_WORLD_PRESET: 'world:load_preset',
     
     // Player events
     PLAYER_MOVE: 'player:move',

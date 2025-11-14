@@ -9,7 +9,7 @@ export const DEV_ROOM_CONFIG = {
         WIDTH: 200,              // Width in tiles
         HEIGHT: 200,             // Height in tiles
         SEED: 12345,            // Fixed seed for consistency (use undefined for random)
-        NOISE_SCALE: 0.1        // Perlin noise scale (0.05-0.3 typical range)
+        NOISE_SCALE: 0.15      // Perlin noise scale (0.05-0.3 typical range)
     },
 
     // Tile rendering settings
@@ -85,7 +85,7 @@ export const DEV_ROOM_CONFIG = {
     GRID_OVERLAY: {
         ENABLED: true,           // Show grid lines over tiles
         COLOR: '#0c5b1bff',        // Grid line color (black)
-        ALPHA: 100,               // Transparency (0-255, lower = more transparent)
+        ALPHA: 125,               // Transparency (0-255, lower = more transparent)
         LINE_WEIGHT: 1           // Line thickness in pixels
     }
 } as const;

@@ -74,6 +74,15 @@ export class SceneManager {
             this.currentScene.handleMouseMove(x, y);
         }
     }
+    
+    /**
+     * Forward key press to current scene
+     */
+    public handleKeyPress(key: string | number): void {
+        if (this.currentScene && this.currentScene.handleKeyPress) {
+            this.currentScene.handleKeyPress(key);
+        }
+    }
 
     /**
      * Get current scene

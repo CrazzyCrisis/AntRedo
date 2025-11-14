@@ -52,6 +52,9 @@ export interface KeyBindings {
     interact: string[];
     pause: string[];
     openInventory: string[];
+    saveWorld: string[];
+    loadWorld: string[];
+    deleteWorld: string[];
 }
 
 export const DEFAULT_KEY_BINDINGS: KeyBindings = {
@@ -62,7 +65,10 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = {
     jump: [' ', 'w', 'ArrowUp'],
     interact: ['e', 'Enter'],
     pause: ['Escape', 'p'],
-    openInventory: ['i', 'Tab']
+    openInventory: ['i', 'Tab'],
+    saveWorld: ['s'],
+    loadWorld: ['l'],
+    deleteWorld: ['d']
 };
 
 /**

@@ -436,7 +436,10 @@ describe('InputManager', () => {
                 jump: ['space'],
                 interact: ['e'],
                 pause: ['Escape'],
-                openInventory: ['Tab']
+                openInventory: ['Tab'],
+                saveWorld: ['s'],
+                loadWorld: ['l'],
+                deleteWorld: ['d']
             };
 
             inputManager.importKeybinds(customBindings);
@@ -453,7 +456,10 @@ describe('InputManager', () => {
                 jump: ['space'],
                 interact: ['e'],
                 pause: ['Escape'],
-                openInventory: ['Tab']
+                openInventory: ['Tab'],
+                saveWorld: ['s'],
+                loadWorld: ['l'],
+                deleteWorld: ['d']
             };
 
             const emittedActions: string[] = [];

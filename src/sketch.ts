@@ -144,6 +144,9 @@ function draw() {
 function keyPressed() {
     EventBus.emit(GameEvents.INPUT_KEY_PRESS, keyCode, key);
     
+    // Forward to scene manager
+    SceneManager.getInstance().handleKeyPress(key);
+    
     // if (gameManager) {
     //     gameManager.handleKeyPressed(keyCode);
     // }

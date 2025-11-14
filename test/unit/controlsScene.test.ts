@@ -434,7 +434,10 @@ describe('ControlsScene', () => {
                 interact: ['e'],
                 openInventory: ['i'],
                 pause: ['Escape'],
-                jump: [' ']
+                jump: [' '],
+                saveWorld: ['s'],
+                loadWorld: ['l'],
+                deleteWorld: ['d']
             });
 
             // Reload InputManager to pick up changes

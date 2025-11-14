@@ -146,18 +146,18 @@ export class WorldGenerator {
 
         // Map noise values to tile types
         // This creates natural-looking terrain with varied features
-        if (normalized < 0.25) {
+        if (normalized < 0.4) {
             return TileType.WATER;           // 25% - Lakes/rivers
-        } else if (normalized < 0.35) {
+        } else if (normalized < 0.5) {
             return TileType.SAND;            // 10% - Beaches/sandy areas
         } else if (normalized < 0.65) {
             return TileType.GRASS;           // 30% - Main ground
         } else if (normalized < 0.75) {
             return TileType.DIRT;            // 10% - Dirt patches
-        } else if (normalized < 0.90) {
+        } else if (normalized < 0.99) {
             return TileType.STONE;           // 15% - Rocky areas
         } else {
-            return TileType.CAVE_WALL;       // 10% - Mountains/obstacles
+            return TileType.DIRT;       // 10% - Mountains/obstacles
         }
     }
 }

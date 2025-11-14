@@ -34,4 +34,10 @@ export interface IScene {
      * @param y - Mouse Y coordinate
      */
     handleMouseMove(x: number, y: number): void;
+    
+    /**
+     * Optional: Called when key is pressed
+     * @param key - Key code or key string
+     */
+    handleKeyPress?(key: string | number): void;
 }
