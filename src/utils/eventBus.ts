@@ -309,7 +309,14 @@ export const GameEvents = {
     
     // Vision events
     ENTITY_DETECTED: 'entity:detected',
-    ENTITY_LOST: 'entity:lost'
+    ENTITY_LOST: 'entity:lost',
+    
+    // AI behavior events
+    AI_STATE_CHANGED: 'ai:state:changed',
+    AI_BEHAVIOR_CHANGED: 'ai:behavior:changed',
+    AI_BEHAVIOR_COMPLETE: 'ai:behavior:complete',
+    AI_TARGET_ACQUIRED: 'ai:target:acquired',
+    AI_TARGET_LOST: 'ai:target:lost'
 } as const;
 
 // Type for event names
