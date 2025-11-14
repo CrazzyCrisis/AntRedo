@@ -41,15 +41,22 @@ export const FRILL_SUPPORTED_TILES = new Set<TileType>([
  * Material Override Hierarchy from tileSmooth.js
  * Higher weight = higher priority = renders on top of lower priority tiles
  * When two tiles meet, the higher priority one's frill extends onto the lower priority one
+ * 
+ * NOTE: Priority values are now stored in WorldGenConfig and can be modified by users.
+ * This map is built dynamically from the config.
  */
-export const MATERIAL_PRIORITY: Partial<Record<TileType, number>> = {
-    [TileType.WATER]: 50,  // Highest - water spreads everywhere
-    [TileType.SAND]: 44,
-    [TileType.MOSS]: 37,
-    [TileType.GRASS]: 25,
-    [TileType.DIRT]: 12,
-    [TileType.STONE]: 6    // Lowest
-};
+let MATERIAL_PRIORITY: Partial<Record<TileType, number>> = {};
+
+/**
+ * Updates the material priority map from WorldGenConfig
+ * Should be called whenever the world gen config changes
+ */
+export function updateMaterialPriorities(config: { tileThresholds: Array<{ tileType: TileType; priority: number }> }): void {
+    MATERIAL_PRIORITY = {};
+    for (const threshold of config.tileThresholds) {
+        MATERIAL_PRIORITY[threshold.tileType] = threshold.priority;
+    }
+}
 
 /**
  * Gets priority for a tile type, returns -1 if not in hierarchy

@@ -7,6 +7,7 @@ import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { SliderComponent } from './SliderComponent';
 import { ToggleComponent } from './ToggleComponent';
+import { NumberInputComponent } from './NumberInputComponent';
 import { WorldGenConfig } from '../../config/worldGenConfig';
 import { TileType } from '../../world/TileSystem';
 import { EventBus, GameEvents } from '../../utils/eventBus';
@@ -19,13 +20,14 @@ export class WorldGenConfigMenu implements Renderable {
     private x: number;
     private y: number;
     private width: number = 350;
-    private height: number = 500;
+    private height: number = 550; // Increased height for priority inputs
     private config: WorldGenConfig;
     private visible: boolean = false;
     
     private noiseScaleSlider: SliderComponent;
     private tileThresholdSliders: Map<number, SliderComponent> = new Map();
     private tileEnabledToggles: Map<number, ToggleComponent> = new Map();
+    private tilePriorityInputs: Map<number, NumberInputComponent> = new Map();
     
     // Debounce for regeneration
     private regenerateDebounceTimer: number | null = null;
@@ -56,7 +58,7 @@ export class WorldGenConfigMenu implements Renderable {
         // Create sliders and toggles for each tile threshold
         const mockToggleSprite = { width: 30, height: 15 } as any;
         this.config.tileThresholds.forEach((threshold, index) => {
-            const yOffset = 120 + index * 50;
+            const yOffset = 120 + index * 60; // Increased spacing for priority inputs
             
             // Threshold slider
             const slider = new SliderComponent(
@@ -87,6 +89,22 @@ export class WorldGenConfigMenu implements Renderable {
                 this.emitConfigChange();
             });
             this.tileEnabledToggles.set(index, toggle);
+            
+            // Priority input (below threshold slider)
+            const priorityInput = new NumberInputComponent(
+                this.x + 175,
+                this.y + yOffset + 25,
+                0,
+                100,
+                threshold.priority,
+                `worldgen_priority_${index}`
+            );
+            priorityInput.setStep(1); // Integer steps for priority
+            priorityInput.onChange((value) => {
+                this.config.tileThresholds[index].priority = Math.round(value);
+                this.emitConfigChange();
+            });
+            this.tilePriorityInputs.set(index, priorityInput);
         });
     }
     
@@ -134,8 +152,10 @@ export class WorldGenConfigMenu implements Renderable {
         config.tileThresholds.forEach((threshold, index) => {
             const slider = this.tileThresholdSliders.get(index);
             const toggle = this.tileEnabledToggles.get(index);
+            const priorityInput = this.tilePriorityInputs.get(index);
             if (slider) slider.setValue(threshold.threshold);
             if (toggle) toggle.setOn(threshold.enabled);
+            if (priorityInput) priorityInput.setValue(threshold.priority);
         });
     }
     
@@ -212,6 +232,11 @@ export class WorldGenConfigMenu implements Renderable {
                 return;
             }
         }
+        
+        // Check priority inputs
+        for (const input of this.tilePriorityInputs.values()) {
+            input.handleClick(x, y);
+        }
     }
     
     /**
@@ -245,6 +270,21 @@ export class WorldGenConfigMenu implements Renderable {
         
         this.tileEnabledToggles.forEach(toggle => {
             toggle.setHovered(toggle.isMouseOver(x, y));
+        });
+        
+        this.tilePriorityInputs.forEach(input => {
+            input.handleMouseMove(x, y);
+        });
+    }
+    
+    /**
+     * Handle text input (for NumberInputComponent)
+     */
+    handleTextInput(text: string): void {
+        if (!this.visible) return;
+        
+        this.tilePriorityInputs.forEach(input => {
+            input.handleTextInput(text);
         });
     }
     
@@ -280,7 +320,7 @@ export class WorldGenConfigMenu implements Renderable {
         
         graphics.textSize(12);
         this.config.tileThresholds.forEach((threshold, index) => {
-            const yOffset = 120 + index * 50;
+            const yOffset = 120 + index * 60; // Updated spacing
             const tileTypeName = this.getTileTypeName(threshold.tileType);
             
             // Render toggle
@@ -305,6 +345,18 @@ export class WorldGenConfigMenu implements Renderable {
             graphics.noStroke();
             graphics.fill(threshold.enabled ? 255 : 120);
             graphics.text(threshold.threshold.toFixed(2), this.x + 280, this.y + yOffset - 5);
+            
+            // Render priority input below slider
+            const priorityInput = this.tilePriorityInputs.get(index);
+            if (priorityInput && threshold.enabled) {
+                // Priority label
+                graphics.fill(200);
+                graphics.textSize(10);
+                graphics.textAlign((window as any).LEFT, (window as any).TOP);
+                graphics.text('Priority:', this.x + 70, this.y + yOffset + 20);
+                
+                priorityInput.render(graphics);
+            }
         });
         
         // Status message at bottom

@@ -13,7 +13,7 @@ import { RenderLayer } from '../rendering/RenderLayer';
 import { TILE_SIZE } from '../world/TileSystem';
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
-import { TileFrillSystem } from '../world/TileEdgeSystem';
+import { TileFrillSystem, updateMaterialPriorities } from '../world/TileEdgeSystem';
 import { WorldPresetManager, WorldPreset } from '../world/WorldPresetManager';
 import { PauseMenuScene } from './PauseMenuScene';
 import { InputManager } from '../managers/InputManager';
@@ -65,6 +65,9 @@ export class DevRoomScene implements IScene {
         // Generate world using config parameters
         this.worldGenerator.setNoiseScale(DEV_ROOM_CONFIG.WORLD.NOISE_SCALE);
         
+        // Initialize material priorities from config
+        updateMaterialPriorities(this.worldGenerator.getConfig());
+        
         // Use custom seed if provided, otherwise use system time
         const seed = customSeed !== null ? customSeed : Date.now();
         this.currentWorldSeed = seed;
@@ -114,6 +117,7 @@ export class DevRoomScene implements IScene {
         // Listen for world gen config changes
         const worldGenConfigListener = EventBus.on(GameEvents.WORLDGEN_CONFIG_CHANGED, (config: any) => {
             this.worldGenerator.setConfig(config);
+            updateMaterialPriorities(config); // Update tile rendering priorities
         });
         
         // Listen for world gen regeneration trigger
@@ -440,6 +444,9 @@ export class DevRoomScene implements IScene {
         if (this.worldGenConfigMenu) {
             this.worldGenConfigMenu.setConfig(this.worldGenerator.getConfig());
         }
+        
+        // Update material priorities from loaded config
+        updateMaterialPriorities(this.worldGenerator.getConfig());
     }
     
     /**
@@ -474,6 +481,9 @@ export class DevRoomScene implements IScene {
         // Unregister old tile renderers
         this.tileRendererUnregister.forEach(unregister => unregister());
         this.tileRendererUnregister = [];
+        
+        // Update material priorities before regenerating
+        updateMaterialPriorities(this.worldGenerator.getConfig());
         
         // Generate new world with current seed
         const worldData = this.worldGenerator.generate(

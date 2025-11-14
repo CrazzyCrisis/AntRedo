@@ -63,6 +63,9 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         rect: function() {
             this._rectDrawn = true;
         },
+        circle: function() {
+            this._circleDrawn = true;
+        },
         text: function() {
             this._textDrawn = true;
         },
@@ -85,6 +88,7 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         _strokeWeightSet: false,
         _noStrokeCalled: false,
         _rectDrawn: false,
+        _circleDrawn: false,
         _textDrawn: false,
         _textSizeSet: false,
         _textAlignSet: false
@@ -118,6 +122,7 @@ export function resetMockGraphics(graphics: any): void {
     graphics._strokeWeightSet = false;
     graphics._noStrokeCalled = false;
     graphics._rectDrawn = false;
+    graphics._circleDrawn = false;
     graphics._textDrawn = false;
     graphics._textSizeSet = false;
     graphics._textAlignSet = false;
