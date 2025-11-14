@@ -5,10 +5,10 @@
 
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
-import { SliderComponent } from './SliderComponent';
+import { SliderWithArrowsComponent } from './SliderWithArrowsComponent';
 import { ToggleComponent } from './ToggleComponent';
 import { NumberInputComponent } from './NumberInputComponent';
-import { WorldGenConfig } from '../../config/worldGenConfig';
+import { WorldGenConfig, sortThresholdsByValue } from '../../config/worldGenConfig';
 import { TileType } from '../../world/TileSystem';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 
@@ -24,8 +24,8 @@ export class WorldGenConfigMenu implements Renderable {
     private config: WorldGenConfig;
     private visible: boolean = false;
     
-    private noiseScaleSlider: SliderComponent;
-    private tileThresholdSliders: Map<number, SliderComponent> = new Map();
+    private noiseScaleSlider: SliderWithArrowsComponent;
+    private tileThresholdInputs: Map<number, NumberInputComponent> = new Map();
     private tileEnabledToggles: Map<number, ToggleComponent> = new Map();
     private tilePriorityInputs: Map<number, NumberInputComponent> = new Map();
     
@@ -41,7 +41,7 @@ export class WorldGenConfigMenu implements Renderable {
         
         // Create noise scale slider
         const mockSliderSprite = { width: 200, height: 20 } as any;
-        this.noiseScaleSlider = new SliderComponent(
+        this.noiseScaleSlider = new SliderWithArrowsComponent(
             mockSliderSprite,
             this.x + 120,
             this.y + 50,
@@ -50,6 +50,7 @@ export class WorldGenConfigMenu implements Renderable {
             this.config.noiseScale,
             'worldgen_noise_scale'
         );
+        this.noiseScaleSlider.setArrowStep(0.01); // 1% step for noise scale
         this.noiseScaleSlider.onChange((value) => {
             this.config.noiseScale = value;
             this.emitConfigChange();
@@ -58,23 +59,24 @@ export class WorldGenConfigMenu implements Renderable {
         // Create sliders and toggles for each tile threshold
         const mockToggleSprite = { width: 30, height: 15 } as any;
         this.config.tileThresholds.forEach((threshold, index) => {
-            const yOffset = 120 + index * 60; // Increased spacing for priority inputs
+            const yOffset = 120 + index * 60; // Spacing for input rows
             
-            // Threshold slider
-            const slider = new SliderComponent(
-                mockSliderSprite,
-                this.x + 120,
+            // Threshold input (left of priority input)
+            const thresholdInput = new NumberInputComponent(
+                this.x + 80,
                 this.y + yOffset,
                 0.0,
                 1.0,
                 threshold.threshold,
                 `worldgen_threshold_${index}`
             );
-            slider.onChange((value) => {
+            thresholdInput.setStep(0.01); // 1% step for thresholds
+            thresholdInput.onChange((value) => {
                 this.config.tileThresholds[index].threshold = value;
+                this.reorderThresholds();
                 this.emitConfigChange();
             });
-            this.tileThresholdSliders.set(index, slider);
+            this.tileThresholdInputs.set(index, thresholdInput);
             
             // Enabled toggle
             const toggle = new ToggleComponent(
@@ -90,10 +92,10 @@ export class WorldGenConfigMenu implements Renderable {
             });
             this.tileEnabledToggles.set(index, toggle);
             
-            // Priority input (below threshold slider)
+            // Priority input (right of threshold input)
             const priorityInput = new NumberInputComponent(
-                this.x + 175,
-                this.y + yOffset + 25,
+                this.x + 210,
+                this.y + yOffset,
                 0,
                 100,
                 threshold.priority,
@@ -148,15 +150,7 @@ export class WorldGenConfigMenu implements Renderable {
     setConfig(config: WorldGenConfig): void {
         this.config = { ...config };
         this.noiseScaleSlider.setValue(config.noiseScale);
-        
-        config.tileThresholds.forEach((threshold, index) => {
-            const slider = this.tileThresholdSliders.get(index);
-            const toggle = this.tileEnabledToggles.get(index);
-            const priorityInput = this.tilePriorityInputs.get(index);
-            if (slider) slider.setValue(threshold.threshold);
-            if (toggle) toggle.setOn(threshold.enabled);
-            if (priorityInput) priorityInput.setValue(threshold.priority);
-        });
+        this.syncUIToConfig();
     }
     
     /**
@@ -172,6 +166,34 @@ export class WorldGenConfigMenu implements Renderable {
     private emitConfigChange(): void {
         EventBus.emit(GameEvents.WORLDGEN_CONFIG_CHANGED, this.getConfig());
         this.scheduleRegeneration();
+    }
+    
+    /**
+     * Reorder thresholds by value and update UI
+     */
+    private reorderThresholds(): void {
+        // Sort thresholds
+        this.config.tileThresholds = sortThresholdsByValue(this.config.tileThresholds);
+        
+        // Emit threshold changed event
+        EventBus.emit(GameEvents.WORLDGEN_THRESHOLD_CHANGED, this.config.tileThresholds);
+        
+        // Update UI components to match new order
+        this.syncUIToConfig();
+    }
+    
+    /**
+     * Sync all UI components with current config order
+     */
+    private syncUIToConfig(): void {
+        this.config.tileThresholds.forEach((threshold, index) => {
+            const thresholdInput = this.tileThresholdInputs.get(index);
+            const toggle = this.tileEnabledToggles.get(index);
+            const priorityInput = this.tilePriorityInputs.get(index);
+            if (thresholdInput) thresholdInput.setValue(threshold.threshold);
+            if (toggle) toggle.setOn(threshold.enabled);
+            if (priorityInput) priorityInput.setValue(threshold.priority);
+        });
     }
     
     /**
@@ -212,15 +234,20 @@ export class WorldGenConfigMenu implements Renderable {
         if (!this.visible) return;
         
         // Check noise scale slider
-        if (this.noiseScaleSlider.isMouseOver(x, y)) {
+        if (this.noiseScaleSlider.isMouseOverTrack(x, y) || 
+            this.noiseScaleSlider.isMouseOverLeftArrow(x, y) || 
+            this.noiseScaleSlider.isMouseOverRightArrow(x, y)) {
             this.noiseScaleSlider.handleMouseDown(x, y);
+            this.noiseScaleSlider.handleClick(x, y);
+            this.unfocusAllInputs(); // Unfocus inputs when clicking other components
             return;
         }
         
-        // Check threshold sliders
-        for (const slider of this.tileThresholdSliders.values()) {
-            if (slider.isMouseOver(x, y)) {
-                slider.handleMouseDown(x, y);
+        // Check threshold inputs (box + arrows)
+        for (const input of this.tileThresholdInputs.values()) {
+            if (input.isMouseOver(x, y) || input.isLeftArrowHovered(x, y) || input.isRightArrowHovered(x, y)) {
+                this.unfocusAllInputs(); // Unfocus others first
+                input.handleClick(x, y);
                 return;
             }
         }
@@ -229,14 +256,30 @@ export class WorldGenConfigMenu implements Renderable {
         for (const toggle of this.tileEnabledToggles.values()) {
             if (toggle.isMouseOver(x, y)) {
                 toggle.handleClick(x, y);
+                this.unfocusAllInputs(); // Unfocus inputs when clicking toggle
                 return;
             }
         }
         
-        // Check priority inputs
+        // Check priority inputs (box + arrows)
         for (const input of this.tilePriorityInputs.values()) {
-            input.handleClick(x, y);
+            if (input.isMouseOver(x, y) || input.isLeftArrowHovered(x, y) || input.isRightArrowHovered(x, y)) {
+                this.unfocusAllInputs(); // Unfocus others first
+                input.handleClick(x, y);
+                return;
+            }
         }
+        
+        // Clicked elsewhere in menu - unfocus all
+        this.unfocusAllInputs();
+    }
+    
+    /**
+     * Unfocus all input components
+     */
+    private unfocusAllInputs(): void {
+        this.tileThresholdInputs.forEach(input => input.unfocus());
+        this.tilePriorityInputs.forEach(input => input.unfocus());
     }
     
     /**
@@ -246,7 +289,7 @@ export class WorldGenConfigMenu implements Renderable {
         if (!this.visible) return;
         
         this.noiseScaleSlider.handleMouseUp();
-        this.tileThresholdSliders.forEach(slider => slider.handleMouseUp());
+        // NumberInputComponent doesn't need handleMouseUp - only slider does
     }
     
     /**
@@ -261,11 +304,8 @@ export class WorldGenConfigMenu implements Renderable {
             this.noiseScaleSlider.handleMouseDown(x, y);
         }
         
-        this.tileThresholdSliders.forEach(slider => {
-            slider.handleMouseMove(x, y);
-            if (slider.isDragging()) {
-                slider.handleMouseDown(x, y);
-            }
+        this.tileThresholdInputs.forEach(input => {
+            input.handleMouseMove(x, y);
         });
         
         this.tileEnabledToggles.forEach(toggle => {
@@ -280,11 +320,21 @@ export class WorldGenConfigMenu implements Renderable {
     /**
      * Handle text input (for NumberInputComponent)
      */
-    handleTextInput(text: string): void {
+    handleTextInput(key: string): void {
         if (!this.visible) return;
         
+        // Handle threshold inputs
+        this.tileThresholdInputs.forEach(input => {
+            if (input.isFocused()) {
+                input.handleTextInput(key);
+            }
+        });
+        
+        // Handle priority inputs
         this.tilePriorityInputs.forEach(input => {
-            input.handleTextInput(text);
+            if (input.isFocused()) {
+                input.handleTextInput(key);
+            }
         });
     }
     
@@ -327,35 +377,35 @@ export class WorldGenConfigMenu implements Renderable {
             const toggle = this.tileEnabledToggles.get(index);
             if (toggle) toggle.render(graphics);
             
-            // Render slider first (behind text)
-            const slider = this.tileThresholdSliders.get(index);
-            if (slider && threshold.enabled) {
-                slider.render(graphics);
-            }
-            
-            // Render tile name on top of slider (centered in slider area)
+            // Render tile name label below toggle
             graphics.textAlign((window as any).CENTER, (window as any).TOP);
             graphics.fill(threshold.enabled ? 255 : 120);
-            graphics.stroke(0);
-            graphics.strokeWeight(3);
-            graphics.text(tileTypeName, this.x + 175, this.y + yOffset - 5);
-            
-            // Render threshold value on right side
-            graphics.textAlign((window as any).LEFT, (window as any).TOP);
             graphics.noStroke();
-            graphics.fill(threshold.enabled ? 255 : 120);
-            graphics.text(threshold.threshold.toFixed(2), this.x + 280, this.y + yOffset - 5);
+            graphics.textSize(10);
+            graphics.text(tileTypeName, this.x + 30, this.y + yOffset + 10);
             
-            // Render priority input below slider
+            // Render threshold input (left)
+            const thresholdInput = this.tileThresholdInputs.get(index);
+            if (thresholdInput && threshold.enabled) {
+                thresholdInput.render(graphics);
+                
+                // Label below threshold input
+                graphics.textAlign((window as any).CENTER, (window as any).TOP);
+                graphics.fill(200);
+                graphics.textSize(9);
+                graphics.text('Threshold', thresholdInput.x + 40, this.y + yOffset + 15);
+            }
+            
+            // Render priority input (right)
             const priorityInput = this.tilePriorityInputs.get(index);
             if (priorityInput && threshold.enabled) {
-                // Priority label
-                graphics.fill(200);
-                graphics.textSize(10);
-                graphics.textAlign((window as any).LEFT, (window as any).TOP);
-                graphics.text('Priority:', this.x + 70, this.y + yOffset + 20);
-                
                 priorityInput.render(graphics);
+                
+                // Label below priority input
+                graphics.textAlign((window as any).CENTER, (window as any).TOP);
+                graphics.fill(200);
+                graphics.textSize(9);
+                graphics.text('Priority', priorityInput.x + 40, this.y + yOffset + 15);
             }
         });
         

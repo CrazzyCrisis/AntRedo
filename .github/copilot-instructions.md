@@ -83,6 +83,7 @@ docs/
 - **Examples** in `docs/examples/` or `docs/codeExamples/` - Usage patterns and best practices
 - Keep checklists clean - reference code snippets, don't embed large code blocks
 - Update relevant docs when adding new patterns or systems
+- **Create checklists for multi-step tasks** - Break down complex work into tracked subtasks in `docs/checklists/`
 
 ## Key Conventions
 
@@ -352,8 +353,43 @@ function mouseMoved() {
    - `setPosition(x, y)` - move container and all children
    - `centerHorizontally(canvasWidth)` - center on screen
 
+4. **SliderWithArrowsComponent** - Enhanced slider with arrow buttons
+   - Combines draggable slider + left/right arrow buttons (±1% default)
+   - `getValue()` / `setValue(value)` - get/set current value
+   - `incrementByArrow()` / `decrementByArrow()` - discrete adjustments
+   - `setArrowStep(step)` - customize arrow increment amount
+   - `onChange(callback)` - fires on all value changes
+   - All interactions bounded to [min, max] range
+   - Hover highlighting on track and arrows
+
+5. **NumberInputComponent** - Numeric input with increment/decrement arrows
+   - Click-to-focus text input + arrow buttons
+   - `getValue()` / `setValue(value)` - get/set current value
+   - `setStep(step)` - set arrow increment amount
+   - `handleTextInput(text)` - process keyboard input when focused
+   - `onChange(callback)` - fires when value changes
+   - Validates numeric input, clamps to bounds
+
 **Example Usage:**
 ```typescript
+// Slider with arrows for precise control
+const slider = new SliderWithArrowsComponent(
+    sprite, x, y, 0, 1, 0.5, 'my_slider'
+);
+slider.setArrowStep(0.01); // 1% increments
+slider.onChange((value) => {
+    console.log('Value changed:', value);
+});
+
+// Number input with arrows
+const numberInput = new NumberInputComponent(
+    x, y, 0, 100, 50, 'priority_input'
+);
+numberInput.setStep(1); // Integer steps
+numberInput.onChange((value) => {
+    updateConfig(value);
+});
+
 // Animated title
 const title = new AnimatedSpriteComponent(titleSprite, 400, 150);
 title.setAnimationSpeed(0.05);

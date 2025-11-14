@@ -219,6 +219,7 @@ export const GameEvents = {
     // World generation events
     WORLDGEN_CONFIG_MENU_TOGGLE: 'worldgen:config:toggle',
     WORLDGEN_CONFIG_CHANGED: 'worldgen:config:changed',
+    WORLDGEN_THRESHOLD_CHANGED: 'worldgen:threshold:changed',
     WORLDGEN_REGENERATE: 'worldgen:regenerate',
     
     // Scene events

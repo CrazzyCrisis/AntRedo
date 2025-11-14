@@ -9,7 +9,6 @@ import { EventBus, GameEvents } from '../utils/eventBus';
 import { RenderLayer } from '../rendering/RenderLayer';
 import { WorldPresetManager } from '../world/WorldPresetManager';
 import { InputManager } from '../managers/InputManager';
-import { ToggleComponent } from '../rendering/components/ToggleComponent';
 
 export class PauseMenuScene implements IScene {
     private renderer: Renderer;
@@ -22,8 +21,8 @@ export class PauseMenuScene implements IScene {
     private inputManager: InputManager;
     private lastClickTime: number = 0;
     private lastClickedPreset: string | null = null;
-    private worldGenConfigEnabled: boolean = false;
-    private worldGenToggle: ToggleComponent | null = null;
+    private worldGenConfigButtonBounds: { x: number; y: number; width: number; height: number } | null = null;
+    private worldGenConfigButtonHovered: boolean = false;
     
     constructor(
         renderer: Renderer, 
@@ -160,20 +159,41 @@ export class PauseMenuScene implements IScene {
         };
         this.unregisterFunctions.push(this.renderer.register(menuPanel));
         
-        // Create world gen config toggle (mock sprite for now)
-        const mockToggleSprite = { width: 40, height: 20 } as any;
-        this.worldGenToggle = new ToggleComponent(
-            mockToggleSprite,
-            centerX - 180,
-            centerY + 180,
-            this.worldGenConfigEnabled,
-            'worldgen_config_toggle'
-        );
-        this.worldGenToggle.onChange((enabled) => {
-            this.worldGenConfigEnabled = enabled;
-            EventBus.emit(GameEvents.WORLDGEN_CONFIG_MENU_TOGGLE, enabled);
-        });
-        this.unregisterFunctions.push(this.renderer.register(this.worldGenToggle));
+        // Create world gen config button (custom renderable)
+        const buttonWidth = 140;
+        const buttonHeight = 35;
+        const buttonX = centerX - 230;
+        const buttonY = centerY + 200;
+        
+        this.worldGenConfigButtonBounds = {
+            x: buttonX - buttonWidth / 2,
+            y: buttonY - buttonHeight / 2,
+            width: buttonWidth,
+            height: buttonHeight
+        };
+        
+        const worldGenButton = {
+            id: 'worldgen_config_button',
+            layer: RenderLayer.UI,
+            depth: 10,
+            render: (graphics: any) => {
+                const bounds = this.worldGenConfigButtonBounds!;
+                
+                // Button background
+                graphics.fill(this.worldGenConfigButtonHovered ? 80 : 60);
+                graphics.stroke(this.worldGenConfigButtonHovered ? 150 : 100);
+                graphics.strokeWeight(2);
+                graphics.rect(bounds.x, bounds.y, bounds.width, bounds.height, 5);
+                
+                // Button text
+                graphics.fill(255);
+                graphics.noStroke();
+                graphics.textSize(14);
+                graphics.textAlign(graphics.CENTER, graphics.CENTER);
+                graphics.text('World Config', buttonX, buttonY);
+            }
+        };
+        this.unregisterFunctions.push(this.renderer.register(worldGenButton));
 
         // Mark UI dirty
         this.renderer.markLayerDirty(RenderLayer.UI);
@@ -192,10 +212,16 @@ export class PauseMenuScene implements IScene {
     }
 
     handleMouseClick(x: number, y: number): void {
-        // Check world gen toggle first
-        if (this.worldGenToggle && this.worldGenToggle.isMouseOver(x, y)) {
-            this.worldGenToggle.handleClick(x, y);
-            return;
+        // Check world gen config button first
+        if (this.worldGenConfigButtonBounds) {
+            const bounds = this.worldGenConfigButtonBounds;
+            if (x >= bounds.x && x <= bounds.x + bounds.width &&
+                y >= bounds.y && y <= bounds.y + bounds.height) {
+                // Open world gen config menu and close pause menu
+                EventBus.emit(GameEvents.WORLDGEN_CONFIG_MENU_TOGGLE, true);
+                EventBus.emit(GameEvents.GAME_RESUME);
+                return;
+            }
         }
         
         // Check if clicking on a preset in the list
@@ -237,9 +263,13 @@ export class PauseMenuScene implements IScene {
     }
 
     handleMouseMove(x: number, y: number): void {
-        // Update toggle hover state
-        if (this.worldGenToggle) {
-            this.worldGenToggle.setHovered(this.worldGenToggle.isMouseOver(x, y));
+        // Update button hover state
+        if (this.worldGenConfigButtonBounds) {
+            const bounds = this.worldGenConfigButtonBounds;
+            this.worldGenConfigButtonHovered = (
+                x >= bounds.x && x <= bounds.x + bounds.width &&
+                y >= bounds.y && y <= bounds.y + bounds.height
+            );
         }
         
         // Calculate preset list area (same bounds as click detection)
@@ -327,12 +357,21 @@ export class PauseMenuScene implements IScene {
         this.canvasWidth = width;
         this.canvasHeight = height;
         
-        // Update toggle position to match new center
-        if (this.worldGenToggle) {
+        // Update button bounds to match new center
+        if (this.worldGenConfigButtonBounds) {
             const centerX = width / 2;
             const centerY = height / 2;
-            this.worldGenToggle.x = centerX - 180;
-            this.worldGenToggle.y = centerY + 180;
+            const buttonX = centerX - 230;
+            const buttonY = centerY + 200;
+            const buttonWidth = 140;
+            const buttonHeight = 35;
+            
+            this.worldGenConfigButtonBounds = {
+                x: buttonX - buttonWidth / 2,
+                y: buttonY - buttonHeight / 2,
+                width: buttonWidth,
+                height: buttonHeight
+            };
         }
         
         // Mark UI layer as dirty to trigger redraw with new dimensions

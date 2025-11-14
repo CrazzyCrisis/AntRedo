@@ -43,6 +43,7 @@ export class NumberInputComponent implements Renderable {
     private hovered: boolean = false;
     private leftArrowHovered: boolean = false;
     private rightArrowHovered: boolean = false;
+    private textBuffer: string = ''; // Buffer for building up text input
     
     // Callback
     private onChangeCallback: ((value: number) => void) | null = null;
@@ -176,9 +177,24 @@ export class NumberInputComponent implements Renderable {
         // Check input box
         if (this.isMouseOver(mouseX, mouseY)) {
             this.focused = true;
+            this.textBuffer = this.value.toFixed(2); // Initialize buffer with current value
         } else {
-            this.focused = false;
+            this.unfocus();
         }
+    }
+    
+    /**
+     * Unfocus and commit any text buffer changes
+     */
+    unfocus(): void {
+        if (this.focused && this.textBuffer) {
+            const parsed = parseFloat(this.textBuffer);
+            if (!isNaN(parsed)) {
+                this.setValue(parsed);
+            }
+        }
+        this.focused = false;
+        this.textBuffer = '';
     }
     
     /**
@@ -191,13 +207,46 @@ export class NumberInputComponent implements Renderable {
     
     /**
      * Handle text input (when focused)
+     * Supports building up a number character by character
      */
-    handleTextInput(text: string): void {
+    handleTextInput(key: string): void {
         if (!this.focused) return;
         
-        const parsed = parseFloat(text);
-        if (!isNaN(parsed)) {
-            this.setValue(parsed);
+        // Handle backspace
+        if (key === 'Backspace') {
+            this.textBuffer = this.textBuffer.slice(0, -1);
+            return;
+        }
+        
+        // Handle Enter - commit the value
+        if (key === 'Enter') {
+            this.unfocus();
+            return;
+        }
+        
+        // Handle Escape - cancel editing
+        if (key === 'Escape') {
+            this.textBuffer = this.value.toFixed(2); // Reset to current value
+            this.unfocus();
+            return;
+        }
+        
+        // Only accept numeric characters, decimal point, and minus sign
+        if (/^[0-9.-]$/.test(key)) {
+            // Prevent multiple decimal points
+            if (key === '.' && this.textBuffer.includes('.')) return;
+            
+            // Prevent multiple minus signs, and only allow at start
+            if (key === '-' && (this.textBuffer.includes('-') || this.textBuffer.length > 0)) return;
+            
+            this.textBuffer += key;
+            
+            // Try to parse and validate (but don't commit yet)
+            const parsed = parseFloat(this.textBuffer);
+            if (!isNaN(parsed)) {
+                // Show preview but don't commit until unfocus
+                // (we'll display textBuffer in render)
+            }
         }
     }
     
@@ -283,6 +332,18 @@ export class NumberInputComponent implements Renderable {
         graphics.noStroke();
         graphics.textSize(12);
         graphics.textAlign((window as any).CENTER, (window as any).CENTER);
-        graphics.text(this.value.toFixed(2), this.x + this.width / 2, this.y);
+        
+        // Show text buffer when focused, otherwise show value
+        const displayText = this.focused && this.textBuffer ? this.textBuffer : this.value.toFixed(2);
+        graphics.text(displayText, this.x + this.width / 2, this.y);
+        
+        // Show cursor when focused
+        if (this.focused) {
+            const textWidth = graphics.textWidth(displayText);
+            const cursorX = this.x + this.width / 2 + textWidth / 2 + 2;
+            graphics.stroke(255);
+            graphics.strokeWeight(1);
+            graphics.line(cursorX, this.y - 6, cursorX, this.y + 6);
+        }
     }
 }

@@ -14,6 +14,7 @@ import { TILE_SIZE } from '../world/TileSystem';
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
 import { TileFrillSystem, updateMaterialPriorities } from '../world/TileEdgeSystem';
+import { CONFIG } from '../config';
 import { WorldPresetManager, WorldPreset } from '../world/WorldPresetManager';
 import { PauseMenuScene } from './PauseMenuScene';
 import { InputManager } from '../managers/InputManager';
@@ -120,12 +121,20 @@ export class DevRoomScene implements IScene {
             updateMaterialPriorities(config); // Update tile rendering priorities
         });
         
+        // Listen for threshold reordering
+        const worldGenThresholdListener = EventBus.on(GameEvents.WORLDGEN_THRESHOLD_CHANGED, (thresholds: any) => {
+            // Config change event already handles regeneration, this is for logging/debugging
+            if (CONFIG.DEBUG_MODE) {
+                console.log('Thresholds reordered:', thresholds);
+            }
+        });
+        
         // Listen for world gen regeneration trigger
         const worldGenRegenerateListener = EventBus.on(GameEvents.WORLDGEN_REGENERATE, () => {
             this.regenerateWorld();
         });
         
-        this.unregisterFunctions.push(savePresetListener, loadPresetListener, resumeListener, worldGenToggleListener, worldGenConfigListener, worldGenRegenerateListener);
+        this.unregisterFunctions.push(savePresetListener, loadPresetListener, resumeListener, worldGenToggleListener, worldGenConfigListener, worldGenThresholdListener, worldGenRegenerateListener);
 
         // Create back button using ButtonComponent
         this.createBackButton();
@@ -341,6 +350,12 @@ export class DevRoomScene implements IScene {
     }
     
     handleKeyPress(key: string | number): void {
+        // Forward to WorldGenConfigMenu if visible
+        if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
+            this.worldGenConfigMenu.handleTextInput(key.toString());
+            return; // Don't process other keys when config menu has focus
+        }
+        
         // Forward to pause menu if paused (except pause key)
         if (this.isPaused && this.pauseMenu && !this.inputManager.isKeyBoundToAction(key.toString(), 'pause')) {
             this.pauseMenu.handleKeyPress(key);

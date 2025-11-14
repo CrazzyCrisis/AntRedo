@@ -53,3 +53,13 @@ export const AVAILABLE_WORLD_GEN_TILES = [
     TileType.WATER,
     TileType.MOSS
 ];
+
+/**
+ * Sort tile thresholds by their threshold value in ascending order
+ * Ensures thresholds are properly ordered for world generation
+ * @param thresholds Array of tile thresholds to sort
+ * @returns New sorted array (does not mutate original)
+ */
+export function sortThresholdsByValue(thresholds: TileThreshold[]): TileThreshold[] {
+    return [...thresholds].sort((a, b) => a.threshold - b.threshold);
+}

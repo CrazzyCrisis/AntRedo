@@ -268,7 +268,7 @@ export class SliderWithArrowsComponent implements Renderable {
         // Render left arrow
         this.renderArrow(graphics, 'left');
 
-        // Render slider track
+        // Render slider track (background)
         if (this.trackHover || this.dragging) {
             graphics.fill(80, 80, 100);
         } else {
@@ -284,8 +284,20 @@ export class SliderWithArrowsComponent implements Renderable {
             trackHeight / 2
         );
 
-        // Render handle
+        // Render filled portion (blue bar showing current value)
         const handleX = this.getHandleX();
+        const fillWidth = handleX - (this.x - trackWidth / 2);
+        graphics.fill(100, 150, 255);
+        graphics.noStroke();
+        graphics.rect(
+            this.x - trackWidth / 2,
+            this.y - trackHeight / 2,
+            fillWidth,
+            trackHeight,
+            trackHeight / 2
+        );
+
+        // Render handle
         const handleRadius = trackHeight * 0.8;
 
         if (this.dragging) {
