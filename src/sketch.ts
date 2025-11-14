@@ -7,6 +7,10 @@ import { EventBus, GameEvents } from './utils/eventBus';
 import { SceneManager } from './managers/SceneManager';
 import { Renderer } from './rendering/Renderer';
 import { MenuScene } from './scenes/MenuScene';
+import { DevRoomScene } from './scenes/DevRoomScene';
+import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
+import { TileType } from './world/TileSystem';
+import { TileEdgeSystem } from './world/TileEdgeSystem';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -38,6 +42,12 @@ let menuImages: {
     levelEditorButton: any;
 } | null = null;
 
+// Preloaded tile sprites
+let tileSprites: { [key: number]: any } | null = null;
+
+// Preloaded tile edge sprites (keyed by full path)
+let tileEdgeSprites: { [path: string]: any } | null = null;
+
 function preload() {
     // Load menu assets
     menuImages = {
@@ -53,6 +63,30 @@ function preload() {
         startGameButton: loadImage('assets/images/menu/start_game_button.png'),
         levelEditorButton: loadImage('assets/images/menu/level_editor_button.png'),
     };
+    
+    // Load tile sprites
+    tileSprites = {};
+    for (const tileTypeKey in TILE_SPRITE_MAP) {
+        const tileType = parseInt(tileTypeKey) as TileType;
+        const spritePath = TILE_SPRITE_BASE_PATH + TILE_SPRITE_MAP[tileType];
+        tileSprites[tileType] = loadImage(spritePath);
+    }
+    
+    // Load tile edge sprites
+    tileEdgeSprites = {};
+    for (const tileTypeKey in TILE_SPRITE_MAP) {
+        const tileType = parseInt(tileTypeKey) as TileType;
+        
+        // Only load edges for tiles that support them
+        if (TileEdgeSystem.supportsEdges(tileType)) {
+            const edgePaths = TileEdgeSystem.getEdgeSpritePaths(tileType);
+            for (const path of edgePaths) {
+                tileEdgeSprites[path] = loadImage(path);
+            }
+        }
+    }
+    
+    console.log('Assets preloaded: menu images, tile sprites, and edge sprites');
 }
 
 function setup() {
@@ -67,6 +101,32 @@ function setup() {
         const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
         SceneManager.getInstance().switchScene(menuScene, 'Menu');
     }
+    
+    // Listen for dev room navigation
+    EventBus.on(GameEvents.MENU_DEV_ROOM_CLICKED, () => {
+        console.log('Switching to DevRoom scene...');
+        if (menuImages && tileSprites && tileEdgeSprites) {
+            const devRoomScene = new DevRoomScene(
+                renderer, 
+                window.innerWidth, 
+                window.innerHeight,
+                menuImages.backButton,
+                tileSprites,
+                tileEdgeSprites
+            );
+            SceneManager.getInstance().switchScene(devRoomScene, 'DevRoom');
+        }
+    });
+
+    // Listen for back button in dev room
+    EventBus.on(GameEvents.MENU_BACK_CLICKED, () => {
+        const currentScene = SceneManager.getInstance().getCurrentScene();
+        if (currentScene instanceof DevRoomScene && menuImages) {
+            console.log('Returning to menu from DevRoom...');
+            const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
+            SceneManager.getInstance().switchScene(menuScene, 'Menu');
+        }
+    });
     
     EventBus.emit(GameEvents.GAME_START);
 }

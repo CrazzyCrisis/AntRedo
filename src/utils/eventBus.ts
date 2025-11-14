@@ -138,14 +138,20 @@ export const EventBus = new EventBusClass();
 
 // Common game events constants (optional but recommended)
 export const GameEvents = {
-    // Game lifecycle
+    // Game lifecycle events
     GAME_START: 'game:start',
     GAME_PAUSE: 'game:pause',
     GAME_RESUME: 'game:resume',
+    GAME_RESET: 'game:reset',
     GAME_OVER: 'game:over',
     GAME_WIN: 'game:win',
     LEVEL_START: 'level:start',
     LEVEL_COMPLETE: 'level:complete',
+    LEVEL_CHANGED: 'level:changed',
+    
+    // World events
+    WORLD_LOADED: 'world:loaded',
+    WORLD_GENERATED: 'world:generated',
     
     // Player events
     PLAYER_MOVE: 'player:move',
