@@ -14,7 +14,7 @@ export const DEV_ROOM_CONFIG = {
 
     // Tile rendering settings
     TILES: {
-        SIZE: 32,               // Tile size in pixels (overrides TILE_SIZE from TileSystem if needed)
+        SIZE: 64,               // Tile size in pixels (overrides TILE_SIZE from TileSystem if needed)
         
         // Tile colors (used until actual sprites are loaded)
         COLORS: {

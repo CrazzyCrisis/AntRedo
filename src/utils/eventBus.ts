@@ -215,6 +215,11 @@ export const GameEvents = {
     SETTING_ACCESSIBILITY_CHANGED: 'settings:accessibility:changed',
     SETTINGS_RESET: 'settings:reset',
     
+    // World generation events
+    WORLDGEN_CONFIG_MENU_TOGGLE: 'worldgen:config:toggle',
+    WORLDGEN_CONFIG_CHANGED: 'worldgen:config:changed',
+    WORLDGEN_REGENERATE: 'worldgen:regenerate',
+    
     // Scene events
     SCENE_CHANGE: 'scene:change'
 } as const;

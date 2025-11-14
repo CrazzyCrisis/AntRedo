@@ -9,6 +9,7 @@ import { EventBus, GameEvents } from '../utils/eventBus';
 import { RenderLayer } from '../rendering/RenderLayer';
 import { WorldPresetManager } from '../world/WorldPresetManager';
 import { InputManager } from '../managers/InputManager';
+import { ToggleComponent } from '../rendering/components/ToggleComponent';
 
 export class PauseMenuScene implements IScene {
     private renderer: Renderer;
@@ -21,6 +22,8 @@ export class PauseMenuScene implements IScene {
     private inputManager: InputManager;
     private lastClickTime: number = 0;
     private lastClickedPreset: string | null = null;
+    private worldGenConfigEnabled: boolean = false;
+    private worldGenToggle: ToggleComponent | null = null;
     
     constructor(
         renderer: Renderer, 
@@ -143,9 +146,30 @@ export class PauseMenuScene implements IScene {
                 
                 graphics.text(`${pauseKeys}: Resume | ${saveKeys}: Save | Click preset then ${loadKeys}: Load | ${deleteKeys}: Delete`, 
                     centerX, panelY + panelHeight - 35);
+                
+                // World Gen Config Toggle
+                graphics.textSize(14);
+                graphics.fill(255);
+                graphics.textAlign((window as any).LEFT, (window as any).TOP);
+                graphics.text('World Gen Config', panelX + 70, panelY + panelHeight - 80);
             }
         };
         this.unregisterFunctions.push(this.renderer.register(menuPanel));
+        
+        // Create world gen config toggle (mock sprite for now)
+        const mockToggleSprite = { width: 40, height: 20 } as any;
+        this.worldGenToggle = new ToggleComponent(
+            mockToggleSprite,
+            centerX - 180,
+            centerY + 180,
+            this.worldGenConfigEnabled,
+            'worldgen_config_toggle'
+        );
+        this.worldGenToggle.onChange((enabled) => {
+            this.worldGenConfigEnabled = enabled;
+            EventBus.emit(GameEvents.WORLDGEN_CONFIG_MENU_TOGGLE, enabled);
+        });
+        this.unregisterFunctions.push(this.renderer.register(this.worldGenToggle));
 
         // Mark UI dirty
         this.renderer.markLayerDirty(RenderLayer.UI);
@@ -164,6 +188,12 @@ export class PauseMenuScene implements IScene {
     }
 
     handleMouseClick(x: number, y: number): void {
+        // Check world gen toggle first
+        if (this.worldGenToggle && this.worldGenToggle.isMouseOver(x, y)) {
+            this.worldGenToggle.handleClick(x, y);
+            return;
+        }
+        
         // Check if clicking on a preset in the list
         const centerX = this.canvasWidth / 2;
         const centerY = this.canvasHeight / 2;
@@ -203,6 +233,11 @@ export class PauseMenuScene implements IScene {
     }
 
     handleMouseMove(x: number, y: number): void {
+        // Update toggle hover state
+        if (this.worldGenToggle) {
+            this.worldGenToggle.setHovered(this.worldGenToggle.isMouseOver(x, y));
+        }
+        
         // Calculate preset list area (same bounds as click detection)
         const centerX = this.canvasWidth / 2;
         const centerY = this.canvasHeight / 2;

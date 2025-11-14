@@ -17,6 +17,7 @@ import { TileFrillSystem } from '../world/TileEdgeSystem';
 import { WorldPresetManager, WorldPreset } from '../world/WorldPresetManager';
 import { PauseMenuScene } from './PauseMenuScene';
 import { InputManager } from '../managers/InputManager';
+import { WorldGenConfigMenu } from '../rendering/components/WorldGenConfigMenu';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -34,6 +35,8 @@ export class DevRoomScene implements IScene {
     private isPaused: boolean = false;
     private pauseMenu: PauseMenuScene | null = null;
     private inputManager: InputManager;
+    private worldGenConfigMenu: WorldGenConfigMenu | null = null;
+    private tileRendererUnregister: (() => void)[] = [];
     
     // Tile colors from config (fallback)
     private tileColors: { [key: number]: string };
@@ -99,7 +102,26 @@ export class DevRoomScene implements IScene {
             this.resumeGame();
         });
         
-        this.unregisterFunctions.push(savePresetListener, loadPresetListener, resumeListener);
+        // Listen for world gen config menu toggle
+        const worldGenToggleListener = EventBus.on(GameEvents.WORLDGEN_CONFIG_MENU_TOGGLE, (enabled: boolean) => {
+            if (enabled) {
+                this.showWorldGenConfigMenu();
+            } else {
+                this.hideWorldGenConfigMenu();
+            }
+        });
+        
+        // Listen for world gen config changes
+        const worldGenConfigListener = EventBus.on(GameEvents.WORLDGEN_CONFIG_CHANGED, (config: any) => {
+            this.worldGenerator.setConfig(config);
+        });
+        
+        // Listen for world gen regeneration trigger
+        const worldGenRegenerateListener = EventBus.on(GameEvents.WORLDGEN_REGENERATE, () => {
+            this.regenerateWorld();
+        });
+        
+        this.unregisterFunctions.push(savePresetListener, loadPresetListener, resumeListener, worldGenToggleListener, worldGenConfigListener, worldGenRegenerateListener);
 
         // Create back button using ButtonComponent
         this.createBackButton();
@@ -187,7 +209,7 @@ export class DevRoomScene implements IScene {
             }
         };
 
-        this.unregisterFunctions.push(this.renderer.register(tileRenderable));
+        this.tileRendererUnregister.push(this.renderer.register(tileRenderable));
         this.renderer.markLayerDirty(RenderLayer.GROUND);
         
         // Add grid overlay on top of tiles
@@ -227,7 +249,7 @@ export class DevRoomScene implements IScene {
             }
         };
         
-        this.unregisterFunctions.push(this.renderer.register(gridRenderable));
+        this.tileRendererUnregister.push(this.renderer.register(gridRenderable));
         this.renderer.markLayerDirty(RenderLayer.GROUND_DECORATIONS);
     }
 
@@ -247,6 +269,11 @@ export class DevRoomScene implements IScene {
             return;
         }
         
+        // Update world gen config menu if visible
+        if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
+            this.worldGenConfigMenu.update();
+        }
+        
         // Update button animations
         if (this.backButton) {
             this.backButton.update();
@@ -262,6 +289,11 @@ export class DevRoomScene implements IScene {
             return;
         }
         
+        // Forward to world gen config menu if visible
+        if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
+            this.worldGenConfigMenu.handleMouseClick(x, y);
+        }
+        
         // Handle button click
         if (this.backButton) {
             this.backButton.handleClick(x, y);
@@ -273,6 +305,11 @@ export class DevRoomScene implements IScene {
         if (this.isPaused && this.pauseMenu) {
             this.pauseMenu.handleMouseMove(x, y);
             return;
+        }
+        
+        // Forward to world gen config menu if visible
+        if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
+            this.worldGenConfigMenu.handleMouseMove(x, y);
         }
         
         // Handle button hover
@@ -405,5 +442,56 @@ export class DevRoomScene implements IScene {
         console.log(`World preset "${presetName}" saved!`);
         console.log(`Seed: ${this.currentWorldSeed}`);
         console.log(`Share URL: ${url}`);
+    }
+    
+    /**
+     * Regenerate the world with current config
+     */
+    private regenerateWorld(): void {
+        // Unregister old tile renderers
+        this.tileRendererUnregister.forEach(unregister => unregister());
+        this.tileRendererUnregister = [];
+        
+        // Generate new world with current seed
+        const worldData = this.worldGenerator.generate(
+            DEV_ROOM_CONFIG.WORLD.WIDTH,
+            DEV_ROOM_CONFIG.WORLD.HEIGHT,
+            this.currentWorldSeed
+        );
+        
+        // Store map data
+        this.currentMapData = worldData;
+        const tileGrid = new TileGrid(worldData);
+        this.gameState.setTileGrid(tileGrid);
+        
+        // Recreate tile renderer
+        this.createTileRenderer(tileGrid);
+    }
+
+    /**
+     * Show world gen config menu
+     */
+    private showWorldGenConfigMenu(): void {
+        if (!this.worldGenConfigMenu) {
+            // Create menu if it doesn't exist
+            this.worldGenConfigMenu = new WorldGenConfigMenu(
+                20,
+                100,
+                this.worldGenerator.getConfig()
+            );
+            this.unregisterFunctions.push(this.renderer.register(this.worldGenConfigMenu));
+        }
+        this.worldGenConfigMenu.show();
+        this.renderer.markLayerDirty(RenderLayer.UI);
+    }
+    
+    /**
+     * Hide world gen config menu
+     */
+    private hideWorldGenConfigMenu(): void {
+        if (this.worldGenConfigMenu) {
+            this.worldGenConfigMenu.hide();
+            this.renderer.markLayerDirty(RenderLayer.UI);
+        }
     }
 }

@@ -4,6 +4,7 @@
  */
 
 import { Tile, TileType, TileData } from './TileSystem';
+import { WorldGenConfig, DEFAULT_WORLD_GEN_CONFIG } from '../config/worldGenConfig';
 
 /**
  * Simple seeded random number generator (LCG)
@@ -87,6 +88,27 @@ class PerlinNoise {
  */
 export class WorldGenerator {
     private noiseScale: number = 0.1;
+    private config: WorldGenConfig;
+
+    constructor(config?: WorldGenConfig) {
+        this.config = config || { ...DEFAULT_WORLD_GEN_CONFIG };
+        this.noiseScale = this.config.noiseScale;
+    }
+
+    /**
+     * Update world generation configuration
+     */
+    setConfig(config: WorldGenConfig): void {
+        this.config = { ...config };
+        this.noiseScale = config.noiseScale;
+    }
+
+    /**
+     * Get current world generation configuration
+     */
+    getConfig(): WorldGenConfig {
+        return { ...this.config };
+    }
 
     /**
      * Set noise scale (affects terrain feature size)
@@ -95,6 +117,7 @@ export class WorldGenerator {
      */
     setNoiseScale(scale: number): void {
         this.noiseScale = scale;
+        this.config.noiseScale = scale;
     }
 
     /**
@@ -132,6 +155,7 @@ export class WorldGenerator {
 
     /**
      * Select tile type based on Perlin noise value
+     * Uses configured thresholds for tile distribution
      * @param noise Perlin noise generator
      * @param col Column position
      * @param row Row position
@@ -144,20 +168,16 @@ export class WorldGenerator {
         // Normalize noise from [-1, 1] to [0, 1]
         const normalized = (noiseValue + 1) / 2;
 
-        // Map noise values to tile types
-        // This creates natural-looking terrain with varied features
-        if (normalized < 0.4) {
-            return TileType.WATER;           // 25% - Lakes/rivers
-        } else if (normalized < 0.5) {
-            return TileType.SAND;            // 10% - Beaches/sandy areas
-        } else if (normalized < 0.65) {
-            return TileType.GRASS;           // 30% - Main ground
-        } else if (normalized < 0.75) {
-            return TileType.DIRT;            // 10% - Dirt patches
-        } else if (normalized < 0.99) {
-            return TileType.STONE;           // 15% - Rocky areas
-        } else {
-            return TileType.DIRT;       // 10% - Mountains/obstacles
+        // Use configured thresholds to select tile type
+        const enabledThresholds = this.config.tileThresholds.filter(t => t.enabled);
+        
+        for (const threshold of enabledThresholds) {
+            if (normalized < threshold.threshold) {
+                return threshold.tileType;
+            }
         }
+
+        // Fallback to last enabled tile type
+        return enabledThresholds[enabledThresholds.length - 1]?.tileType || TileType.GRASS;
     }
 }

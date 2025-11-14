@@ -1,0 +1,290 @@
+/**
+ * WorldGenConfigMenu - UI panel for configuring world generation parameters
+ * Allows live editing of noise scale and tile distribution thresholds
+ */
+
+import { Renderable } from '../Renderable';
+import { RenderLayer } from '../RenderLayer';
+import { SliderComponent } from './SliderComponent';
+import { ToggleComponent } from './ToggleComponent';
+import { WorldGenConfig } from '../../config/worldGenConfig';
+import { TileType } from '../../world/TileSystem';
+import { EventBus, GameEvents } from '../../utils/eventBus';
+
+export class WorldGenConfigMenu implements Renderable {
+    public layer: RenderLayer = RenderLayer.UI;
+    public depth: number = 100; // Above most UI
+    public id: string = 'worldgen_config_menu';
+    
+    private x: number;
+    private y: number;
+    private width: number = 350;
+    private height: number = 500;
+    private config: WorldGenConfig;
+    private visible: boolean = false;
+    
+    private noiseScaleSlider: SliderComponent;
+    private tileThresholdSliders: Map<number, SliderComponent> = new Map();
+    private tileEnabledToggles: Map<number, ToggleComponent> = new Map();
+    
+    constructor(x: number, y: number, initialConfig: WorldGenConfig) {
+        this.x = x;
+        this.y = y;
+        this.config = { ...initialConfig };
+        
+        // Create noise scale slider
+        const mockSliderSprite = { width: 200, height: 20 } as any;
+        this.noiseScaleSlider = new SliderComponent(
+            mockSliderSprite,
+            this.x + 120,
+            this.y + 50,
+            0.05,
+            0.5,
+            this.config.noiseScale,
+            'worldgen_noise_scale'
+        );
+        this.noiseScaleSlider.onChange((value) => {
+            this.config.noiseScale = value;
+            this.emitConfigChange();
+        });
+        
+        // Create sliders and toggles for each tile threshold
+        const mockToggleSprite = { width: 30, height: 15 } as any;
+        this.config.tileThresholds.forEach((threshold, index) => {
+            const yOffset = 120 + index * 50;
+            
+            // Threshold slider
+            const slider = new SliderComponent(
+                mockSliderSprite,
+                this.x + 120,
+                this.y + yOffset,
+                0.0,
+                1.0,
+                threshold.threshold,
+                `worldgen_threshold_${index}`
+            );
+            slider.onChange((value) => {
+                this.config.tileThresholds[index].threshold = value;
+                this.emitConfigChange();
+            });
+            this.tileThresholdSliders.set(index, slider);
+            
+            // Enabled toggle
+            const toggle = new ToggleComponent(
+                mockToggleSprite,
+                this.x + 30,
+                this.y + yOffset,
+                threshold.enabled,
+                `worldgen_toggle_${index}`
+            );
+            toggle.onChange((enabled) => {
+                this.config.tileThresholds[index].enabled = enabled;
+                this.emitConfigChange();
+            });
+            this.tileEnabledToggles.set(index, toggle);
+        });
+    }
+    
+    /**
+     * Show the menu
+     */
+    show(): void {
+        this.visible = true;
+    }
+    
+    /**
+     * Hide the menu
+     */
+    hide(): void {
+        this.visible = false;
+    }
+    
+    /**
+     * Toggle visibility
+     */
+    toggle(): void {
+        this.visible = !this.visible;
+    }
+    
+    /**
+     * Check if visible
+     */
+    isVisible(): boolean {
+        return this.visible;
+    }
+    
+    /**
+     * Update config from external source
+     */
+    setConfig(config: WorldGenConfig): void {
+        this.config = { ...config };
+        this.noiseScaleSlider.setValue(config.noiseScale);
+        
+        config.tileThresholds.forEach((threshold, index) => {
+            const slider = this.tileThresholdSliders.get(index);
+            const toggle = this.tileEnabledToggles.get(index);
+            if (slider) slider.setValue(threshold.threshold);
+            if (toggle) toggle.setOn(threshold.enabled);
+        });
+    }
+    
+    /**
+     * Get current config
+     */
+    getConfig(): WorldGenConfig {
+        return { ...this.config };
+    }
+    
+    /**
+     * Emit config change event and trigger regeneration
+     */
+    private emitConfigChange(): void {
+        EventBus.emit(GameEvents.WORLDGEN_CONFIG_CHANGED, this.getConfig());
+        EventBus.emit(GameEvents.WORLDGEN_REGENERATE);
+    }
+    
+    /**
+     * Update sliders (for dragging)
+     */
+    update(): void {
+        // Sliders don't have update method, dragging is handled in mouse events
+    }
+    
+    /**
+     * Handle mouse click
+     */
+    handleMouseClick(x: number, y: number): void {
+        if (!this.visible) return;
+        
+        // Check noise scale slider
+        if (this.noiseScaleSlider.isMouseOver(x, y)) {
+            this.noiseScaleSlider.handleMouseDown(x, y);
+            return;
+        }
+        
+        // Check threshold sliders
+        for (const slider of this.tileThresholdSliders.values()) {
+            if (slider.isMouseOver(x, y)) {
+                slider.handleMouseDown(x, y);
+                return;
+            }
+        }
+        
+        // Check toggles
+        for (const toggle of this.tileEnabledToggles.values()) {
+            if (toggle.isMouseOver(x, y)) {
+                toggle.handleClick(x, y);
+                return;
+            }
+        }
+    }
+    
+    /**
+     * Handle mouse release
+     */
+    handleMouseUp(): void {
+        if (!this.visible) return;
+        
+        this.noiseScaleSlider.handleMouseUp();
+        this.tileThresholdSliders.forEach(slider => slider.handleMouseUp());
+    }
+    
+    /**
+     * Handle mouse move (for hover and dragging)
+     */
+    handleMouseMove(x: number, y: number): void {
+        if (!this.visible) return;
+        
+        // Update hover states and handle dragging
+        this.noiseScaleSlider.handleMouseMove(x, y);
+        if (this.noiseScaleSlider.isDragging()) {
+            this.noiseScaleSlider.handleMouseDown(x, y);
+        }
+        
+        this.tileThresholdSliders.forEach(slider => {
+            slider.handleMouseMove(x, y);
+            if (slider.isDragging()) {
+                slider.handleMouseDown(x, y);
+            }
+        });
+        
+        this.tileEnabledToggles.forEach(toggle => {
+            toggle.setHovered(toggle.isMouseOver(x, y));
+        });
+    }
+    
+    /**
+     * Render the menu
+     */
+    render(graphics: any): void {
+        if (!this.visible) return;
+        
+        // Panel background
+        graphics.fill(30, 30, 40, 230);
+        graphics.stroke(100, 100, 120);
+        graphics.strokeWeight(2);
+        graphics.rect(this.x, this.y, this.width, this.height, 10);
+        
+        // Title
+        graphics.fill(255);
+        graphics.noStroke();
+        graphics.textSize(18);
+        graphics.textAlign((window as any).CENTER, (window as any).TOP);
+        graphics.text('World Generation Config', this.x + this.width / 2, this.y + 15);
+        
+        // Noise Scale section
+        graphics.textSize(14);
+        graphics.textAlign((window as any).LEFT, (window as any).TOP);
+        graphics.text('Noise Scale:', this.x + 20, this.y + 45);
+        graphics.text(this.config.noiseScale.toFixed(3), this.x + 250, this.y + 45);
+        this.noiseScaleSlider.render(graphics);
+        
+        // Tile Thresholds section
+        graphics.textSize(16);
+        graphics.text('Tile Distribution:', this.x + 20, this.y + 85);
+        
+        graphics.textSize(12);
+        this.config.tileThresholds.forEach((threshold, index) => {
+            const yOffset = 120 + index * 50;
+            const tileTypeName = this.getTileTypeName(threshold.tileType);
+            
+            // Render toggle
+            const toggle = this.tileEnabledToggles.get(index);
+            if (toggle) toggle.render(graphics);
+            
+            // Tile name
+            graphics.fill(threshold.enabled ? 255 : 120);
+            graphics.text(tileTypeName, this.x + 70, this.y + yOffset - 5);
+            
+            // Threshold value
+            graphics.text(threshold.threshold.toFixed(2), this.x + 250, this.y + yOffset - 5);
+            
+            // Render slider
+            const slider = this.tileThresholdSliders.get(index);
+            if (slider && threshold.enabled) {
+                slider.render(graphics);
+            }
+        });
+        
+        // Regenerate button hint
+        graphics.fill(200);
+        graphics.textSize(12);
+        graphics.textAlign((window as any).CENTER, (window as any).TOP);
+        graphics.text('Changes apply on next world generation', this.x + this.width / 2, this.y + this.height - 25);
+    }
+    
+    /**
+     * Get human-readable tile type name
+     */
+    private getTileTypeName(tileType: TileType): string {
+        const names: { [key: number]: string } = {
+            [TileType.GRASS]: 'Grass',
+            [TileType.DIRT]: 'Dirt',
+            [TileType.STONE]: 'Stone',
+            [TileType.SAND]: 'Sand',
+            [TileType.WATER]: 'Water',
+            [TileType.MOSS]: 'Moss'
+        };
+        return names[tileType] || 'Unknown';
+    }
+}
