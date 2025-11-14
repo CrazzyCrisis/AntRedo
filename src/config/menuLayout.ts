@@ -20,15 +20,15 @@ export const MAIN_MENU_LAYOUT = {
     },
     PLAY_BUTTON: {
         offsetX: 0,
-        offsetY: 0.05
+        offsetY: -0.10
     },
     OPTIONS_BUTTON: {
         offsetX: 0,
-        offsetY: -0.20
+        offsetY: -0.45
     },
     EXIT_BUTTON: {
         offsetX: 0,
-        offsetY: -0.45
+        offsetY: -1.45     // This button does nothing, so lets hide it but we will keep it just in case
     }
 } as const;
 
