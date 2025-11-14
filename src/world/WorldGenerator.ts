@@ -5,83 +5,7 @@
 
 import { Tile, TileType, TileData } from './TileSystem';
 import { WorldGenConfig, DEFAULT_WORLD_GEN_CONFIG } from '../config/worldGenConfig';
-
-/**
- * Simple seeded random number generator (LCG)
- */
-class SeededRandom {
-    private seed: number;
-
-    constructor(seed: number) {
-        this.seed = seed % 2147483647;
-        if (this.seed <= 0) this.seed += 2147483646;
-    }
-
-    next(): number {
-        this.seed = (this.seed * 16807) % 2147483647;
-        return (this.seed - 1) / 2147483646;
-    }
-}
-
-/**
- * Simple Perlin noise implementation
- */
-class PerlinNoise {
-    private permutation: number[];
-
-    constructor(seed: number) {
-        const random = new SeededRandom(seed);
-        
-        // Generate permutation table
-        this.permutation = [];
-        for (let i = 0; i < 256; i++) {
-            this.permutation[i] = i;
-        }
-
-        // Shuffle using seeded random
-        for (let i = 255; i > 0; i--) {
-            const j = Math.floor(random.next() * (i + 1));
-            [this.permutation[i], this.permutation[j]] = [this.permutation[j], this.permutation[i]];
-        }
-
-        // Duplicate for wrapping
-        this.permutation = this.permutation.concat(this.permutation);
-    }
-
-    private fade(t: number): number {
-        return t * t * t * (t * (t * 6 - 15) + 10);
-    }
-
-    private lerp(t: number, a: number, b: number): number {
-        return a + t * (b - a);
-    }
-
-    private grad(hash: number, x: number, y: number): number {
-        const h = hash & 3;
-        const u = h < 2 ? x : y;
-        const v = h < 2 ? y : x;
-        return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-    }
-
-    noise(x: number, y: number): number {
-        const X = Math.floor(x) & 255;
-        const Y = Math.floor(y) & 255;
-
-        x -= Math.floor(x);
-        y -= Math.floor(y);
-
-        const u = this.fade(x);
-        const v = this.fade(y);
-
-        const a = this.permutation[X] + Y;
-        const b = this.permutation[X + 1] + Y;
-
-        return this.lerp(v,
-            this.lerp(u, this.grad(this.permutation[a], x, y), this.grad(this.permutation[b], x - 1, y)),
-            this.lerp(u, this.grad(this.permutation[a + 1], x, y - 1), this.grad(this.permutation[b + 1], x - 1, y - 1))
-        );
-    }
-}
+import { PerlinNoise } from '../utils/PerlinNoise';
 
 /**
  * WorldGenerator creates procedural tile-based worlds
@@ -166,7 +90,7 @@ export class WorldGenerator {
         const noiseValue = noise.noise(col * this.noiseScale, row * this.noiseScale);
         
         // Normalize noise from [-1, 1] to [0, 1]
-        const normalized = (noiseValue + 1) / 2;
+        const normalized = PerlinNoise.normalize(noiseValue);
 
         // Use configured thresholds to select tile type
         const enabledThresholds = this.config.tileThresholds.filter(t => t.enabled);

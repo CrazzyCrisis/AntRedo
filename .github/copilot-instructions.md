@@ -38,19 +38,48 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - **EventBus integration** - state changes trigger layer redraws automatically
 - See `docs/codeExamples/RENDERING_ARCHITECTURE.md` for full details
 
+### Configuration-First Design Philosophy (CRITICAL)
+**ALWAYS expose values in centralized config files** - Never use hardcoded magic numbers or constants scattered throughout the codebase.
+
+**Pattern:**
+1. **Define values in config files** (`src/config/*.ts`)
+2. **Import and use** from config in implementation
+3. **Never hardcode** - even "temporary" values go in config first
+
+**Why:**
+- Single source of truth for all adjustable values
+- Easy experimentation and tuning
+- No hunting through codebase to change values
+- Config files become documentation of game parameters
+
+**Examples:**
+- Tile size → `DEV_ROOM_CONFIG.TILES.SIZE`
+- UI positions → `MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX`
+- Animation speeds → `MENU_ANIMATIONS.TITLE_SPEED`
+- Game physics → `CONFIG.PLAYER.SPEED`
+
+**When adding ANY new feature:** First question is "What should be configurable?" → Add to appropriate config file → Use from there.
+
 ### Project Structure
 ```
 src/
-  config.ts         # Single CONFIG object for all game constants
+  config/           # CENTRALIZED CONFIG FILES (primary source of truth)
+    config.ts       # Main CONFIG object for game constants
+    devRoomConfig.ts # Dev room settings (world, tiles, camera, debug)
+    menuLayout.ts   # UI layout configurations
+    worldGenConfig.ts # World generation parameters
   sketch.ts         # p5.js lifecycle (setup/draw/input) - bridges p5 to game (VIEW layer)
   utils/
     eventBus.ts     # Singleton EventBus + GameEvents constants
     helpers.ts      # 50+ pure utility functions (math, grid, vectors, etc.)
+    PerlinNoise.ts  # Reusable Perlin noise generator
+    SeededRandom.ts # Seeded random number generator
   classes/          # Game entities (MODEL layer)
   managers/         # System managers (CONTROLLER layer - audio, level, etc.)
   factories/        # Entity factories (hide rendering complexity)
   rendering/        # Rendering system (Renderer, Camera, Layers, Components)
   scenes/           # Scene management (CONTROLLER layer)
+  world/            # World generation and tile systems
 assets/
   images/
     16x16 Tiles/    # Tile spritesheet for procedural generation overlay

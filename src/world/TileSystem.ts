@@ -3,6 +3,8 @@
  * Provides foundation for procedural generation and A* pathfinding
  */
 
+import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
+
 /**
  * Enum defining all available tile types
  * Maps to sprites in assets/images/16x16 Tiles/
@@ -72,9 +74,9 @@ export const TILE_PROPERTIES: Record<TileType, TileProperties> = {
 };
 
 /**
- * Tile size constant (16x16 pixels)
+ * Tile size constant (from config)
  */
-export const TILE_SIZE = 16;
+export const TILE_SIZE = DEV_ROOM_CONFIG.TILES.SIZE;
 
 /**
  * Tile class - Represents a single tile in the world grid
