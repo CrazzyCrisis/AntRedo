@@ -33,6 +33,9 @@ let menuImages: {
     audioSettingsButton: any;
     controlsButton: any;
     backButton: any;
+    devRoomButton: any;
+    startGameButton: any;
+    levelEditorButton: any;
 } | null = null;
 
 function preload() {
@@ -45,7 +48,10 @@ function preload() {
         videoSettingsButton: loadImage('assets/images/menu/vs_button.png'),
         audioSettingsButton: loadImage('assets/images/menu/as_button.png'),
         controlsButton: loadImage('assets/images/menu/controls_button.png'),
-        backButton: loadImage('assets/images/menu/back_button.png')
+        backButton: loadImage('assets/images/menu/back_button.png'),
+        devRoomButton: loadImage('assets/images/menu/dev_room_button.png'),
+        startGameButton: loadImage('assets/images/menu/start_game_button.png'),
+        levelEditorButton: loadImage('assets/images/menu/level_editor_button.png'),
     };
 }
 

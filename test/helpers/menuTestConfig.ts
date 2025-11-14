@@ -4,7 +4,7 @@
  * Imports from actual menu config to stay in sync
  */
 
-import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT } from '../../src/config/menuLayout';
+import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT } from '../../src/config/menuLayout';
 
 // Canvas dimensions used in tests
 export const TEST_CANVAS = {
@@ -70,6 +70,34 @@ export const OPTIONS_MENU_BUTTONS = {
 } as const;
 
 /**
+ * Level Select Menu Button Positions
+ * These are calculated from the actual menu layout config
+ * Normalized coordinates (-1 to 1) are converted to pixel positions
+ */
+export const LEVEL_SELECT_BUTTONS = {
+    DEV_ROOM: {
+        x: centerX + (LEVEL_SELECT_LAYOUT.DEV_ROOM_BUTTON.offsetX * halfWidth),
+        y: centerY - (LEVEL_SELECT_LAYOUT.DEV_ROOM_BUTTON.offsetY * halfHeight),
+        label: 'Dev Room Button'
+    },
+    START_GAME: {
+        x: centerX + (LEVEL_SELECT_LAYOUT.START_GAME_BUTTON.offsetX * halfWidth),
+        y: centerY - (LEVEL_SELECT_LAYOUT.START_GAME_BUTTON.offsetY * halfHeight),
+        label: 'Start Game Button'
+    },
+    LEVEL_EDITOR: {
+        x: centerX + (LEVEL_SELECT_LAYOUT.LEVEL_EDITOR_BUTTON.offsetX * halfWidth),
+        y: centerY - (LEVEL_SELECT_LAYOUT.LEVEL_EDITOR_BUTTON.offsetY * halfHeight),
+        label: 'Level Editor Button'
+    },
+    BACK: {
+        x: centerX + (LEVEL_SELECT_LAYOUT.BACK_BUTTON.offsetX * halfWidth),
+        y: centerY - (LEVEL_SELECT_LAYOUT.BACK_BUTTON.offsetY * halfHeight),
+        label: 'Back Button'
+    }
+} as const;
+
+/**
  * Title Position
  * Calculated from the actual menu layout config
  * Normalized coordinates (-1 to 1) are converted to pixel positions
@@ -91,5 +119,8 @@ export const createMockImages = () => ({
     videoSettingsButton: { width: 200, height: 80 },
     audioSettingsButton: { width: 200, height: 80 },
     controlsButton: { width: 200, height: 80 },
-    backButton: { width: 200, height: 80 }
+    backButton: { width: 200, height: 80 },
+    devRoomButton: { width: 200, height: 80 },
+    startGameButton: { width: 200, height: 80 },
+    levelEditorButton: { width: 200, height: 80 }
 });

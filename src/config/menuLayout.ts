@@ -55,6 +55,29 @@ export const OPTIONS_MENU_LAYOUT = {
 } as const;
 
 /**
+ * Level Select Submenu Button Offsets (normalized -1 to 1 scale)
+ * Three buttons arranged horizontally
+ */
+export const LEVEL_SELECT_LAYOUT = {
+    DEV_ROOM_BUTTON: {
+        offsetX: -0.4,    // Left side
+        offsetY: -0.2         // Center vertically
+    },
+    START_GAME_BUTTON: {
+        offsetX: 0,        // Center
+        offsetY: -0.2
+    },
+    LEVEL_EDITOR_BUTTON: {
+        offsetX: 0.4,      // Right side
+        offsetY: -0.2
+    },
+    BACK_BUTTON: {
+        offsetX: -0.85,    // Near left edge
+        offsetY: -0.75     // Near bottom
+    }
+} as const;
+
+/**
  * UI Element Scales
  */
 export const MENU_SCALES = {

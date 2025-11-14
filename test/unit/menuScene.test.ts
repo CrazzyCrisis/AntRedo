@@ -329,8 +329,112 @@ describe('MenuScene', () => {
             expect(scene.optionsButton.isHovered).to.be.true;
         });
     });
-});
 
+    describe('Level Select Menu', () => {
+        it('should switch to level select menu when play button is clicked', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
+            
+            scene.enter();
+            
+            // Click play button
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            
+            // Should have level select buttons, not main menu buttons
+            expect(scene.devRoomButton).to.not.be.null;
+            expect(scene.startGameButton).to.not.be.null;
+            expect(scene.levelEditorButton).to.not.be.null;
+            expect(scene.playButton).to.be.null;
+        });
+
+        it('should create three horizontally aligned buttons', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
+            
+            scene.enter();
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            
+            // All buttons should have same Y position (horizontal alignment)
+            expect(scene.devRoomButton.y).to.equal(scene.startGameButton.y);
+            expect(scene.startGameButton.y).to.equal(scene.levelEditorButton.y);
+            
+            // Buttons should be spread horizontally
+            expect(scene.devRoomButton.x).to.be.lessThan(scene.startGameButton.x);
+            expect(scene.startGameButton.x).to.be.lessThan(scene.levelEditorButton.x);
+        });
+
+        it('should emit MENU_DEV_ROOM_CLICKED when dev room button clicked', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
+            
+            scene.enter();
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            
+            let devRoomClicked = false;
+            EventBus.on(GameEvents.MENU_DEV_ROOM_CLICKED, () => { devRoomClicked = true; });
+            
+            // Get dev room button position from scene
+            const devRoomX = scene.devRoomButton.x;
+            const devRoomY = scene.devRoomButton.y;
+            
+            scene.handleMouseClick(devRoomX, devRoomY);
+            
+            expect(devRoomClicked).to.be.true;
+        });
+
+        it('should emit MENU_START_GAME_CLICKED when start game button clicked', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
+            
+            scene.enter();
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            
+            let startGameClicked = false;
+            EventBus.on(GameEvents.MENU_START_GAME_CLICKED, () => { startGameClicked = true; });
+            
+            const startGameX = scene.startGameButton.x;
+            const startGameY = scene.startGameButton.y;
+            
+            scene.handleMouseClick(startGameX, startGameY);
+            
+            expect(startGameClicked).to.be.true;
+        });
+
+        it('should emit MENU_LEVEL_EDITOR_CLICKED when level editor button clicked', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
+            
+            scene.enter();
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            
+            let levelEditorClicked = false;
+            EventBus.on(GameEvents.MENU_LEVEL_EDITOR_CLICKED, () => { levelEditorClicked = true; });
+            
+            const levelEditorX = scene.levelEditorButton.x;
+            const levelEditorY = scene.levelEditorButton.y;
+            
+            scene.handleMouseClick(levelEditorX, levelEditorY);
+            
+            expect(levelEditorClicked).to.be.true;
+        });
+
+        it('should return to main menu when back button clicked', () => {
+            const scene = new MenuScene(mockRenderer, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT, createMockImages());
+            
+            scene.enter();
+            scene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
+            
+            // Now in level select menu
+            expect(scene.devRoomButton).to.not.be.null;
+            
+            // Click back button (bottom left corner)
+            const backX = TEST_CANVAS.WIDTH * 0.15; // Near left edge
+            const backY = TEST_CANVAS.HEIGHT * 0.875; // Near bottom
+            
+            mockRenderer.clear();
+            scene.handleMouseClick(backX, backY);
+            
+            // Should be back in main menu
+            expect(scene.playButton).to.not.be.null;
+            expect(scene.devRoomButton).to.be.null;
+        });
+    });
+});
 
 
 

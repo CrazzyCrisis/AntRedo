@@ -4,7 +4,7 @@ import { AnimatedSpriteComponent } from '../rendering/components/AnimatedSpriteC
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { RenderLayer } from '../rendering/RenderLayer';
-import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, MENU_SCALES, MENU_ANIMATIONS } from '../config/menuLayout';
+import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT, MENU_SCALES, MENU_ANIMATIONS } from '../config/menuLayout';
 
 /**
  * MenuScene - Main menu implementation
@@ -26,6 +26,11 @@ export class MenuScene implements IScene {
     private controlsButton: ButtonComponent | null = null;
     private backButton: ButtonComponent | null = null;
     
+    // Level select submenu buttons
+    public devRoomButton: ButtonComponent | null = null;
+    public startGameButton: ButtonComponent | null = null;
+    public levelEditorButton: ButtonComponent | null = null;
+    
     private buttons: ButtonComponent[] = [];
     private buttonUnregisterFunctions: Array<() => void> = [];
     private titleUnregisterFunction: (() => void) | null = null;
@@ -41,6 +46,9 @@ export class MenuScene implements IScene {
     private audioSettingsButtonImg: any;
     private controlsButtonImg: any;
     private backButtonImg: any;
+    private devRoomButtonImg: any;
+    private startGameButtonImg: any;
+    private levelEditorButtonImg: any;
 
     constructor(
         renderer: Renderer,
@@ -55,6 +63,9 @@ export class MenuScene implements IScene {
             audioSettingsButton: any;
             controlsButton: any;
             backButton: any;
+            devRoomButton: any;
+            startGameButton: any;
+            levelEditorButton: any;
         }
     ) {
         this.renderer = renderer;
@@ -70,6 +81,9 @@ export class MenuScene implements IScene {
         this.audioSettingsButtonImg = images.audioSettingsButton;
         this.controlsButtonImg = images.controlsButton;
         this.backButtonImg = images.backButton;
+        this.devRoomButtonImg = images.devRoomButton;
+        this.startGameButtonImg = images.startGameButton;
+        this.levelEditorButtonImg = images.levelEditorButton;
     }
 
     /**
@@ -120,7 +134,7 @@ export class MenuScene implements IScene {
         this.playButton.depth = 10;
         this.playButton.scale = MENU_SCALES.BUTTON;
         this.playButton.onClick(() => {
-            EventBus.emit(GameEvents.MENU_PLAY_CLICKED);
+            this.showLevelSelectMenu();
         });
 
         this.optionsButton = new ButtonComponent(
@@ -218,6 +232,75 @@ export class MenuScene implements IScene {
 
         // Track and register buttons
         this.buttons = [this.videoSettingsButton, this.audioSettingsButton, this.controlsButton, this.backButton];
+        this.buttons.forEach(button => {
+            this.buttonUnregisterFunctions.push(this.renderer.register(button));
+        });
+    }
+
+    /**
+     * Show level select submenu buttons
+     */
+    private showLevelSelectMenu(): void {
+        this.clearButtons();
+        
+        const centerX = this.canvasWidth / 2;
+        const centerY = this.canvasHeight / 2;
+        const halfWidth = this.canvasWidth / 2;
+        const halfHeight = this.canvasHeight / 2;
+
+        // Create level select submenu buttons using layout config
+        // Convert normalized coordinates (-1 to 1) to pixel positions
+        this.devRoomButton = new ButtonComponent(
+            this.devRoomButtonImg,
+            centerX + (LEVEL_SELECT_LAYOUT.DEV_ROOM_BUTTON.offsetX * halfWidth),
+            centerY - (LEVEL_SELECT_LAYOUT.DEV_ROOM_BUTTON.offsetY * halfHeight),
+            'dev_room_button'
+        );
+        this.devRoomButton.depth = 10;
+        this.devRoomButton.scale = MENU_SCALES.BUTTON;
+        this.devRoomButton.onClick(() => {
+            EventBus.emit(GameEvents.MENU_DEV_ROOM_CLICKED);
+        });
+
+        this.startGameButton = new ButtonComponent(
+            this.startGameButtonImg,
+            centerX + (LEVEL_SELECT_LAYOUT.START_GAME_BUTTON.offsetX * halfWidth),
+            centerY - (LEVEL_SELECT_LAYOUT.START_GAME_BUTTON.offsetY * halfHeight),
+            'start_game_button'
+        );
+        this.startGameButton.depth = 10;
+        this.startGameButton.scale = MENU_SCALES.BUTTON;
+        this.startGameButton.onClick(() => {
+            EventBus.emit(GameEvents.MENU_START_GAME_CLICKED);
+        });
+
+        this.levelEditorButton = new ButtonComponent(
+            this.levelEditorButtonImg,
+            centerX + (LEVEL_SELECT_LAYOUT.LEVEL_EDITOR_BUTTON.offsetX * halfWidth),
+            centerY - (LEVEL_SELECT_LAYOUT.LEVEL_EDITOR_BUTTON.offsetY * halfHeight),
+            'level_editor_button'
+        );
+        this.levelEditorButton.depth = 10;
+        this.levelEditorButton.scale = MENU_SCALES.BUTTON;
+        this.levelEditorButton.onClick(() => {
+            EventBus.emit(GameEvents.MENU_LEVEL_EDITOR_CLICKED);
+        });
+
+        // Create back button
+        this.backButton = new ButtonComponent(
+            this.backButtonImg,
+            centerX + (LEVEL_SELECT_LAYOUT.BACK_BUTTON.offsetX * halfWidth),
+            centerY - (LEVEL_SELECT_LAYOUT.BACK_BUTTON.offsetY * halfHeight),
+            'back_button'
+        );
+        this.backButton.depth = 10;
+        this.backButton.scale = MENU_SCALES.BUTTON;
+        this.backButton.onClick(() => {
+            this.showMainMenu();
+        });
+
+        // Track and register buttons
+        this.buttons = [this.devRoomButton, this.startGameButton, this.levelEditorButton, this.backButton];
         this.buttons.forEach(button => {
             this.buttonUnregisterFunctions.push(this.renderer.register(button));
         });

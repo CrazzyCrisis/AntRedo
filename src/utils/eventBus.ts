@@ -195,6 +195,9 @@ export const GameEvents = {
     MENU_VIDEO_SETTINGS_CLICKED: 'menu:video_settings:clicked',
     MENU_AUDIO_SETTINGS_CLICKED: 'menu:audio_settings:clicked',
     MENU_CONTROLS_CLICKED: 'menu:controls:clicked',
+    MENU_DEV_ROOM_CLICKED: 'menu:dev_room:clicked',
+    MENU_START_GAME_CLICKED: 'menu:start_game:clicked',
+    MENU_LEVEL_EDITOR_CLICKED: 'menu:level_editor:clicked',
     
     // Scene events
     SCENE_CHANGE: 'scene:change'
