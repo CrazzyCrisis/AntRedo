@@ -297,6 +297,7 @@ export const GameEvents = {
     BURN_EFFECT_APPLIED: 'power:burn:applied',
     
     // Combat events
+    ENTITY_ATTACKED: 'entity:attacked',
     COMBAT_DAMAGE_DEALT: 'combat:damage:dealt',
     COMBAT_KNOCKBACK_APPLIED: 'combat:knockback:applied',
     COMBAT_KILL: 'combat:kill'
