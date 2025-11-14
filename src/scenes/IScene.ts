@@ -34,4 +34,24 @@ export interface IScene {
      * @param y - Mouse Y coordinate
      */
     handleMouseMove(x: number, y: number): void;
+    
+    /**
+     * Called when mouse button is released
+     * @param x - Mouse X coordinate
+     * @param y - Mouse Y coordinate
+     */
+    handleMouseUp(x: number, y: number): void;
+    
+    /**
+     * Called when window is resized
+     * @param width - New canvas width
+     * @param height - New canvas height
+     */
+    onResize(width: number, height: number): void;
+    
+    /**
+     * Optional: Called when key is pressed
+     * @param key - Key code or key string
+     */
+    handleKeyPress?(key: string | number): void;
 }

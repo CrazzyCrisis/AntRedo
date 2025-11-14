@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
 import { SceneManager } from '../../src/managers/SceneManager';
 import { MenuScene } from '../../src/scenes/MenuScene';
+import { IScene } from '../../src/scenes/IScene';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { Renderer } from '../../src/rendering/Renderer';
 import { createMockP5 } from '../helpers/renderingMocks';
@@ -85,7 +86,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             
             sceneManager.switchScene(nextScene, 'NextScene');
@@ -132,7 +135,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             
             sceneManager.switchScene(emptyScene, 'Empty');
@@ -175,11 +180,17 @@ describe('Scene System Integration', () => {
             EventBus.on(GameEvents.MENU_PLAY_CLICKED, () => playClicked = true);
             EventBus.on(GameEvents.MENU_EXIT_CLICKED, () => exitClicked = true);
             
-            // Click play and exit buttons (options now opens submenu, doesn't emit event)
+            // Click play button (will switch to level select menu)
             menuScene.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
-            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.EXIT.x, MAIN_MENU_BUTTONS.EXIT.y);
-            
             expect(playClicked).to.be.true;
+            
+            // Go back to main menu
+            if (menuScene.backButton) {
+                menuScene.handleMouseClick(menuScene.backButton.x, menuScene.backButton.y);
+            }
+            
+            // Now click exit button
+            menuScene.handleMouseClick(MAIN_MENU_BUTTONS.EXIT.x, MAIN_MENU_BUTTONS.EXIT.y);
             expect(exitClicked).to.be.true;
         });
 
@@ -231,7 +242,9 @@ describe('Scene System Integration', () => {
                     exit: () => {},
                     update: () => {},
                     handleMouseClick: (_x: number, _y: number) => {},
-                    handleMouseMove: (_x: number, _y: number) => {}
+                    handleMouseMove: (_x: number, _y: number) => {},
+                    handleMouseUp: (_x: number, _y: number) => {},
+                    onResize: (_width: number, _height: number) => {}
                 };
                 
                 sceneManager.switchScene(gameScene, 'Game');
@@ -266,7 +279,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             
             // Switch scenes many times
@@ -365,12 +380,14 @@ describe('Scene System Integration', () => {
             expect(shouldStartGame).to.be.true;
             
             // 4. Transition to game scene
-            const gameScene = {
+            const gameScene: IScene = {
                 enter: () => {},
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             sceneManager.switchScene(gameScene, 'Game');
             
@@ -385,7 +402,9 @@ describe('Scene System Integration', () => {
                 exit: () => {},
                 update: () => {},
                 handleMouseClick: (_x: number, _y: number) => {},
-                handleMouseMove: (_x: number, _y: number) => {}
+                handleMouseMove: (_x: number, _y: number) => {},
+                handleMouseUp: (_x: number, _y: number) => {},
+                onResize: (_width: number, _height: number) => {}
             };
             sceneManager.switchScene(gameScene, 'Game');
             

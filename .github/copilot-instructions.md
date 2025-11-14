@@ -38,19 +38,48 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - **EventBus integration** - state changes trigger layer redraws automatically
 - See `docs/codeExamples/RENDERING_ARCHITECTURE.md` for full details
 
+### Configuration-First Design Philosophy (CRITICAL)
+**ALWAYS expose values in centralized config files** - Never use hardcoded magic numbers or constants scattered throughout the codebase.
+
+**Pattern:**
+1. **Define values in config files** (`src/config/*.ts`)
+2. **Import and use** from config in implementation
+3. **Never hardcode** - even "temporary" values go in config first
+
+**Why:**
+- Single source of truth for all adjustable values
+- Easy experimentation and tuning
+- No hunting through codebase to change values
+- Config files become documentation of game parameters
+
+**Examples:**
+- Tile size → `DEV_ROOM_CONFIG.TILES.SIZE`
+- UI positions → `MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX`
+- Animation speeds → `MENU_ANIMATIONS.TITLE_SPEED`
+- Game physics → `CONFIG.PLAYER.SPEED`
+
+**When adding ANY new feature:** First question is "What should be configurable?" → Add to appropriate config file → Use from there.
+
 ### Project Structure
 ```
 src/
-  config.ts         # Single CONFIG object for all game constants
+  config/           # CENTRALIZED CONFIG FILES (primary source of truth)
+    config.ts       # Main CONFIG object for game constants
+    devRoomConfig.ts # Dev room settings (world, tiles, camera, debug)
+    menuLayout.ts   # UI layout configurations
+    worldGenConfig.ts # World generation parameters
   sketch.ts         # p5.js lifecycle (setup/draw/input) - bridges p5 to game (VIEW layer)
   utils/
     eventBus.ts     # Singleton EventBus + GameEvents constants
     helpers.ts      # 50+ pure utility functions (math, grid, vectors, etc.)
+    PerlinNoise.ts  # Reusable Perlin noise generator
+    SeededRandom.ts # Seeded random number generator
   classes/          # Game entities (MODEL layer)
   managers/         # System managers (CONTROLLER layer - audio, level, etc.)
   factories/        # Entity factories (hide rendering complexity)
   rendering/        # Rendering system (Renderer, Camera, Layers, Components)
   scenes/           # Scene management (CONTROLLER layer)
+  world/            # World generation and tile systems
 assets/
   images/
     16x16 Tiles/    # Tile spritesheet for procedural generation overlay
@@ -83,6 +112,7 @@ docs/
 - **Examples** in `docs/examples/` or `docs/codeExamples/` - Usage patterns and best practices
 - Keep checklists clean - reference code snippets, don't embed large code blocks
 - Update relevant docs when adding new patterns or systems
+- **Create checklists for multi-step tasks** - Break down complex work into tracked subtasks in `docs/checklists/`
 
 ## Key Conventions
 
@@ -352,8 +382,43 @@ function mouseMoved() {
    - `setPosition(x, y)` - move container and all children
    - `centerHorizontally(canvasWidth)` - center on screen
 
+4. **SliderWithArrowsComponent** - Enhanced slider with arrow buttons
+   - Combines draggable slider + left/right arrow buttons (±1% default)
+   - `getValue()` / `setValue(value)` - get/set current value
+   - `incrementByArrow()` / `decrementByArrow()` - discrete adjustments
+   - `setArrowStep(step)` - customize arrow increment amount
+   - `onChange(callback)` - fires on all value changes
+   - All interactions bounded to [min, max] range
+   - Hover highlighting on track and arrows
+
+5. **NumberInputComponent** - Numeric input with increment/decrement arrows
+   - Click-to-focus text input + arrow buttons
+   - `getValue()` / `setValue(value)` - get/set current value
+   - `setStep(step)` - set arrow increment amount
+   - `handleTextInput(text)` - process keyboard input when focused
+   - `onChange(callback)` - fires when value changes
+   - Validates numeric input, clamps to bounds
+
 **Example Usage:**
 ```typescript
+// Slider with arrows for precise control
+const slider = new SliderWithArrowsComponent(
+    sprite, x, y, 0, 1, 0.5, 'my_slider'
+);
+slider.setArrowStep(0.01); // 1% increments
+slider.onChange((value) => {
+    console.log('Value changed:', value);
+});
+
+// Number input with arrows
+const numberInput = new NumberInputComponent(
+    x, y, 0, 100, 50, 'priority_input'
+);
+numberInput.setStep(1); // Integer steps
+numberInput.onChange((value) => {
+    updateConfig(value);
+});
+
 // Animated title
 const title = new AnimatedSpriteComponent(titleSprite, 400, 150);
 title.setAnimationSpeed(0.05);
@@ -480,6 +545,20 @@ EventBus.on(GameEvents.WORLD_GENERATED, (tiles) => {
 2. **Green:** Write minimal code to pass test (`src/`)
 3. **Refactor:** Improve code while keeping tests passing
 4. **Repeat:** Never write production code without a failing test
+
+### Regression Testing (CRITICAL)
+**ALWAYS perform regression testing after ANY code changes:**
+1. **Manual Testing:** Test all related features in browser after each change
+2. **Common Regressions to Check:**
+   - UI component interactions (clicks, hovers, drags)
+   - Window resize behavior (all UI should scale/reposition)
+   - Component positioning after state changes
+   - Event handler chains (input → scene → component)
+   - Config/state synchronization between systems
+3. **Before Marking Complete:** Verify ALL existing functionality still works
+4. **When Bugs Found:** Add test coverage to prevent future regressions
+
+**Pattern:** After every edit, mentally ask "What could this break?" and test those areas.
 
 ### Testing Patterns
 ```typescript

@@ -7,6 +7,10 @@ import { EventBus, GameEvents } from './utils/eventBus';
 import { SceneManager } from './managers/SceneManager';
 import { Renderer } from './rendering/Renderer';
 import { MenuScene } from './scenes/MenuScene';
+import { DevRoomScene } from './scenes/DevRoomScene';
+import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
+import { TileType } from './world/TileSystem';
+import { TileFrillSystem } from './world/TileEdgeSystem';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -33,7 +37,16 @@ let menuImages: {
     audioSettingsButton: any;
     controlsButton: any;
     backButton: any;
+    devRoomButton: any;
+    startGameButton: any;
+    levelEditorButton: any;
 } | null = null;
+
+// Preloaded tile sprites
+let tileSprites: { [key: number]: any } | null = null;
+
+// Preloaded tile edge sprites (keyed by full path)
+let tileEdgeSprites: { [path: string]: any } | null = null;
 
 function preload() {
     // Load menu assets
@@ -45,8 +58,35 @@ function preload() {
         videoSettingsButton: loadImage('assets/images/menu/vs_button.png'),
         audioSettingsButton: loadImage('assets/images/menu/as_button.png'),
         controlsButton: loadImage('assets/images/menu/controls_button.png'),
-        backButton: loadImage('assets/images/menu/back_button.png')
+        backButton: loadImage('assets/images/menu/back_button.png'),
+        devRoomButton: loadImage('assets/images/menu/dev_room_button.png'),
+        startGameButton: loadImage('assets/images/menu/start_game_button.png'),
+        levelEditorButton: loadImage('assets/images/menu/level_editor_button.png'),
     };
+    
+    // Load tile sprites
+    tileSprites = {};
+    for (const tileTypeKey in TILE_SPRITE_MAP) {
+        const tileType = parseInt(tileTypeKey) as TileType;
+        const spritePath = TILE_SPRITE_BASE_PATH + TILE_SPRITE_MAP[tileType];
+        tileSprites[tileType] = loadImage(spritePath);
+    }
+    
+    // Load tile edge sprites (frills)
+    tileEdgeSprites = {};
+    for (const tileTypeKey in TILE_SPRITE_MAP) {
+        const tileType = parseInt(tileTypeKey) as TileType;
+        
+        // Only load frill overlays for tiles that support them
+        if (TileFrillSystem.supportsFrills(tileType)) {
+            const frillPaths = TileFrillSystem.getFrillSpritePaths(tileType);
+            for (const path of frillPaths) {
+                tileEdgeSprites[path] = loadImage(path);
+            }
+        }
+    }
+    
+    console.log('Assets preloaded: menu images, tile sprites, and frill overlays');
 }
 
 function setup() {
@@ -61,6 +101,32 @@ function setup() {
         const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
         SceneManager.getInstance().switchScene(menuScene, 'Menu');
     }
+    
+    // Listen for dev room navigation
+    EventBus.on(GameEvents.MENU_DEV_ROOM_CLICKED, () => {
+        console.log('Switching to DevRoom scene...');
+        if (menuImages && tileSprites && tileEdgeSprites) {
+            const devRoomScene = new DevRoomScene(
+                renderer, 
+                window.innerWidth, 
+                window.innerHeight,
+                menuImages.backButton,
+                tileSprites,
+                tileEdgeSprites
+            );
+            SceneManager.getInstance().switchScene(devRoomScene, 'DevRoom');
+        }
+    });
+
+    // Listen for back button in dev room
+    EventBus.on(GameEvents.MENU_BACK_CLICKED, () => {
+        const currentScene = SceneManager.getInstance().getCurrentScene();
+        if (currentScene instanceof DevRoomScene && menuImages) {
+            console.log('Returning to menu from DevRoom...');
+            const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
+            SceneManager.getInstance().switchScene(menuScene, 'Menu');
+        }
+    });
     
     EventBus.emit(GameEvents.GAME_START);
 }
@@ -77,6 +143,9 @@ function draw() {
 
 function keyPressed() {
     EventBus.emit(GameEvents.INPUT_KEY_PRESS, keyCode, key);
+    
+    // Forward to scene manager
+    SceneManager.getInstance().handleKeyPress(key);
     
     // if (gameManager) {
     //     gameManager.handleKeyPressed(keyCode);
@@ -109,18 +178,21 @@ function mouseMoved() {
     SceneManager.getInstance().handleMouseMove(mouseX, mouseY);
 }
 
+function mouseReleased() {
+    EventBus.emit(GameEvents.INPUT_MOUSE_RELEASE, mouseX, mouseY, mouseButton);
+    
+    // Forward to current scene
+    SceneManager.getInstance().handleMouseUp(mouseX, mouseY);
+}
+
 function windowResized() {
     resizeCanvas(window.innerWidth, window.innerHeight);
     
     // Update renderer dimensions
     renderer.updateDimensions(window.innerWidth, window.innerHeight);
     
-    // Recreate menu scene with new dimensions (if in menu)
-    const currentScene = SceneManager.getInstance().getCurrentScene();
-    if (currentScene instanceof MenuScene && menuImages) {
-        const newMenuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
-        SceneManager.getInstance().switchScene(newMenuScene, 'Menu');
-    }
+    // Forward resize to current scene
+    SceneManager.getInstance().handleResize(window.innerWidth, window.innerHeight);
 }
 
 // Make functions available to p5.js
@@ -131,4 +203,5 @@ function windowResized() {
 (window as any).keyReleased = keyReleased;
 (window as any).mousePressed = mousePressed;
 (window as any).mouseMoved = mouseMoved;
+(window as any).mouseReleased = mouseReleased;
 (window as any).windowResized = windowResized;

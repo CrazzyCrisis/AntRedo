@@ -8,7 +8,10 @@
     "watch": "tsc --watch & esbuild dist/sketch.js --bundle --outfile=dist/bundle.js --format=iife --global-name=AntGame --watch",
     "dev": "npm run watch",
     "test": "mocha",
-    "test:watch": "mocha --watch"
+    "test:watch": "mocha --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "keywords": [
     "game",
@@ -18,6 +21,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^10.0.0",
     "@types/node": "^20.0.0",

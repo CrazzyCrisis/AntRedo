@@ -138,14 +138,22 @@ export const EventBus = new EventBusClass();
 
 // Common game events constants (optional but recommended)
 export const GameEvents = {
-    // Game lifecycle
+    // Game lifecycle events
     GAME_START: 'game:start',
     GAME_PAUSE: 'game:pause',
     GAME_RESUME: 'game:resume',
+    GAME_RESET: 'game:reset',
     GAME_OVER: 'game:over',
     GAME_WIN: 'game:win',
     LEVEL_START: 'level:start',
     LEVEL_COMPLETE: 'level:complete',
+    LEVEL_CHANGED: 'level:changed',
+    
+    // World events
+    WORLD_LOADED: 'world:loaded',
+    WORLD_GENERATED: 'world:generated',
+    SAVE_WORLD_PRESET: 'world:save_preset',
+    LOAD_WORLD_PRESET: 'world:load_preset',
     
     // Player events
     PLAYER_MOVE: 'player:move',
@@ -172,6 +180,7 @@ export const GameEvents = {
     INPUT_KEY_RELEASE: 'input:key:release',
     INPUT_MOUSE_CLICK: 'input:mouse:click',
     INPUT_MOUSE_MOVE: 'input:mouse:move',
+    INPUT_MOUSE_RELEASE: 'input:mouse:release',
     
     // Audio events
     AUDIO_PLAY: 'audio:play',
@@ -192,9 +201,26 @@ export const GameEvents = {
     MENU_PLAY_CLICKED: 'menu:play:clicked',
     MENU_OPTIONS_CLICKED: 'menu:options:clicked',
     MENU_EXIT_CLICKED: 'menu:exit:clicked',
+    MENU_BACK_CLICKED: 'menu:back:clicked',
     MENU_VIDEO_SETTINGS_CLICKED: 'menu:video_settings:clicked',
     MENU_AUDIO_SETTINGS_CLICKED: 'menu:audio_settings:clicked',
     MENU_CONTROLS_CLICKED: 'menu:controls:clicked',
+    MENU_DEV_ROOM_CLICKED: 'menu:dev_room:clicked',
+    MENU_START_GAME_CLICKED: 'menu:start_game:clicked',
+    MENU_LEVEL_EDITOR_CLICKED: 'menu:level_editor:clicked',
+    
+    // Settings events
+    SETTING_AUDIO_CHANGED: 'settings:audio:changed',
+    SETTING_VIDEO_CHANGED: 'settings:video:changed',
+    SETTING_KEYBIND_CHANGED: 'settings:keybind:changed',
+    SETTING_ACCESSIBILITY_CHANGED: 'settings:accessibility:changed',
+    SETTINGS_RESET: 'settings:reset',
+    
+    // World generation events
+    WORLDGEN_CONFIG_MENU_TOGGLE: 'worldgen:config:toggle',
+    WORLDGEN_CONFIG_CHANGED: 'worldgen:config:changed',
+    WORLDGEN_THRESHOLD_CHANGED: 'worldgen:threshold:changed',
+    WORLDGEN_REGENERATE: 'worldgen:regenerate',
     
     // Scene events
     SCENE_CHANGE: 'scene:change'

@@ -69,9 +69,36 @@ export class SceneManager {
     /**
      * Forward mouse move to current scene
      */
-    public handleMouseMove(x: number, y: number): void {
+    handleMouseMove(x: number, y: number): void {
         if (this.currentScene) {
             this.currentScene.handleMouseMove(x, y);
+        }
+    }
+    
+    /**
+     * Forward mouse up to current scene
+     */
+    handleMouseUp(x: number, y: number): void {
+        if (this.currentScene) {
+            this.currentScene.handleMouseUp(x, y);
+        }
+    }
+    
+    /**
+     * Forward window resize to current scene
+     */
+    handleResize(width: number, height: number): void {
+        if (this.currentScene) {
+            this.currentScene.onResize(width, height);
+        }
+    }
+    
+    /**
+     * Forward key press to current scene
+     */
+    public handleKeyPress(key: string | number): void {
+        if (this.currentScene && this.currentScene.handleKeyPress) {
+            this.currentScene.handleKeyPress(key);
         }
     }
 
