@@ -80,12 +80,21 @@ export class SettingsManager {
     /**
      * Save settings to localStorage
      */
-    private saveSettings(): void {
+    public saveSettings(): void {
         try {
             localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(this.settings));
         } catch (error) {
             console.error('Failed to save settings to localStorage:', error);
         }
+    }
+
+    /**
+     * Reset all settings to defaults
+     */
+    public resetSettings(): void {
+        this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        this.saveSettings();
+        EventBus.emit(GameEvents.SETTINGS_RESET);
     }
 
     /**

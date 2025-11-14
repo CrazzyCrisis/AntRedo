@@ -169,30 +169,34 @@ export class AudioManager {
     }
 
     /**
+     * Set music mute state
+     * @param muted - New mute state
+     */
+    public setMusicMuted(muted: boolean): void {
+        this.musicMuted = muted;
+        this.saveToSettings();
+        this.updateAllVolumes();
+    }
+
+    /**
      * Mute music
      */
     public muteMusic(): void {
-        this.musicMuted = true;
-        this.saveToSettings();
-        this.updateAllVolumes();
+        this.setMusicMuted(true);
     }
 
     /**
      * Unmute music
      */
     public unmuteMusic(): void {
-        this.musicMuted = false;
-        this.saveToSettings();
-        this.updateAllVolumes();
+        this.setMusicMuted(false);
     }
 
     /**
      * Toggle music mute
      */
     public toggleMusicMute(): void {
-        this.musicMuted = !this.musicMuted;
-        this.saveToSettings();
-        this.updateAllVolumes();
+        this.setMusicMuted(!this.musicMuted);
     }
 
     /**
@@ -203,30 +207,34 @@ export class AudioManager {
     }
 
     /**
+     * Set SFX mute state
+     * @param muted - New mute state
+     */
+    public setSFXMuted(muted: boolean): void {
+        this.sfxMuted = muted;
+        this.saveToSettings();
+        this.updateAllVolumes();
+    }
+
+    /**
      * Mute SFX
      */
     public muteSFX(): void {
-        this.sfxMuted = true;
-        this.saveToSettings();
-        this.updateAllVolumes();
+        this.setSFXMuted(true);
     }
 
     /**
      * Unmute SFX
      */
     public unmuteSFX(): void {
-        this.sfxMuted = false;
-        this.saveToSettings();
-        this.updateAllVolumes();
+        this.setSFXMuted(false);
     }
 
     /**
      * Toggle SFX mute
      */
     public toggleSFXMute(): void {
-        this.sfxMuted = !this.sfxMuted;
-        this.saveToSettings();
-        this.updateAllVolumes();
+        this.setSFXMuted(!this.sfxMuted);
     }
 
     // ============ Sound Management ============

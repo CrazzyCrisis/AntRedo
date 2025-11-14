@@ -192,6 +192,7 @@ export const GameEvents = {
     MENU_PLAY_CLICKED: 'menu:play:clicked',
     MENU_OPTIONS_CLICKED: 'menu:options:clicked',
     MENU_EXIT_CLICKED: 'menu:exit:clicked',
+    MENU_BACK_CLICKED: 'menu:back:clicked',
     MENU_VIDEO_SETTINGS_CLICKED: 'menu:video_settings:clicked',
     MENU_AUDIO_SETTINGS_CLICKED: 'menu:audio_settings:clicked',
     MENU_CONTROLS_CLICKED: 'menu:controls:clicked',
