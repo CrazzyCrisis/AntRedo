@@ -13,7 +13,7 @@ import { RenderLayer } from '../rendering/RenderLayer';
 import { TILE_SIZE } from '../world/TileSystem';
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
-import { TileEdgeSystem } from '../world/TileEdgeSystem';
+import { TileFrillSystem } from '../world/TileEdgeSystem';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -98,7 +98,7 @@ export class DevRoomScene implements IScene {
     private createTileRenderer(tileGrid: TileGrid): void {
         const grid = tileGrid.getGrid();
         
-        // Create a renderable that draws all tiles with edge awareness
+        // Create a renderable that draws all tiles with frill overlays
         const tileRenderable = {
             id: 'tile_grid',
             layer: RenderLayer.GROUND,
@@ -112,20 +112,24 @@ export class DevRoomScene implements IScene {
                         const y = row * TILE_SIZE;
                         
                         if (DEV_ROOM_CONFIG.TILES.USE_SPRITES) {
-                            // Try to get edge sprite first
-                            let spriteDrawn = false;
-                            
-                            if (DEV_ROOM_CONFIG.TILES.USE_EDGES && TileEdgeSystem.supportsEdges(tile.type)) {
-                                const edgeSpritePath = TileEdgeSystem.getEdgeSpritePath(tileGrid, col, row);
-                                if (edgeSpritePath && this.tileEdgeSprites[edgeSpritePath]) {
-                                    graphics.image(this.tileEdgeSprites[edgeSpritePath], x, y, TILE_SIZE, TILE_SIZE);
-                                    spriteDrawn = true;
-                                }
+                            // Step 1: Draw base tile sprite
+                            if (this.tileSprites[tile.type]) {
+                                graphics.image(this.tileSprites[tile.type], x, y, TILE_SIZE, TILE_SIZE);
                             }
                             
-                            // Fall back to base sprite if no edge sprite
-                            if (!spriteDrawn && this.tileSprites[tile.type]) {
-                                graphics.image(this.tileSprites[tile.type], x, y, TILE_SIZE, TILE_SIZE);
+                            // Step 2: Overlay frill sprites on top (if enabled)
+                            if (DEV_ROOM_CONFIG.TILES.USE_EDGES) {
+                                const frillData = TileFrillSystem.getFrillOverlays(tileGrid, col, row);
+                                
+                                if (frillData.hasFrill) {
+                                    // Render each frill overlay
+                                    for (const frillPath of frillData.frillPaths) {
+                                        const sprite = this.tileEdgeSprites[frillPath];
+                                        if (sprite) {
+                                            graphics.image(sprite, x, y, TILE_SIZE, TILE_SIZE);
+                                        }
+                                    }
+                                }
                             }
                         } else {
                             // Draw colored rectangle (fallback)

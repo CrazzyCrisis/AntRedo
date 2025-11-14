@@ -10,7 +10,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
 import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
 import { TileType } from './world/TileSystem';
-import { TileEdgeSystem } from './world/TileEdgeSystem';
+import { TileFrillSystem } from './world/TileEdgeSystem';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -72,21 +72,21 @@ function preload() {
         tileSprites[tileType] = loadImage(spritePath);
     }
     
-    // Load tile edge sprites
+    // Load tile edge sprites (frills)
     tileEdgeSprites = {};
     for (const tileTypeKey in TILE_SPRITE_MAP) {
         const tileType = parseInt(tileTypeKey) as TileType;
         
-        // Only load edges for tiles that support them
-        if (TileEdgeSystem.supportsEdges(tileType)) {
-            const edgePaths = TileEdgeSystem.getEdgeSpritePaths(tileType);
-            for (const path of edgePaths) {
+        // Only load frill overlays for tiles that support them
+        if (TileFrillSystem.supportsFrills(tileType)) {
+            const frillPaths = TileFrillSystem.getFrillSpritePaths(tileType);
+            for (const path of frillPaths) {
                 tileEdgeSprites[path] = loadImage(path);
             }
         }
     }
     
-    console.log('Assets preloaded: menu images, tile sprites, and edge sprites');
+    console.log('Assets preloaded: menu images, tile sprites, and frill overlays');
 }
 
 function setup() {
