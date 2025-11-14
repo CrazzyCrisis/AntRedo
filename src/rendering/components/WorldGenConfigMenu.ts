@@ -27,6 +27,11 @@ export class WorldGenConfigMenu implements Renderable {
     private tileThresholdSliders: Map<number, SliderComponent> = new Map();
     private tileEnabledToggles: Map<number, ToggleComponent> = new Map();
     
+    // Debounce for regeneration
+    private regenerateDebounceTimer: number | null = null;
+    private readonly REGENERATE_DEBOUNCE_MS: number = 300;
+    private isRegenerating: boolean = false;
+    
     constructor(x: number, y: number, initialConfig: WorldGenConfig) {
         this.x = x;
         this.y = y;
@@ -97,6 +102,12 @@ export class WorldGenConfigMenu implements Renderable {
      */
     hide(): void {
         this.visible = false;
+        // Cancel any pending regeneration when hiding
+        if (this.regenerateDebounceTimer !== null) {
+            clearTimeout(this.regenerateDebounceTimer);
+            this.regenerateDebounceTimer = null;
+        }
+        this.isRegenerating = false;
     }
     
     /**
@@ -136,11 +147,35 @@ export class WorldGenConfigMenu implements Renderable {
     }
     
     /**
-     * Emit config change event and trigger regeneration
+     * Emit config change event and trigger debounced regeneration
      */
     private emitConfigChange(): void {
         EventBus.emit(GameEvents.WORLDGEN_CONFIG_CHANGED, this.getConfig());
-        EventBus.emit(GameEvents.WORLDGEN_REGENERATE);
+        this.scheduleRegeneration();
+    }
+    
+    /**
+     * Schedule a debounced world regeneration
+     * Prevents excessive regenerations during rapid slider adjustments
+     */
+    private scheduleRegeneration(): void {
+        // Clear existing timer
+        if (this.regenerateDebounceTimer !== null) {
+            clearTimeout(this.regenerateDebounceTimer);
+        }
+        
+        // Set regenerating flag immediately for UI feedback
+        this.isRegenerating = true;
+        
+        // Schedule regeneration after debounce period
+        this.regenerateDebounceTimer = setTimeout(() => {
+            EventBus.emit(GameEvents.WORLDGEN_REGENERATE);
+            this.regenerateDebounceTimer = null;
+            // Keep isRegenerating true briefly to show "Regenerating..." text
+            setTimeout(() => {
+                this.isRegenerating = false;
+            }, 100);
+        }, this.REGENERATE_DEBOUNCE_MS) as any;
     }
     
     /**
@@ -231,6 +266,13 @@ export class WorldGenConfigMenu implements Renderable {
         graphics.textSize(18);
         graphics.textAlign((window as any).CENTER, (window as any).TOP);
         graphics.text('World Generation Config', this.x + this.width / 2, this.y + 15);
+        
+        // Regenerating indicator
+        if (this.isRegenerating) {
+            graphics.fill(255, 200, 0);
+            graphics.textSize(12);
+            graphics.text('⚡ Regenerating...', this.x + this.width / 2, this.y + 38);
+        }
         
         // Noise Scale section
         graphics.textSize(14);
