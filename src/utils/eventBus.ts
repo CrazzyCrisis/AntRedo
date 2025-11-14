@@ -300,7 +300,12 @@ export const GameEvents = {
     ENTITY_ATTACKED: 'entity:attacked',
     COMBAT_DAMAGE_DEALT: 'combat:damage:dealt',
     COMBAT_KNOCKBACK_APPLIED: 'combat:knockback:applied',
-    COMBAT_KILL: 'combat:kill'
+    COMBAT_KILL: 'combat:kill',
+    
+    // Inventory events
+    ITEM_ADDED: 'item:added',
+    ITEM_REMOVED: 'item:removed',
+    INVENTORY_FULL: 'inventory:full'
 } as const;
 
 // Type for event names
