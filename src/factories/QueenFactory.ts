@@ -6,7 +6,8 @@ import {
     GameEvents,
     setupEntitySpriteBinding,
     TILE_SIZE,
-    EntityManager
+    EntityManager,
+    gridToWorldCenter
 } from '../imports/factoryImports';
 import { Queen } from '../classes/Queen';
 
@@ -59,8 +60,7 @@ export class QueenFactory {
         QueenFactory.activeQueens.set(factionId, queen);
 
         // 3. Create View (SpriteComponent) - MUST use world coordinates for initial position
-        const worldX = gridX * TILE_SIZE;
-        const worldY = gridY * TILE_SIZE;
+        const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
         const spriteComponent = new SpriteComponent(
             sprite,
             worldX,
@@ -70,8 +70,8 @@ export class QueenFactory {
         );
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
-        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
+        // Grid coordinates → world coordinates (centered in tile)
+        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
 
         // 4. Register with EntityManager for update() lifecycle
         EntityManager.getInstance().addEntity(queen);

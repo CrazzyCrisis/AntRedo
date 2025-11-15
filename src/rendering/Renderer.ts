@@ -132,17 +132,6 @@ export class Renderer {
         this.framebufferManager.clearFramebuffer(layer);
 
         // Disable smoothing for pixel art layers (crisp rendering)
-        const pixelArtLayers = [
-            RenderLayer.BACKGROUND,
-            RenderLayer.GROUND,
-            RenderLayer.GROUND_DECORATIONS,
-            RenderLayer.ENTITIES,
-            RenderLayer.ABOVE_ENTITIES
-        ];
-        if (pixelArtLayers.includes(layer)) {
-            fb.noSmooth();
-        }
-
         // Sort renderables if layer uses depth sorting
         let sortedRenderables = renderables;
         if (layerConfig.depthSort) {

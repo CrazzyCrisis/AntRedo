@@ -430,15 +430,76 @@ return entity;
 - Automatic cleanup on entity destruction
 - No missed event unsubscriptions
 
+### Manager Base Class Pattern (NEW - Eliminates Boilerplate)
+**All managers MUST extend `BaseManager`** - Never implement singleton + EventBus patterns manually.
+
+**BaseManager provides:**
+- Automatic EventBus subscription tracking
+- Helper methods: `subscribe()`, `subscribeOnce()`, `emit()`
+- Automatic cleanup: `cleanupSubscriptions()`
+
+**Pattern:**
+```typescript
+import { BaseManager } from './BaseManager';
+import { GameEvents } from '../utils/eventBus';
+
+export class MyManager extends BaseManager {
+    private static instance: MyManager;
+    
+    private constructor() {
+        super(); // REQUIRED - initializes BaseManager
+        
+        // Automatic subscription tracking
+        this.subscribe(GameEvents.PLAYER_MOVE, (x: number, y: number) => {
+            this.handleMove(x, y);
+        });
+        
+        // One-time listeners
+        this.subscribeOnce(GameEvents.GAME_START, () => {
+            this.initialize();
+        });
+    }
+    
+    public static getInstance(): MyManager {
+        if (!MyManager.instance) {
+            MyManager.instance = new MyManager();
+        }
+        return MyManager.instance;
+    }
+    
+    private handleMove(x: number, y: number): void {
+        // Process move
+        this.emit(GameEvents.PLAYER_MOVED, x, y); // Helper method
+    }
+    
+    public cleanup(): void {
+        this.cleanupSubscriptions(); // One-line cleanup!
+        // Additional cleanup...
+    }
+}
+```
+
+**Benefits:**
+- Eliminates 8-12 lines per manager (~100-120 lines saved across 15 managers)
+- No manual `unsubscribeFunctions` array management
+- No repetitive `EventBus.on() + push()` pattern
+- Guaranteed cleanup on `cleanup()` call
+- Consistent subscription pattern across all managers
+
+**See:** `docs/architecture/BASE_MANAGER_PATTERN.md` and `docs/checklists/MANAGER_REFACTORING.md`
+
 ### EventBus Patterns
 ```typescript
-// Listen (returns unsubscribe function)
+// IN MANAGERS: Use BaseManager helpers
+this.subscribe(GameEvents.PLAYER_DAMAGE, (amount, health) => {
+    this.updateHealth(health);
+});
+this.emit(GameEvents.PLAYER_MOVE, this.x, this.y, this.direction);
+
+// IN OTHER CODE: Use EventBus directly
 const unsub = EventBus.on(GameEvents.PLAYER_DAMAGE, (amount, health) => {
     this.updateHealth(health);
 });
-
-// Emit with multiple args
-EventBus.emit(GameEvents.PLAYER_MOVE, this.x, this.y, this.direction);
 
 // One-time listeners
 EventBus.once(GameEvents.LEVEL_COMPLETE, () => { /* ... */ });

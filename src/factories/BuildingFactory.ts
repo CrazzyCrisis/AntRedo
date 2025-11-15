@@ -13,7 +13,8 @@ import {
     EventBus,
     setupEntitySpriteBinding,
     TILE_SIZE,
-    BuildingType
+    BuildingType,
+    gridToWorldCenter
 } from '../imports/factoryImports';
 import { Building } from '../classes/Building';
 
@@ -58,9 +59,8 @@ export class BuildingFactory {
         const building = new Building(gridX, gridY, buildingType);
 
         // Create sprite component starting with construction sprite
-        // MUST use world coordinates for initial position
-        const worldX = gridX * TILE_SIZE;
-        const worldY = gridY * TILE_SIZE;
+        // MUST use world coordinates for initial position (centered in tile)
+        const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
         const spriteComponent = new SpriteComponent(
             constructionSprite,
             worldX,
@@ -81,8 +81,8 @@ export class BuildingFactory {
         EventBus.emit('BUILDING_PATHFINDING_BLOCK', building.id, occupiedTiles);
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
-        setupEntitySpriteBinding(building, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord * TILE_SIZE);
+        // Grid coordinates → world coordinates (centered in tile)
+        setupEntitySpriteBinding(building, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
 
         // Additional listeners specific to buildings
         const originalCleanup = (building as any)._cleanup;

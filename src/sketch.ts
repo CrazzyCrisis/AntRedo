@@ -333,11 +333,13 @@ function mouseReleased() {
 function windowResized() {
     resizeCanvas(window.innerWidth, window.innerHeight);
     
-    // Update renderer dimensions
-    renderer.updateDimensions(window.innerWidth, window.innerHeight);
-    
-    // Forward resize to current scene
-    SceneManager.getInstance().handleResize(window.innerWidth, window.innerHeight);
+    // Update renderer dimensions (only if initialized)
+    if (renderer) {
+        renderer.updateDimensions(window.innerWidth, window.innerHeight);
+        
+        // Forward resize to current scene
+        SceneManager.getInstance().handleResize(window.innerWidth, window.innerHeight);
+    }
 }
 
 // Make functions available to p5.js

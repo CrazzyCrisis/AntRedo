@@ -10,7 +10,8 @@ import {
     SpriteComponent,
     EntityManager,
     setupEntitySpriteBinding,
-    TILE_SIZE
+    TILE_SIZE,
+    gridToWorldCenter
 } from '../imports/factoryImports';
 import { Boss } from '../classes/Boss';
 
@@ -52,9 +53,8 @@ export class BossFactory {
         const boss = new Boss(gridX, gridY, patrolPath, projectileType);
 
         // Create sprite component with Y-position as depth for proper sorting
-        // MUST use world coordinates for initial position
-        const worldX = gridX * TILE_SIZE;
-        const worldY = gridY * TILE_SIZE;
+        // MUST use world coordinates for initial position (centered in tile)
+        const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
         const spriteComponent = new SpriteComponent(
             sprite,
             worldX,
@@ -71,8 +71,8 @@ export class BossFactory {
         EntityManager.getInstance().addEntity(boss);
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
-        setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
+        // Grid coordinates → world coordinates (centered in tile)
+        setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
 
         return boss;
     }

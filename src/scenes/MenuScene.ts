@@ -345,8 +345,8 @@ export class MenuScene implements IScene {
      * Called when scene is deactivated
      */
     exit(): void {
-        // Stop menu music
-        AudioManager.getInstance().stopBGM();
+        // Don't stop menu music - let it continue for settings/other menu scenes
+        // BGM will be stopped automatically when switching to a different track
         
         // Unregister buttons
         this.clearButtons();

@@ -5,14 +5,15 @@
  * Event-driven: automatically plays sounds in response to game events
  */
 
-import { EventBus, GameEvents } from '../utils/eventBus';
+import { BaseManager } from './BaseManager';
+import { GameEvents } from '../utils/eventBus';
 import { SettingsManager } from './SettingsManager';
 import { AudioSettings } from '../config/defaultSettings';
 import { clamp } from '../utils/helpers';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AUDIO_SOUNDS, AUDIO_EVENT_MAPPINGS, AUDIO_CATEGORIES, SoundKey } from '../config/audioConfig';
 
-export class AudioManager {
+export class AudioManager extends BaseManager {
     private static instance: AudioManager;
     
     private masterVolume: number;
@@ -23,7 +24,8 @@ export class AudioManager {
     
     private loadedSounds: Set<string>;
     private currentBGM: string | null;
-    private unsubscribeFunctions: Array<() => void>;
+    private audioContextStarted: boolean = false;
+    private pendingBGM: { key: SoundKey; loop: boolean } | null = null;
     
     // Store actual audio objects (p5.SoundFile)
     private BGMTracks: Map<string, any>;
@@ -32,12 +34,13 @@ export class AudioManager {
     private sounds: Map<SoundKey, any>; // All loaded sounds by key
 
     private constructor() {
+        super(); // Initialize BaseManager
+        
         this.loadedSounds = new Set();
         this.BGMTracks = new Map();
         this.sfxSounds = new Map();
         this.sounds = new Map();
         this.currentBGM = null;
-        this.unsubscribeFunctions = [];
         
         // Load settings from SettingsManager
         const settingsManager = SettingsManager.getInstance();
@@ -49,12 +52,13 @@ export class AudioManager {
         this.voiceVolume = audioSettings.voiceVolume;
         this.systemVolume = audioSettings.systemVolume;
         
-        // Listen for settings changes
-        this.unsubscribeFunctions.push(
-            EventBus.on(GameEvents.SETTING_AUDIO_CHANGED, (settings: AudioSettings) => {
-                this.handleSettingsChange(settings);
-            })
-        );
+        // Listen for settings changes (tracked automatically by BaseManager)
+        this.subscribe(GameEvents.SETTING_AUDIO_CHANGED, (settings: AudioSettings) => {
+            this.handleSettingsChange(settings);
+        });
+        
+        // Listen for first user interaction to start audio context
+        this.setupUserInteractionListener();
     }
 
     /**
@@ -85,8 +89,24 @@ export class AudioManager {
      * Update volumes of all playing sounds
      */
     private updateAllVolumes(): void {
-        // In browser, this would update p5.SoundFile volumes
-        // For now, this is a placeholder for when we integrate p5.sound
+        // Update currently playing BGM volume
+        if (this.currentBGM) {
+            const sound = this.sounds.get(this.currentBGM as SoundKey);
+            if (sound && sound.isPlaying && sound.isPlaying()) {
+                const soundConfig = AUDIO_SOUNDS[this.currentBGM as SoundKey];
+                const finalVolume = this.masterVolume * this.BGMVolume * soundConfig.volume;
+                sound.setVolume(finalVolume);
+            }
+        }
+        
+        // Emit event for UI updates
+        this.emit('AUDIO_VOLUME_CHANGED', {
+            master: this.masterVolume,
+            bgm: this.BGMVolume,
+            sfx: this.sfxVolume,
+            voice: this.voiceVolume,
+            system: this.systemVolume
+        });
     }
 
     /**
@@ -285,8 +305,9 @@ export class AudioManager {
     /**
      * Play a sound by key
      * @param key - Sound key to play
+     * @param restart - If true, restart sound even if already playing (for previews)
      */
-    public play(key: SoundKey): void {
+    public play(key: SoundKey, restart: boolean = false): void {
         const sound = this.sounds.get(key);
         if (!sound) {
             // Silently fail if sound not loaded (asset may not exist yet)
@@ -300,8 +321,12 @@ export class AudioManager {
         if (category === 'VOICE' && this.getEffectiveVoiceVolume() === 0) return;
         if (category === 'SYSTEM' || category === 'UI' && this.getEffectiveSystemVolume() === 0) return;
 
-        // Don't play if already playing (prevents overlapping)
-        if (sound.isPlaying && sound.isPlaying()) {
+        // If restart is true, stop and restart the sound (for volume preview)
+        if (restart && sound.isPlaying && sound.isPlaying()) {
+            sound.stop();
+        }
+        // Otherwise don't play if already playing (prevents overlapping)
+        else if (sound.isPlaying && sound.isPlaying()) {
             return;
         }
 
@@ -346,6 +371,21 @@ export class AudioManager {
     public playBGM(key: SoundKey, loop: boolean = true): void {
         const sound = this.sounds.get(key);
         if (!sound) {
+            return;
+        }
+
+        // If audio context hasn't started yet (no user interaction), queue the BGM
+        if (!this.audioContextStarted) {
+            this.pendingBGM = { key, loop };
+            console.log('⏸️ Audio queued - waiting for user interaction');
+            return;
+        }
+
+        // If same BGM is already playing, just update volume and continue
+        if (this.currentBGM === key && sound.isPlaying && sound.isPlaying()) {
+            const soundConfig = AUDIO_SOUNDS[key];
+            const finalVolume = this.masterVolume * this.BGMVolume * soundConfig.volume;
+            sound.setVolume(finalVolume);
             return;
         }
 
@@ -420,7 +460,7 @@ export class AudioManager {
      */
     public isBGMMuted(): boolean {
         if (this.getEffectiveBGMVolume() === 0) {
-            EventBus.emit('BGM_MUTED');
+            this.emit('BGM_MUTED');
             return true;
         } return false;
     }
@@ -433,7 +473,7 @@ export class AudioManager {
      */
     public isSFXMuted(): boolean {
         if (this.getEffectiveSFXVolume() === 0) {
-            EventBus.emit('SFX_MUTED');
+            this.emit('SFX_MUTED');
             return true;
         } return false;
     }
@@ -443,12 +483,11 @@ export class AudioManager {
      * Maps game events to sound effects
      */
     private setupEventListeners(): void {
-        // Subscribe to all mapped events
+        // Subscribe to all mapped events (tracked automatically by BaseManager)
         Object.entries(AUDIO_EVENT_MAPPINGS).forEach(([eventName, soundKey]) => {
-            const unsubscribe = EventBus.on(eventName, () => {
+            this.subscribe(eventName, () => {
                 this.play(soundKey);
             });
-            this.unsubscribeFunctions.push(unsubscribe);
         });
     }
 
@@ -467,11 +506,39 @@ export class AudioManager {
     }
 
     /**
+     * Setup listener for first user interaction to start audio context
+     */
+    private setupUserInteractionListener(): void {
+        const startAudio = () => {
+            if (this.audioContextStarted) return;
+            
+            this.audioContextStarted = true;
+            console.log('🔊 Audio context started');
+            
+            // Play pending BGM if any
+            if (this.pendingBGM) {
+                const { key, loop } = this.pendingBGM;
+                this.pendingBGM = null;
+                this.playBGM(key, loop);
+            }
+            
+            // Remove listeners after first interaction
+            document.removeEventListener('click', startAudio);
+            document.removeEventListener('keydown', startAudio);
+            document.removeEventListener('touchstart', startAudio);
+        };
+        
+        // Listen for any user interaction
+        document.addEventListener('click', startAudio);
+        document.addEventListener('keydown', startAudio);
+        document.addEventListener('touchstart', startAudio);
+    }
+
+    /**
      * Cleanup - unsubscribe from all events
      */
     public cleanup(): void {
-        this.unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
-        this.unsubscribeFunctions = [];
+        this.cleanupSubscriptions(); // Use BaseManager's cleanup
         this.stopAll();
     }
 }

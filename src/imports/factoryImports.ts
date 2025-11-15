@@ -41,7 +41,8 @@ export { EventBus, GameEvents } from '../utils/eventBus';
 // ============================================================================
 // UTILITIES
 // ============================================================================
-export { setupEntitySpriteBinding, gridToWorld } from '../utils/helpers';
+export { setupEntitySpriteBinding, gridToWorld, gridToWorldCenter, gridToWorldPosition } from '../utils/helpers';
+export type { TilePosition } from '../utils/helpers';
 export { TILE_SIZE } from '../world/TileSystem';
 
 // ============================================================================

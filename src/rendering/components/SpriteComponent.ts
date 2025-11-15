@@ -102,6 +102,9 @@ export class SpriteComponent implements Renderable {
      * Render sprite to graphics context
      */
     render(graphics: any): void {
+        // Set image mode to CENTER so sprites are drawn centered on their position
+        graphics.imageMode((window as any).CENTER);
+        
         // If no sprite, render bright magenta placeholder
         if (!this.sprite) {
             console.warn(`⚠️ NULL sprite at (${this.x}, ${this.y}) layer=${this.layer} depth=${this.depth}`);

@@ -226,6 +226,8 @@ export class AudioSettingsScene implements IScene {
         this.sfxVolumeSlider.setArrowStep(0.05);
         this.sfxVolumeSlider.onChange((value: number) => {
             this.audioManager.setSFXVolume(value);
+            // Play preview sound (use LIGHTNING as SFX example) - restart to hear volume changes
+            this.audioManager.play('LIGHTNING', true);
         });
         
         // Voices and System sliders (currently map to SFX, can be extended later)
@@ -241,6 +243,8 @@ export class AudioSettingsScene implements IScene {
         this.voicesVolumeSlider.onChange((value: number) => {
             // Could extend AudioManager to have separate voices volume
             this.audioManager.setVoiceVolume(value);
+            // Play preview sound (ant voice) - restart to hear volume changes
+            this.audioManager.play('ANT_FOCUSED_1', true);
         });
         
         this.systemVolumeSlider = new SliderWithArrowsComponent(
@@ -255,6 +259,8 @@ export class AudioSettingsScene implements IScene {
         this.systemVolumeSlider.onChange((value: number) => {
             // Could extend AudioManager to have separate system volume
             this.audioManager.setSystemVolume(value);
+            // Play preview sound (button click as UI/system example) - restart to hear volume changes
+            this.audioManager.play('BUTTON_CLICK', true);
         });
         
         // Create labels using config positions

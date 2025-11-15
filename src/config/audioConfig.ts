@@ -14,15 +14,15 @@ export const AUDIO_SOUNDS = {
     // =================================== Background Music ===================================
 
     MENU_THEME: { file: 'assets/sounds/bgMusic.mp3', volume: 0.8 },
-    DEV_ROOM_THEME: { file: 'assets/sounds/Prison.mp3', volume: 0.7 },
-    BOSS_THEME: { file: 'assets/sounds/music/boss_theme.mp3', volume: 0.9 },
+    DEV_ROOM_THEME: { file: 'assets/sounds/prison.mp3', volume: 0.7 },
+    BOSS_THEME: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/dabuu.wav', volume: 0.01 },
 
     // ==================================== Ant Sounds ====================================
 
     // Ants when focused_VOICE
-    ANT_FOCUSED_1: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/dabuu.wav', volume: 0.5 },
-    ANT_FOCUSED_2: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/scree.wav', volume: 0.5 },
-    ANT_FOCUSED_3: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/zug.wav', volume: 0.5 },
+    ANT_FOCUSED_1: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/dabuu.wav', volume: 1.0 },
+    ANT_FOCUSED_2: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/scree.wav', volume: 1.0 },
+    ANT_FOCUSED_3: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/zug.wav', volume: 1.0 },
 
     // Ants when attacked_VOICE
     ANT_ATTACKED_1: { file: 'assets/sounds/soundEffects/antNoises/attacking/forTheQueen.mp3', volume: 0.5 },
@@ -37,7 +37,7 @@ export const AUDIO_SOUNDS = {
 
     // Queen powers_SFX
     FIREBALL: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
-    LIGHTNING: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.8 },
+    LIGHTNING: { file: 'assets/sounds/lightning_strike.wav', volume: 0.5 },
     BLACKHOLE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
     TIDALWAVE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
     FINALFLASH: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.8 },

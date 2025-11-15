@@ -185,6 +185,46 @@ export function gridToWorldCenter(col: number, row: number, tileSize: number): W
     };
 }
 
+/**
+ * Tile position options for flexible entity placement
+ * Allows up to 9 entities per tile by placing them at different positions
+ */
+export type TilePosition = 'TL' | 'T' | 'TR' | 'L' | 'C' | 'R' | 'BL' | 'B' | 'BR';
+
+/**
+ * Convert grid coordinates to world coordinates with flexible positioning within the tile
+ * @param col - Grid column
+ * @param row - Grid row
+ * @param tileSize - Size of one tile in pixels
+ * @param position - Position within tile (TL=top-left, T=top-center, TR=top-right, L=left, C=center, R=right, BL=bottom-left, B=bottom, BR=bottom-right)
+ * @returns World position with specified offset within tile
+ */
+export function gridToWorldPosition(col: number, row: number, tileSize: number, position: TilePosition = 'C'): WorldPosition {
+    const baseX = col * tileSize;
+    const baseY = row * tileSize;
+    const quarter = tileSize / 4;
+    const half = tileSize / 2;
+    const threeQuarters = tileSize * 3 / 4;
+    
+    const offsets: Record<TilePosition, { x: number; y: number }> = {
+        'TL': { x: quarter, y: quarter },           // Top-left
+        'T':  { x: half, y: quarter },              // Top-center
+        'TR': { x: threeQuarters, y: quarter },     // Top-right
+        'L':  { x: quarter, y: half },              // Left-center
+        'C':  { x: half, y: half },                 // Center (default)
+        'R':  { x: threeQuarters, y: half },        // Right-center
+        'BL': { x: quarter, y: threeQuarters },     // Bottom-left
+        'B':  { x: half, y: threeQuarters },        // Bottom-center
+        'BR': { x: threeQuarters, y: threeQuarters } // Bottom-right
+    };
+    
+    const offset = offsets[position];
+    return {
+        x: baseX + offset.x,
+        y: baseY + offset.y
+    };
+}
+
 // Get neighboring grid cells (4-directional)
 export function getNeighbors4(col: number, row: number): GridCell[] {
     return [

@@ -60,7 +60,10 @@ export class TextRenderable implements Renderable {
         graphics.push();
         
         // Enable smooth rendering for better text quality
-        graphics.smooth();
+        // Set directly on context to avoid p5.js setAttributes warning
+        if (graphics.drawingContext) {
+            graphics.drawingContext.imageSmoothingEnabled = true;
+        }
         graphics.strokeJoin(graphics.ROUND);
         graphics.fill(this.color);
         graphics.strokeWeight(2);
