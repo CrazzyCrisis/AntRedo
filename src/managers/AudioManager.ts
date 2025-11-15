@@ -296,9 +296,9 @@ export class AudioManager {
         // check volumne levels, if at 0, don't play
         const category = this.getSoundCategory(key);
         if (category === 'BGM' && this.getEffectiveBGMVolume() === 0) return;
-        if ((category === 'SFX' || category === 'UI') && this.getEffectiveSFXVolume() === 0) return;
+        if (category === 'SFX' && this.getEffectiveSFXVolume() === 0) return;
         if (category === 'VOICE' && this.getEffectiveVoiceVolume() === 0) return;
-        if (category === 'SYSTEM' && this.getEffectiveSystemVolume() === 0) return;
+        if (category === 'SYSTEM' || category === 'UI' && this.getEffectiveSystemVolume() === 0) return;
 
         // Don't play if already playing (prevents overlapping)
         if (sound.isPlaying && sound.isPlaying()) {
@@ -307,7 +307,7 @@ export class AudioManager {
 
         // Calculate final volume
         const soundConfig = AUDIO_SOUNDS[key];
-        const categoryVolume = category === 'BGM' ? this.BGMVolume : this.sfxVolume;
+        const categoryVolume = category === 'BGM' ? this.BGMVolume : category === 'SFX' ? this.sfxVolume : category === 'VOICE' ? this.voiceVolume : this.systemVolume;
         const finalVolume = this.masterVolume * categoryVolume * soundConfig.volume;
 
         sound.setVolume(finalVolume);

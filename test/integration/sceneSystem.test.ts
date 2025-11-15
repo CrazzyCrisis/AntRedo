@@ -5,7 +5,8 @@ import { MenuScene } from '../../src/scenes/MenuScene';
 import { IScene } from '../../src/scenes/IScene';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { Renderer } from '../../src/rendering/Renderer';
-import { createMockP5 } from '../helpers/renderingMocks';
+import { AudioManager } from '../../src/managers/AudioManager';
+import { createMockP5, createMockSound } from '../helpers/renderingMocks';
 import { createMockImages, TEST_CANVAS, MAIN_MENU_BUTTONS } from '../helpers/menuTestConfig';
 
 /**
@@ -34,6 +35,16 @@ describe('Scene System Integration', () => {
         
         // Clear event bus
         EventBus.clear();
+        
+        // Mock audio sounds in AudioManager to prevent playback errors
+        const audioManager = AudioManager.getInstance();
+        const mockSound = createMockSound();
+        (audioManager as any).sounds = new Map([
+            ['MAIN_MENU_THEME', mockSound],
+            ['BUTTON_HOVER', mockSound],
+            ['BUTTON_CLICK', mockSound],
+            ['DEV_ROOM_THEME', mockSound]
+        ]);
         
         // Create fresh renderer
         renderer = new Renderer(mockP5 as any, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT);

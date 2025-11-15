@@ -28,7 +28,7 @@ export interface QueenPower {
  * - Keybind input (1-5 for powers)
  * - Death triggers game over
  * 
- * MODEL layer - NO RENDERING CODE
+ * MODEL layer
  */
 export class Queen extends GameObject {
     private factionId: string;

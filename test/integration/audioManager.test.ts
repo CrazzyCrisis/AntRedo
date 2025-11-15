@@ -217,7 +217,7 @@ describe('AudioManager Integration Tests', () => {
 
     describe('Sound Loading and Playback (Mock)', () => {
         it('should load sound without error', () => {
-            const mockSound = { isPlaying: () => false, setVolume: () => {}, play: () => {} };
+            const mockSound = { isPlaying: () => false, setSFXsetSFXVolume: () => {}, play: () => {} };
             
             expect(() => {
                 audioManager.loadSound('ANT_HIT', mockSound);
@@ -243,7 +243,7 @@ describe('AudioManager Integration Tests', () => {
         it('should track current music when played', () => {
             const mockSound = { 
                 isPlaying: () => false, 
-                setVolume: () => {}, 
+                setBGMVolume: () => {}, 
                 loop: () => {},
                 play: () => {}
             };

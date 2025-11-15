@@ -7,49 +7,70 @@ import { GameEvents } from '../utils/eventBus';
 
 /**
  * Sound definitions with file paths and default volumes
+ * Use assets/sounds/uiSounds/clicking/clickSound.mp3 for a default sound and replace later so the system does 
+ * not silently fail to find a sound
  */
 export const AUDIO_SOUNDS = {
-    // Music/BGM
+    // =================================== Background Music ===================================
+
     MENU_THEME: { file: 'assets/sounds/bgMusic.mp3', volume: 0.8 },
     DEV_ROOM_THEME: { file: 'assets/sounds/Prison.mp3', volume: 0.7 },
     BOSS_THEME: { file: 'assets/sounds/music/boss_theme.mp3', volume: 0.9 },
-    
-    // UI sounds
-    BUTTON_CLICK: { file: 'assets/sounds/ui_click.wav', volume: 0.5 },
-    BUTTON_HOVER: { file: 'assets/sounds/ui_hover.wav', volume: 0.3 },
-    MENU_OPEN: { file: 'assets/sounds/menu_open.wav', volume: 0.4 },
-    MENU_CLOSE: { file: 'assets/sounds/menu_close.wav', volume: 0.4 },
-    
-    // Ant sounds
-    ANT_HIT: { file: 'assets/sounds/ant_hit.wav', volume: 0.5 },
-    ANT_DEATH: { file: 'assets/sounds/ant_death.wav', volume: 0.6 },
-    ANT_ATTACK: { file: 'assets/sounds/ant_attack.wav', volume: 0.5 },
-    
-    // Queen powers
-    FIREBALL: { file: 'assets/sounds/fireball.wav', volume: 0.7 },
-    LIGHTNING: { file: 'assets/sounds/lightning.wav', volume: 0.8 },
-    BLACKHOLE: { file: 'assets/sounds/blackhole.wav', volume: 0.7 },
-    TIDALWAVE: { file: 'assets/sounds/tidalwave.wav', volume: 0.7 },
-    FINALFLASH: { file: 'assets/sounds/finalflash.wav', volume: 0.8 },
-    
-    // Building sounds
-    BUILDING_PLACE: { file: 'assets/sounds/building_place.wav', volume: 0.6 },
-    BUILDING_COMPLETE: { file: 'assets/sounds/building_complete.wav', volume: 0.6 },
-    BUILDING_DESTROY: { file: 'assets/sounds/building_destroy.wav', volume: 0.6 },
-    
-    // Resource sounds
-    RESOURCE_COLLECT: { file: 'assets/sounds/resource_collect.wav', volume: 0.5 },
-    RESOURCE_DEPOSIT: { file: 'assets/sounds/resource_deposit.wav', volume: 0.5 },
-    
-    // Combat sounds
-    PROJECTILE_FIRE: { file: 'assets/sounds/projectile_fire.wav', volume: 0.5 },
-    PROJECTILE_HIT: { file: 'assets/sounds/projectile_hit.wav', volume: 0.6 },
-    EXPLOSION: { file: 'assets/sounds/explosion.wav', volume: 0.7 },
-    
-    // Boss sounds
-    BOSS_SPAWN: { file: 'assets/sounds/boss_spawn.wav', volume: 0.8 },
-    BOSS_DEATH: { file: 'assets/sounds/boss_death.wav', volume: 0.8 },
-    BOSS_ATTACK: { file: 'assets/sounds/boss_attack.wav', volume: 0.7 }
+
+    // ==================================== Ant Sounds ====================================
+
+    // Ants when focused_VOICE
+    ANT_FOCUSED_1: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/dabuu.wav', volume: 0.5 },
+    ANT_FOCUSED_2: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/scree.wav', volume: 0.5 },
+    ANT_FOCUSED_3: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/zug.wav', volume: 0.5 },
+
+    // Ants when attacked_VOICE
+    ANT_ATTACKED_1: { file: 'assets/sounds/soundEffects/antNoises/attacking/forTheQueen.mp3', volume: 0.5 },
+    ANT_ATTACKED_2: { file: 'assets/sounds/soundEffects/antNoises/attacking/hissssss.wav', volume: 0.5 },
+
+    // Ant SFX sounds
+    ANT_HIT: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.5 },
+    ANT_DEATH: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.6 },
+    ANT_ATTACK: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.5 },
+
+    // =================================== Queen Sounds =======================================
+
+    // Queen powers_SFX
+    FIREBALL: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
+    LIGHTNING: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.8 },
+    BLACKHOLE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
+    TIDALWAVE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
+    FINALFLASH: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.8 },
+    // =================================== Boss Sounds =========================================
+
+    BOSS_SPAWN: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.8 },
+    BOSS_DEATH: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.8 },
+    BOSS_ATTACK: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
+
+    // =================================== Building Sounds =====================================
+
+    BUILDING_PLACE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.6 },
+    BUILDING_COMPLETE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.6 },
+    BUILDING_DESTROY: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.6 },
+
+    // =================================== UI Sounds =====================================
+
+    BUTTON_CLICK: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.5 },
+    BUTTON_HOVER: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.3 },
+    MENU_OPEN: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.4 },
+    MENU_CLOSE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.4 },
+
+    // =================================== Combat Sounds =====================================
+
+    PROJECTILE_FIRE: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.5 },
+    PROJECTILE_HIT: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.6 },
+    EXPLOSION: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.7 },
+
+    // =================================== Resource Sounds =====================================
+
+    RESOURCE_COLLECT: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.5 },
+    RESOURCE_DEPOSIT: { file: 'assets/sounds/uiSounds/clicking/clickSound.mp3', volume: 0.5 },
+
 } as const;
 
 /**
@@ -91,13 +112,15 @@ export const AUDIO_EVENT_MAPPINGS: Record<string, keyof typeof AUDIO_SOUNDS> = {
     [GameEvents.BOSS_SPAWNED]: 'BOSS_SPAWN',
     [GameEvents.BOSS_DIED]: 'BOSS_DEATH',
     [GameEvents.BOSS_ATTACKED]: 'BOSS_ATTACK'
+
+
 };
 
 /**
  * Sound categories for grouped volume control
  */
 export const AUDIO_CATEGORIES = {
-    MUSIC: ['MENU_THEME', 'DEV_ROOM_THEME', 'BOSS_THEME'],
+    BGM: ['MENU_THEME', 'DEV_ROOM_THEME', 'BOSS_THEME'],
     SFX: [
         'ANT_HIT', 'ANT_DEATH', 'ANT_ATTACK',
         'BUILDING_PLACE', 'BUILDING_COMPLETE', 'BUILDING_DESTROY',
@@ -106,8 +129,12 @@ export const AUDIO_CATEGORIES = {
         'BOSS_SPAWN', 'BOSS_DEATH', 'BOSS_ATTACK',
         'FIREBALL', 'LIGHTNING', 'BLACKHOLE', 'TIDALWAVE', 'FINALFLASH'
     ],
-    UI: [
+    SYSTEM: [
         'BUTTON_CLICK', 'BUTTON_HOVER', 'MENU_OPEN', 'MENU_CLOSE'
+    ],
+    VOICE: [
+        'ANT_FOCUSED_1', 'ANT_FOCUSED_2', 'ANT_FOCUSED_3',
+        'ANT_ATTACKED_1', 'ANT_ATTACKED_2'
     ]
 } as const;
 

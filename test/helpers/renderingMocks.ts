@@ -99,6 +99,19 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         triangle: function() {
             this._triangleDrawn = true;
         },
+        noSmooth: function() {
+            this._noSmoothCalled = true;
+        },
+        smooth: function() {
+            this._smoothCalled = true;
+        },
+        strokeJoin: function() {
+            this._strokeJoinSet = true;
+        },
+        strokeCap: function() {
+            this._strokeCapSet = true;
+        },
+        // Tracking flags
         _cleared: false,
         _imageDrawn: false,
         _pushCalled: false,
@@ -118,7 +131,61 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         _textAlignSet: false,
         _lineDrawn: false,
         _ellipseDrawn: false,
-        _triangleDrawn: false
+        _triangleDrawn: false,
+        _noSmoothCalled: false,
+        _smoothCalled: false,
+        _strokeJoinSet: false,
+        _strokeCapSet: false
+    };
+}
+
+/**
+ * Creates a mock p5.SoundFile object with all necessary methods
+ */
+export function createMockSound() {
+    return {
+        _volume: 1.0,
+        _isPlaying: false,
+        _isPaused: false,
+        _isLooping: false,
+        
+        setVolume: function(vol: number) {
+            this._volume = vol;
+        },
+        
+        play: function() {
+            this._isPlaying = true;
+            this._isPaused = false;
+        },
+        
+        stop: function() {
+            this._isPlaying = false;
+            this._isPaused = false;
+            this._isLooping = false;
+        },
+        
+        pause: function() {
+            this._isPaused = true;
+            this._isPlaying = false;
+        },
+        
+        loop: function() {
+            this._isPlaying = true;
+            this._isPaused = false;
+            this._isLooping = true;
+        },
+        
+        isPlaying: function() {
+            return this._isPlaying;
+        },
+        
+        isPaused: function() {
+            return this._isPaused;
+        },
+        
+        isLooping: function() {
+            return this._isLooping;
+        }
     };
 }
 
