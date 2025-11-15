@@ -74,6 +74,14 @@ export class ResourceManager {
     }
 
     /**
+     * Public method to initialize a faction (for testing)
+     * @param factionId - Faction ID
+     */
+    public initializeFaction(factionId: string): void {
+        this.initializeFactionResources(factionId);
+    }
+
+    /**
      * Add resources to faction
      * @param factionId - Faction ID
      * @param type - Resource type
@@ -229,5 +237,12 @@ export class ResourceManager {
      */
     public clear(): void {
         this.resources.clear();
+    }
+
+    /**
+     * Reinitialize EventBus listeners (for testing after EventBus.clear())
+     */
+    public reinitializeListeners(): void {
+        this.setupEventListeners();
     }
 }

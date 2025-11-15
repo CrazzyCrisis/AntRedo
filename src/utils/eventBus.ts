@@ -294,7 +294,9 @@ export const GameEvents = {
     // Power effect events
     LIGHTNING_STRIKE: 'power:lightning:strike',
     FIREBALL_EXPLODE: 'power:fireball:explode',
+    BLACKHOLE_ACTIVATED: 'power:blackhole:activated',
     BLACKHOLE_PULL: 'power:blackhole:pull',
+    TIDALWAVE_ACTIVATED: 'power:tidalwave:activated',
     TIDALWAVE_PUSH: 'power:tidalwave:push',
     FINALFLASH_ACTIVATED: 'power:finalflash:activated',
     SOOT_STAIN_CREATED: 'power:soot:created',

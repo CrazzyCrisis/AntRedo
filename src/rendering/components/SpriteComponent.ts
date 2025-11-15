@@ -16,6 +16,9 @@ export class SpriteComponent implements Renderable {
     private height: number;
     private offsetX: number;
     private offsetY: number;
+    private tintColor: { r: number; g: number; b: number; a?: number } | null = null;
+    public scale: number = 1;
+    public rotation: number = 0; // Radians
 
     constructor(
         sprite: any,
@@ -64,17 +67,78 @@ export class SpriteComponent implements Renderable {
     }
 
     /**
+     * Set tint color for faction recoloring
+     * @param color RGB color object {r, g, b} (0-255) or null to disable tint
+     */
+    setTint(color: { r: number; g: number; b: number; a?: number } | null): void {
+        this.tintColor = color;
+    }
+
+    /**
+     * Set scale (multiplier for width/height)
+     */
+    setScale(scale: number): void {
+        this.scale = scale;
+    }
+
+    /**
+     * Set rotation in radians
+     */
+    setRotation(rotation: number): void {
+        this.rotation = rotation;
+    }
+
+    /**
      * Render sprite to graphics context
      */
     render(graphics: any): void {
         if (!this.sprite) return;
         
-        graphics.image(
-            this.sprite,
-            this.x + this.offsetX,
-            this.y + this.offsetY,
-            this.width,
-            this.height
-        );
+        // Save graphics state if transform needed
+        if (this.rotation !== 0 || this.scale !== 1) {
+            graphics.push();
+            graphics.translate(this.x + this.offsetX + (this.width * this.scale) / 2, 
+                             this.y + this.offsetY + (this.height * this.scale) / 2);
+            if (this.rotation !== 0) graphics.rotate(this.rotation);
+            if (this.scale !== 1) graphics.scale(this.scale);
+        }
+        
+        // Apply tint if set (for faction recoloring)
+        if (this.tintColor) {
+            if (this.tintColor.a !== undefined) {
+                graphics.tint(this.tintColor.r, this.tintColor.g, this.tintColor.b, this.tintColor.a);
+            } else {
+                graphics.tint(this.tintColor.r, this.tintColor.g, this.tintColor.b);
+            }
+        }
+        
+        // Draw sprite (centered if transformed, otherwise top-left)
+        if (this.rotation !== 0 || this.scale !== 1) {
+            graphics.image(
+                this.sprite,
+                -(this.width * this.scale) / 2,
+                -(this.height * this.scale) / 2,
+                this.width * this.scale,
+                this.height * this.scale
+            );
+        } else {
+            graphics.image(
+                this.sprite,
+                this.x + this.offsetX,
+                this.y + this.offsetY,
+                this.width,
+                this.height
+            );
+        }
+        
+        // Reset tint after drawing
+        if (this.tintColor) {
+            graphics.noTint();
+        }
+        
+        // Restore graphics state if transformed
+        if (this.rotation !== 0 || this.scale !== 1) {
+            graphics.pop();
+        }
     }
 }

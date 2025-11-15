@@ -298,4 +298,11 @@ export class BuildingManager {
         this.buildings.clear();
         this.buildingsByFaction.clear();
     }
+
+    /**
+     * Reinitialize EventBus listeners (for testing after EventBus.clear())
+     */
+    public reinitializeListeners(): void {
+        this.setupEventListeners();
+    }
 }

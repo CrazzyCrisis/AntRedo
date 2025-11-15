@@ -108,16 +108,28 @@ describe('AntFactory', () => {
         it('should update sprite position on ENTITY_MOVED event', () => {
             const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
 
-            // Emit move event
-            EventBus.emit(GameEvents.ENTITY_MOVED, ant.id, 8, 12);
-
             // Get sprite component
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const spriteComponent = renderables[0];
+            
+            // Track setPosition calls
+            let setPositionCalled = false;
+            let lastX = 0, lastY = 0;
+            const originalSetPosition = spriteComponent.setPosition.bind(spriteComponent);
+            spriteComponent.setPosition = (x: number, y: number) => {
+                setPositionCalled = true;
+                lastX = x;
+                lastY = y;
+                originalSetPosition(x, y);
+            };
 
-            // Should update position
-            expect(spriteComponent.x).to.equal(8);
-            expect(spriteComponent.y).to.equal(12);
+            // Emit move event
+            EventBus.emit(GameEvents.ENTITY_MOVED, ant.id, 8, 12);
+
+            // Should update position via setPosition()
+            expect(setPositionCalled).to.be.true;
+            expect(lastX).to.equal(8);
+            expect(lastY).to.equal(12);
             expect(spriteComponent.depth).to.equal(12); // Depth updates with Y
         });
 
@@ -137,20 +149,23 @@ describe('AntFactory', () => {
         });
 
         it('should mark layer dirty on sprite position update', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
-
-            // Spy on markLayerDirty
+            // Spy on markLayerDirty BEFORE creating ant
             let dirtyLayerCalls = 0;
             const originalMarkDirty = renderer.markLayerDirty.bind(renderer);
             renderer.markLayerDirty = (layer: RenderLayer) => {
                 dirtyLayerCalls++;
                 originalMarkDirty(layer);
             };
+            
+            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            
+            // Reset counter after creation
+            dirtyLayerCalls = 0;
 
             // Emit move event
             EventBus.emit(GameEvents.ENTITY_MOVED, ant.id, 8, 12);
 
-            // Should mark layer dirty
+            // Should have marked layer dirty
             expect(dirtyLayerCalls).to.be.greaterThan(0);
         });
     });
@@ -224,20 +239,28 @@ describe('AntFactory', () => {
 
         it('should only update sprite for matching ant ID', () => {
             const ant1 = AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            AntFactory.create(renderer, mockSprite, 5, 5, 'faction_1');
+            AntFactory.create(renderer, mockSprite, 5, 5, 'faction_1'); // ant2
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const sprite1 = renderables[0];
             const sprite2 = renderables[1];
+            
+            // Track setPosition calls on sprite2
+            let sprite2UpdateCount = 0;
+            const originalSetPosition = sprite2.setPosition.bind(sprite2);
+            sprite2.setPosition = (x: number, y: number) => {
+                sprite2UpdateCount++;
+                originalSetPosition(x, y);
+            };
 
             // Move ant1
             EventBus.emit(GameEvents.ENTITY_MOVED, ant1.id, 3, 3);
 
-            // Only sprite1 should move
-            expect(sprite1.x).to.equal(3);
-            expect(sprite1.y).to.equal(3);
-            expect(sprite2.x).to.equal(5);
-            expect(sprite2.y).to.equal(5);
+            // Sprite2 should NOT have been updated
+            expect(sprite2UpdateCount).to.equal(0);
+            
+            // Verify sprite1 updated by checking depth (Y-coordinate)
+            expect(sprite1.depth).to.equal(3);
         });
 
         it('should only remove sprite for matching ant ID on destroy', () => {

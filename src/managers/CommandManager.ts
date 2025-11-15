@@ -298,4 +298,11 @@ export class CommandManager {
 
         this.activeCommands.clear();
     }
+
+    /**
+     * Reinitialize EventBus listeners (for testing after EventBus.clear())
+     */
+    public reinitializeListeners(): void {
+        this.setupEventListeners();
+    }
 }

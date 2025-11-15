@@ -219,4 +219,11 @@ export class PathfindingManager {
         this.width = 0;
         this.height = 0;
     }
+
+    /**
+     * Reinitialize EventBus listeners (for testing after EventBus.clear())
+     */
+    public reinitializeListeners(): void {
+        this.setupEventListeners();
+    }
 }

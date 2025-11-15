@@ -259,4 +259,11 @@ export class PowerManager {
     public clear(): void {
         this.powers.clear();
     }
+
+    /**
+     * Reinitialize EventBus listeners (for testing after EventBus.clear())
+     */
+    public reinitializeListeners(): void {
+        this.setupEventListeners();
+    }
 }

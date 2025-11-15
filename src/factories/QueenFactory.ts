@@ -65,7 +65,7 @@ export class QueenFactory {
         // 3. Setup automatic sprite binding with helper (handles registration, movement, destruction)
         setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord);
 
-        // 4. Additional cleanup: Listen to ENTITY_DIED for faction tracking (specific to queens)
+        // 4. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
         const originalCleanup = (queen as any)._cleanup;
         const diedListener = EventBus.once('ENTITY_DIED', (entityId: string) => {
             if (entityId === queen.id) {
@@ -74,10 +74,10 @@ export class QueenFactory {
             }
         });
 
-        // 5. Extend cleanup to include faction tracking and died listener
+        // 5. Extend cleanup to include faction tracking (handles both destroy() and death)
         (queen as any)._cleanup = () => {
             QueenFactory.activeQueens.delete(factionId); // Remove from active queens
-            originalCleanup();
+            originalCleanup(); // Call helper's cleanup (handles ENTITY_DESTROYED)
             EventBus.off('ENTITY_DIED', diedListener);
         };
 

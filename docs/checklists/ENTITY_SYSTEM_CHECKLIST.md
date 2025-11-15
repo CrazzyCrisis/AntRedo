@@ -486,38 +486,42 @@
 
 ## Phase 7: Rendering Integration (VIEW)
 
-### Task 7.1: Shader System for Faction Recoloring (VIEW)
-- [ ] **Option A: GLSL Shaders** (better performance, more complex)
+### Task 7.1: Shader System for Faction Recoloring (VIEW) ✅
+- [x] **Option B: p5.js tint()** (simpler, implemented first)
+  - [x] Added `tintColor` property to SpriteComponent
+  - [x] Added `setTint(color)` method to set/clear tint
+  - [x] In sprite render: `tint(factionColor.r, factionColor.g, factionColor.b)`
+  - [x] Reset tint after drawing: `noTint()`
+- [ ] **Option A: GLSL Shaders** (deferred - only if performance issues)
   - [ ] Research p5.js shader API (`createShader()`, `shader()`)
   - [ ] Create `src/rendering/shaders/factionRecolorShader.glsl`
   - [ ] Vertex shader: Pass texture coordinates
   - [ ] Fragment shader: Replace specific color (e.g., white) with faction color
   - [ ] Apply in AntFactory: `sprite.setShader(factionShader, factionColor)`
-- [ ] **Option B: p5.js tint()** (simpler, may have performance cost)
-  - [ ] In sprite render: `tint(factionColor.r, factionColor.g, factionColor.b)`
-  - [ ] Reset tint after drawing: `noTint()`
-- [ ] **Recommendation:** Start with Option B (tint), upgrade to Option A if performance issues
+- [x] **Recommendation:** Started with Option B (tint), upgrade to Option A if performance issues
 - [ ] **TEST:** Color application, multiple factions, sprite rendering
 
-### Task 7.2: Entity Sprite Components (VIEW)
-- [ ] Update `src/rendering/components/SpriteComponent.ts` (if exists) or create
-  - [ ] Properties: `sprite`, `x`, `y`, `scale`, `rotation`, `tintColor`, `shader`
-  - [ ] Methods: `render(graphics)`, `setTint(color)`, `setShader(shader)`, `setPosition(x, y)`
-  - [ ] Render: Apply tint/shader if present, draw sprite, reset
-  - [ ] EventBus listeners: Update position on `ENTITY_MOVED`
-  - [ ] **TEST:** Rendering, tint application, position updates
+### Task 7.2: Entity Sprite Components (VIEW) ✅
+- [x] SpriteComponent already exists with complete functionality
+  - [x] Properties: `sprite`, `x`, `y`, `scale`, `rotation`, `tintColor`, `width`, `height`, `offsetX`, `offsetY`
+  - [x] Methods: `render(graphics)`, `setTint(color)`, `setPosition(x, y)`, `setScale(scale)`, `setRotation(rotation)`
+  - [x] Render: Apply tint/shader if present, apply transforms (rotate/scale), draw sprite, reset
+  - [x] EventBus integration: Position updates handled by factories via setupEntitySpriteBinding helper
+- [ ] **TEST:** Rendering, tint application, position updates, scale, rotation
 
-### Task 7.3: Power Visual Effects (VIEW)
-- [ ] Create `src/rendering/effects/` for power effects
-  - [ ] **Lightning:** Bolt sprite from queen to target, flash effect, knockback animation
-  - [ ] **Fireball:** Projectile sprite with trail, explosion sprite on impact, fire particles for burn
-  - [ ] **Blackhole:** Vortex sprite, spiral particle effect, entities pulled visually
-  - [ ] **Tidalwave:** Expanding wave sprite, ripple effect, push animation
-  - [ ] **FinalFlash:** Screen flash (white overlay fade), particle burst
-  - [ ] **Soot stains:** Dark circle sprite on ground, fades over time
-  - [ ] All effects registered with Renderer on appropriate layers
-  - [ ] EventBus listeners: Create effects on power events
-  - [ ] **TEST:** Effect creation, timing, cleanup
+### Task 7.3: Power Visual Effects (VIEW) ✅
+- [x] Created `src/rendering/effects/PowerEffects.ts` with effect system
+  - [x] **Lightning:** Jagged bolt sprite with segments, flash effect, fades over 300ms
+  - [x] **Fireball:** Explosion sprite on impact, expanding rings (fire + bright center), 500ms duration
+  - [x] **Blackhole:** Rotating vortex sprite, spiral effect, duration-based, purple color
+  - [x] **Tidalwave:** Expanding wave rings, ripple effect, blue water color, 600ms duration
+  - [x] **FinalFlash:** Screen flash (white overlay fade in/out), 1 second duration
+  - [x] **Soot stains:** Dark circle sprite on ground, slow fade over 10-15 seconds
+  - [x] All effects extend TemporaryEffect base class with lifetime management
+  - [x] EffectManager singleton handles creation, updates, and cleanup
+  - [x] Effects registered with Renderer on appropriate layers
+  - [x] EventBus listeners: Create effects on power events (LIGHTNING_STRIKE, FIREBALL_EXPLODE, etc.)
+- [ ] **TEST:** Effect creation, timing, cleanup, visual appearance
 
 ### Task 7.4: Vision Cone Visualization (VIEW - Debug)
 - [ ] Create debug rendering for boss vision cone
