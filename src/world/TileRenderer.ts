@@ -6,9 +6,6 @@
  * - Support base tile sprites + frill overlays
  * - Grid overlay rendering
  * - Fallback to colored rectangles when sprites disabled
- * 
- * Performance:
- * - Camera culling reduces draw calls from ~10,000 to ~300 (60x faster!)
  * - Only renders tiles visible in camera view + small margin
  */
 
@@ -17,6 +14,8 @@ import { TileFrillSystem } from './TileEdgeSystem';
 import { TILE_SIZE } from './TileSystem';
 import { Camera } from '../rendering/Camera';
 import { TILE_CONFIG } from '../config/tileConfig';
+import { EventBus, GameEvents } from '../utils/eventBus';
+import { RenderLayer } from '../rendering/RenderLayer';
 
 export interface TileRenderConfig {
     /** Map of tile type to sprite image */
@@ -169,5 +168,24 @@ export class TileRenderer {
             // Reset alpha
             (graphics as any).drawingContext.globalAlpha = 1.0;
         };
+    }
+    
+    /**
+     * Force a tile layer rerender by marking it dirty via EventBus.
+     * This triggers the Renderer to redraw the ground layer on the next frame.
+     * 
+     * Use cases:
+     * - After changing tile types dynamically
+     * - After toggling sprite settings (USE_SPRITES, USE_EDGES)
+     * - After loading new tile sprites
+     * - When you want to refresh the display without waiting for camera movement
+     * 
+     * @param includeDecorations - Also mark ground decorations layer as dirty (default: true)
+     */
+    static forceRerender(includeDecorations: boolean = true): void {
+        EventBus.emit(GameEvents.LAYER_DIRTY, RenderLayer.GROUND);
+        if (includeDecorations) {
+            EventBus.emit(GameEvents.LAYER_DIRTY, RenderLayer.GROUND_DECORATIONS);
+        }
     }
 }

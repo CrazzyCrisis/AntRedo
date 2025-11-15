@@ -585,10 +585,14 @@ export function setupEntitySpriteBinding(
     });
     
     // Listen for entity destruction - cleanup sprite
-    const destroyListener = EventBus.once(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+    // CRITICAL: Use EventBus.on() NOT once() because once() unsubscribes after first event,
+    // and we need to check entity.id for every ENTITY_DESTROYED event
+    const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
         if (entityId === entity.id) {
+            console.log(`[setupEntitySpriteBinding] Cleaning up sprite for ${entityId}`);
             unregister();
             EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+            EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
         }
     });
     
@@ -603,6 +607,85 @@ export function setupEntitySpriteBinding(
 // ============================================================================
 // EVENTBUS EMIT HELPERS
 // ============================================================================
+
+/**
+ * Create a tile background renderable for static scenes (menus, etc.)
+ * Generates procedural tile world and returns a renderable object for the Renderer.
+ * 
+ * @param canvasWidth - Canvas width in pixels
+ * @param canvasHeight - Canvas height in pixels
+ * @param tileSprites - Map of tile type to sprite image
+ * @param _tileEdgeSprites - Map of frill path to sprite image (optional, reserved for future use)
+ * @param seed - Random seed for world generation (default: 42)
+ * @param worldGenConfig - World generation config (optional, uses DEFAULT_WORLD_GEN_CONFIG)
+ * @returns Object with renderable and unregister function
+ * 
+ * @example
+ * ```typescript
+ * const { renderable, cleanup } = createTileBackgroundRenderable(
+ *     800, 600, tileSprites, tileEdgeSprites
+ * );
+ * const unregister = renderer.register(renderable);
+ * // Later: cleanup()
+ * ```
+ */
+export function createTileBackgroundRenderable(
+    canvasWidth: number,
+    canvasHeight: number,
+    tileSprites: { [key: number]: any },
+    _tileEdgeSprites?: { [path: string]: any },
+    seed: number = Date.now(),
+    worldGenConfig?: any
+): { renderable: any; cleanup: () => void } {
+    // Dynamic imports to avoid circular dependencies
+    const { WorldGenerator } = require('../world/WorldGenerator');
+    const { TileGrid } = require('../world/TileGrid');
+    const { TILE_SIZE } = require('../world/TileSystem');
+    const { TILE_CONFIG } = require('../config/tileConfig');
+    const { DEFAULT_WORLD_GEN_CONFIG } = require('../config/worldGenConfig');
+    const { RenderLayer } = require('../rendering/RenderLayer');
+    
+    // Calculate world size to cover canvas
+    const worldWidth = Math.ceil(canvasWidth / TILE_SIZE) + 4; // Extra tiles for coverage
+    const worldHeight = Math.ceil(canvasHeight / TILE_SIZE) + 4;
+    
+    // Generate world
+    const config = worldGenConfig || DEFAULT_WORLD_GEN_CONFIG;
+    const worldGenerator = new WorldGenerator(config);
+    const gridData = worldGenerator.generate(worldWidth, worldHeight, seed);
+    const tileGrid = new TileGrid(gridData);
+    
+    // Calculate offset to center world around (0, 0)
+    const offsetX = -(worldWidth * TILE_SIZE) / 2;
+    const offsetY = -(worldHeight * TILE_SIZE) / 2;
+    
+    // Create renderable
+    const renderable = {
+        depth: 0,
+        layer: RenderLayer.GROUND,
+        render: (graphics: any) => {
+            const grid = tileGrid.getGrid();
+            for (let row = 0; row < grid.length; row++) {
+                for (let col = 0; col < grid[row].length; col++) {
+                    const tile = grid[row][col];
+                    const x = (col * TILE_SIZE) + offsetX; // Apply offset to center
+                    const y = (row * TILE_SIZE) + offsetY; // Apply offset to center
+                    
+                    if (TILE_CONFIG.USE_SPRITES && tileSprites[tile.type]) {
+                        graphics.image(tileSprites[tile.type], x, y, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+    };
+    
+    return {
+        renderable,
+        cleanup: () => {
+            // Cleanup if needed in future (currently no resources to clean)
+        }
+    };
+}
 
 /**
  * Emit entity event with owner.id check

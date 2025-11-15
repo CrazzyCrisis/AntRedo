@@ -236,6 +236,7 @@ export const GameEvents = {
     ENTITY_MOVED: 'entity:moved',
     ENTITY_DESTROYED: 'entity:destroyed',
     ENTITY_UPDATED: 'entity:updated',
+    CLEANUP_ALL_ENTITIES: 'cleanup:all:entities', // Broadcast to destroy all entities
     
     // Ant events
     ANT_CREATED: 'ant:created',

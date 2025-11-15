@@ -50,7 +50,6 @@ export { QueenFactory } from '../factories/QueenFactory';
 export { BossFactory } from '../factories/BossFactory';
 export { ResourceFactory } from '../factories/ResourceFactory';
 export { BuildingFactory } from '../factories/BuildingFactory';
-export { PlayerFactory } from '../factories/PlayerFactory';
 export { ProjectileFactory } from '../factories/ProjectileFactory';
 
 // ============================================================================
@@ -81,7 +80,6 @@ export { Ant } from '../classes/Ant';
 export { Boss } from '../classes/Boss';
 export { Resource } from '../classes/Resource';
 export { Building } from '../classes/Building';
-export { Player } from '../classes/Player';
 export { Projectile } from '../classes/Projectile';
 export { GameObject } from '../classes/GameObject';
 

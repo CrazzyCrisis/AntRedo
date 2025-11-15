@@ -8,18 +8,8 @@
  * - Level validation
  */
 
-import { SpawnConfig } from '../config/spawnConfig';
+import { SpawnConfig, DEFAULT_SPAWN_CONFIG } from '../config/spawnConfig';
 import { EventBus, GameEvents } from '../utils/eventBus';
-
-/**
- * Spawn area boundaries
- */
-interface SpawnBounds {
-    minX: number;
-    minY: number;
-    maxX: number;
-    maxY: number;
-}
 
 /**
  * Level metadata for display and organization
@@ -219,6 +209,9 @@ export class LevelLoader {
         params: ProceduralLevelParams,
         worldCenter: { x: number; y: number }
     ): SpawnConfig {
+        // Start with DEFAULT_SPAWN_CONFIG as base
+        const config = JSON.parse(JSON.stringify(DEFAULT_SPAWN_CONFIG)) as SpawnConfig;
+        
         // Base config on difficulty
         const difficultyMultipliers = {
             easy: { ants: 1.5, resources: 1.5, enemies: 0.5, safeRadius: 30 },
@@ -229,13 +222,35 @@ export class LevelLoader {
 
         const multiplier = difficultyMultipliers[params.difficulty];
 
-        // Resource abundance mapping
-        const resourceDensityMap = {
-            scarce: 0.15,
-            normal: 0.3,
-            abundant: 0.5
+        // Override queen position with world center
+        config.queen.position = worldCenter;
+        
+        // Override starter ants based on difficulty multiplier
+        config.starterAnts = {
+            builders: Math.floor(DEFAULT_SPAWN_CONFIG.starterAnts.builders * multiplier.ants),
+            gatherers: Math.floor(DEFAULT_SPAWN_CONFIG.starterAnts.gatherers * multiplier.ants),
+            scouts: Math.floor(DEFAULT_SPAWN_CONFIG.starterAnts.scouts * multiplier.ants)
         };
-        const resourceDensity = resourceDensityMap[params.resourceAbundance];
+
+        // Resource abundance mapping (multiplies default densities)
+        const resourceDensityMap = {
+            scarce: 0.5,
+            normal: 1.0,
+            abundant: 1.5
+        };
+        const resourceMultiplier = resourceDensityMap[params.resourceAbundance] * multiplier.resources;
+
+        // Override resource veins with adjusted densities
+        config.resourceVeins = config.resourceVeins.map(vein => ({
+            ...vein,
+            bounds: {
+                x: Math.floor(params.worldSize.width * 0.1),
+                y: Math.floor(params.worldSize.height * 0.1),
+                width: Math.floor(params.worldSize.width * 0.8),
+                height: Math.floor(params.worldSize.height * 0.8)
+            },
+            density: vein.density * resourceMultiplier
+        }));
 
         // Enemy density mapping
         const enemyCountMap = {
@@ -246,64 +261,7 @@ export class LevelLoader {
         };
         const nestCount = enemyCountMap[params.enemyDensity];
 
-        // Generate random seed for noise layers
-        const baseSeed = Date.now();
-
-        // Create spawn bounds (80% of world size)
-        const bounds: SpawnBounds = {
-            minX: Math.floor(params.worldSize.width * 0.1),
-            minY: Math.floor(params.worldSize.height * 0.1),
-            maxX: Math.floor(params.worldSize.width * 0.9),
-            maxY: Math.floor(params.worldSize.height * 0.9)
-        };
-
-        // Generate starter ants based on difficulty
-        const baseAnts = {
-            builders: 3,
-            gatherers: 5,
-            scouts: 2
-        };
-
-        const starterAnts = {
-            builders: Math.floor(baseAnts.builders * multiplier.ants),
-            gatherers: Math.floor(baseAnts.gatherers * multiplier.ants),
-            scouts: Math.floor(baseAnts.scouts * multiplier.ants)
-        };
-
-        // Generate resource veins
-        const resourceVeins = [
-            {
-                bounds: { x: bounds.minX, y: bounds.minY, width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY },
-                resourceType: 'food',
-                noiseLayer: 'resources',
-                threshold: { min: 0.6, max: 1.0 },
-                density: resourceDensity
-            },
-            {
-                bounds: { x: bounds.minX, y: bounds.minY, width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY },
-                resourceType: 'wood',
-                noiseLayer: 'resources',
-                threshold: { min: 0.3, max: 0.6 },
-                density: resourceDensity * 0.8
-            },
-            {
-                bounds: { x: bounds.minX, y: bounds.minY, width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY },
-                resourceType: 'stone',
-                noiseLayer: 'resources',
-                threshold: { min: 0.0, max: 0.3 },
-                density: resourceDensity * 0.6
-            },
-            {
-                bounds: { x: bounds.minX, y: bounds.minY, width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY },
-                resourceType: 'magicCrystal',
-                noiseLayer: 'resources',
-                threshold: { min: 0.85, max: 1.0 },
-                density: resourceDensity * 0.3
-            }
-        ];
-
         // Generate enemy nests
-        const enemyNests = [];
         const nestPositions = this.generateNestPositions(
             nestCount,
             worldCenter,
@@ -311,11 +269,12 @@ export class LevelLoader {
             params.worldSize
         );
 
+        config.enemyNests = [];
         for (let i = 0; i < nestCount; i++) {
             const antCount = Math.floor(5 * multiplier.enemies);
-            enemyNests.push({
+            config.enemyNests.push({
                 center: nestPositions[i],
-                bossType: i % 2 === 0 ? 'scorpion' : 'spider', // Alternate boss types
+                bossType: i % 2 === 0 ? 'scorpion' : 'spider',
                 antCount,
                 factionId: `enemy_${i}`
             });
@@ -329,7 +288,7 @@ export class LevelLoader {
             expert: 2.0
         };
 
-        const waves = params.wavesEnabled ? {
+        config.waves = params.wavesEnabled ? {
             enabled: true,
             baseDelay: 30,
             baseAntCount: Math.floor(3 * multiplier.enemies),
@@ -344,31 +303,21 @@ export class LevelLoader {
         };
 
         // Safe zone configuration
-        const safeZone = {
+        config.safeZone = {
             center: worldCenter,
             radius: multiplier.safeRadius,
             duration: params.safeZoneDuration
         };
 
         // Noise layers with random seeds
-        const noiseLayers = {
+        const baseSeed = Date.now();
+        config.noiseLayers = {
             resources: { scale: 0.05, seed: baseSeed + 1 },
             enemies: { scale: 0.08, seed: baseSeed + 2 },
             decorations: { scale: 0.1, seed: baseSeed + 3 }
         };
 
-        return {
-            queen: {
-                position: worldCenter,
-                factionId: 'player'
-            },
-            starterAnts,
-            resourceVeins,
-            enemyNests,
-            safeZone,
-            waves,
-            noiseLayers
-        };
+        return config;
     }
 
     /**

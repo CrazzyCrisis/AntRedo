@@ -28,6 +28,8 @@ export class Ant extends GameObject {
 
         this.factionId = factionId;
 
+        console.log(`[Ant ${this.id}] Created at grid (${gridX}, ${gridY}) for faction ${factionId}`);
+
         // Initialize all components
         this.initializeComponents();
     }

@@ -44,7 +44,6 @@ export { Queen } from '../classes/Queen';
 export { Boss } from '../classes/Boss';
 export { Resource } from '../classes/Resource';
 export { Building } from '../classes/Building';
-export { Player } from '../classes/Player';
 export { Projectile } from '../classes/Projectile';
 
 // ============================================================================

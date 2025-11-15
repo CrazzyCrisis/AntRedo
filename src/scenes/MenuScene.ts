@@ -13,6 +13,7 @@ import {
     MENU_ANIMATIONS,
     AudioManager
 } from '../imports/sceneImports';
+import { createTileBackgroundRenderable } from '../utils/helpers';
 
 /**
  * MenuScene - Main menu implementation
@@ -43,7 +44,12 @@ export class MenuScene implements IScene {
     private buttonUnregisterFunctions: Array<() => void> = [];
     private titleUnregisterFunction: (() => void) | null = null;
     private canvasWidth: number;
-    private canvasHeight: number; 
+    private canvasHeight: number;
+    
+    // Tile background
+    private tileRendererUnregister: (() => void)[] = [];
+    private tileSprites: { [key: number]: any } | null = null;
+    private tileEdgeSprites: { [path: string]: any } | null = null; 
 
     // Preloaded images
     private titleImg: any;
@@ -74,11 +80,15 @@ export class MenuScene implements IScene {
             devRoomButton: any;
             startGameButton: any;
             levelEditorButton: any;
-        }
+        },
+        tileSprites?: { [key: number]: any },
+        tileEdgeSprites?: { [path: string]: any }
     ) {
         this.renderer = renderer;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        this.tileSprites = tileSprites || null;
+        this.tileEdgeSprites = tileEdgeSprites || null;
         
         // Store preloaded images
         this.titleImg = images.title;
@@ -102,6 +112,8 @@ export class MenuScene implements IScene {
         const centerY = this.canvasHeight / 2;
         const halfWidth = this.canvasWidth / 2;
         const halfHeight = this.canvasHeight / 2;
+        
+        this.createTileBackground();
         
         // Start menu music
         AudioManager.getInstance().playBGM('MENU_THEME', true);
@@ -320,6 +332,23 @@ export class MenuScene implements IScene {
     }
 
     /**
+     * Create procedurally generated tile background
+     */
+    private createTileBackground(): void {
+        if (!this.tileSprites || !this.tileEdgeSprites) return;
+        
+        const { renderable } = createTileBackgroundRenderable(
+            this.canvasWidth,
+            this.canvasHeight,
+            this.tileSprites,
+            this.tileEdgeSprites,
+            Date.now()
+        );
+        
+        this.tileRendererUnregister.push(this.renderer.register(renderable));
+    }
+    
+    /**
      * Clear current buttons from renderer
      */
     private clearButtons(): void {
@@ -347,6 +376,10 @@ export class MenuScene implements IScene {
     exit(): void {
         // Don't stop menu music - let it continue for settings/other menu scenes
         // BGM will be stopped automatically when switching to a different track
+        
+        // Unregister tile renderer
+        this.tileRendererUnregister.forEach(unregister => unregister());
+        this.tileRendererUnregister = [];
         
         // Unregister buttons
         this.clearButtons();
@@ -400,8 +433,13 @@ export class MenuScene implements IScene {
     /**
      * Handle mouse up (required by IScene)
      */
-    handleMouseUp(_x: number, _y: number): void {
-        // Menu doesn't need mouse up handling currently
+    handleMouseUp(x: number, y: number): void {
+        this.buttons.forEach(button => {
+            const isOver = button.isMouseOver(x, y);
+            if (!isOver) {
+                this.createTileBackground();
+            }
+        });
     }
     
     onResize(width: number, height: number): void {

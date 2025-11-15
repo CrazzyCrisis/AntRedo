@@ -39,6 +39,9 @@ export class GameObject {
     
     // Component system
     private components: Map<string, IComponent>;
+    
+    // Cleanup event listener (store reference for manual unsubscription)
+    private cleanupListener: (() => void) | null = null;
 
     /**
      * Create a new GameObject
@@ -59,6 +62,12 @@ export class GameObject {
         
         // Calculate world position from grid position
         this.updateWorldPosition();
+        
+        // Listen for cleanup signal - all entities self-destruct on this event
+        this.cleanupListener = EventBus.once(GameEvents.CLEANUP_ALL_ENTITIES, () => {
+            if (!this.isActive) return; // Already destroyed by other means
+            this.destroy();
+        });
     }
 
     /**
@@ -220,10 +229,18 @@ export class GameObject {
      */
     public destroy(): void {
         if (!this.isActive) {
+            console.log(`[${this.type} ${this.id}] destroy() called but already inactive - skipping`);
             return; // Already destroyed
         }
 
+        console.log(`[${this.type} ${this.id}] Destroying...`);
         this.isActive = false;
+        
+        // Unsubscribe from cleanup event (if not already fired)
+        if (this.cleanupListener) {
+            this.cleanupListener();
+            this.cleanupListener = null;
+        }
 
         // Remove all components
         const componentNames = Array.from(this.components.keys());
@@ -231,7 +248,8 @@ export class GameObject {
             this.removeComponent(name);
         });
 
-        // Emit destruction event
-        EventBus.emit('ENTITY_DESTROYED', this.id, this.type);
+        // Emit destruction event using proper constant
+        EventBus.emit(GameEvents.ENTITY_DESTROYED, this.id, this.type);
+        console.log(`[${this.type} ${this.id}] Destroyed and emitted ENTITY_DESTROYED event`);
     }
 }

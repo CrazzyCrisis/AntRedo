@@ -190,9 +190,9 @@ export const DEFAULT_SPAWN_CONFIG: SpawnConfig = {
     },
     
     starterAnts: {
-        builders: 3,
-        gatherers: 2,
-        scouts: 2
+        builders: 1,
+        gatherers: 0,
+        scouts: 0
     },
     
     antClusters: [],
@@ -203,22 +203,22 @@ export const DEFAULT_SPAWN_CONFIG: SpawnConfig = {
             resourceType: 'food',
             noiseLayer: 'resources',
             threshold: { min: 0.6, max: 1.0 },
-            density: 0.3
+            density: 0.003
         },
         {
             bounds: { x: 0, y: 0, width: 100, height: 100 },
             resourceType: 'wood',
             noiseLayer: 'resources',
             threshold: { min: 0.3, max: 0.6 },
-            density: 0.2
+            density: 0.02
         }
     ],
     
     enemyNests: [
         {
             center: { x: 80, y: 80 },
-            bossType: 'scorpion',
-            antCount: 5,
+            bossType: 'spider',
+            antCount: 0,
             factionId: 'enemy'
         }
     ],
@@ -240,15 +240,15 @@ export const DEFAULT_SPAWN_CONFIG: SpawnConfig = {
     
     noiseLayers: {
         resources: {
-            scale: 0.05,
+            scale: 0.0,
             seed: 12345
         },
         enemies: {
-            scale: 0.08,
+            scale: 0.0,
             seed: 54321
         },
         decorations: {
-            scale: 0.1,
+            scale: 0.0,
             seed: 99999
         }
     },

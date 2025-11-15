@@ -257,19 +257,18 @@ export class DevRoomScene implements IScene {
         // Stop dev room music
         AudioManager.getInstance().stopBGM();
         
-        // Cleanup spawning system
-        if (this.spawnManager) {
-            this.spawnManager.clearAllSpawns();
-        }
-        if (this.levelLoader) {
-            this.levelLoader.clearLevel();
-        }
+        // Note: Entity cleanup now handled by CLEANUP_ALL_ENTITIES event in sketch.ts
+        // This only cleans up scene-specific UI and resources
         
-        // Unregister all renderables
+        // Unregister tile renderers (CRITICAL - prevents framerate degradation)
+        this.tileRendererUnregister.forEach(unregister => unregister());
+        this.tileRendererUnregister = [];
+        
+        // Unregister all renderables (UI components only - entities handled by cleanup signal)
         this.unregisterFunctions.forEach(unregister => unregister());
         this.unregisterFunctions = [];
 
-        // Clear game state
+        // Clear tile grid
         this.gameState.clearTileGrid();
     }
 

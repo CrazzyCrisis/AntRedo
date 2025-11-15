@@ -8,6 +8,14 @@ import { SceneManager } from './managers/SceneManager';
 import { InputManager } from './managers/InputManager';
 import { AudioManager } from './managers/AudioManager';
 import { CameraManager } from './managers/CameraManager';
+import { EntityManager } from './managers/EntityManager';
+import { SpawnManager } from './managers/SpawnManager';
+import { ResourceManager } from './managers/ResourceManager';
+import { PowerManager } from './managers/PowerManager';
+import { PathfindingManager } from './managers/PathfindingManager';
+import { BuildingManager } from './managers/BuildingManager';
+import { GameStateManager } from './managers/GameStateManager';
+import { QueenFactory } from './factories/QueenFactory';
 import { Renderer } from './rendering/Renderer';
 import { Camera } from './rendering/Camera';
 import { MenuScene } from './scenes/MenuScene';
@@ -164,7 +172,14 @@ function setup() {
     
     // Create and set menu scene
     if (menuImages) {
-        const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
+        const menuScene = new MenuScene(
+            renderer, 
+            window.innerWidth, 
+            window.innerHeight, 
+            menuImages,
+            tileSprites || undefined,
+            tileEdgeSprites || undefined
+        );
         SceneManager.getInstance().switchScene(menuScene, 'Menu');
     }
     
@@ -190,7 +205,55 @@ function setup() {
         const currentScene = SceneManager.getInstance().getCurrentScene();
         if ((currentScene instanceof DevRoomScene || currentScene instanceof AudioSettingsScene) && menuImages) {
             console.log('Returning to menu...');
-            const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
+            
+            // Comprehensive cleanup when leaving game scenes
+            if (currentScene instanceof DevRoomScene) {
+                console.log('[Cleanup] Starting comprehensive cleanup...');
+                
+                // FIRST: Broadcast cleanup signal - all entities self-destruct
+                const listenerCount = EventBus.listenerCount(GameEvents.CLEANUP_ALL_ENTITIES);
+                console.log(`[Cleanup] Broadcasting entity cleanup signal to ${listenerCount} entities...`);
+                EventBus.emit(GameEvents.CLEANUP_ALL_ENTITIES);
+                console.log('[Cleanup] Cleanup signal broadcast complete');
+                
+                // THEN: Call scene exit() to unregister UI components
+                console.log('[Cleanup] Exiting scene and unregistering UI renderables...');
+                currentScene.exit();
+                
+                // THEN: Mark all renderer layers dirty to clear framebuffers
+                console.log('[Cleanup] Marking all layers dirty for redraw...');
+                renderer.markAllLayersDirty();
+                
+                // THEN: Cleanup all managers (clears EventBus subscriptions)
+                console.log('[Cleanup] Cleaning up manager event subscriptions...');
+                EntityManager.getInstance().cleanup();
+                SpawnManager.getInstance().cleanup();
+                ResourceManager.getInstance().cleanup();
+                PowerManager.getInstance().cleanup();
+                PathfindingManager.getInstance().cleanup();
+                BuildingManager.getInstance().cleanup();
+                GameStateManager.getInstance().cleanup();
+                
+                // THEN: Reset factory registries (allows new Queens to be created)
+                console.log('[Cleanup] Resetting factory registries...');
+                QueenFactory.clearAll();
+                
+                // Reset camera to center
+                console.log('[Cleanup] Resetting camera to origin...');
+                camera.x = 0;
+                camera.y = 0;
+                
+                console.log('[Cleanup] ✅ Cleanup complete!');
+            }
+            
+            const menuScene = new MenuScene(
+                renderer, 
+                window.innerWidth, 
+                window.innerHeight, 
+                menuImages,
+                tileSprites || undefined,
+                tileEdgeSprites || undefined
+            );
             SceneManager.getInstance().switchScene(menuScene, 'Menu');
         }
     });

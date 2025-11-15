@@ -13,8 +13,8 @@ import { GameEvents } from '../utils/eventBus';
 export const AUDIO_SOUNDS = {
     // =================================== Background Music ===================================
 
-    MENU_THEME: { file: 'assets/sounds/bgMusic.mp3', volume: 0.8 },
-    DEV_ROOM_THEME: { file: 'assets/sounds/prison.mp3', volume: 0.7 },
+    MENU_THEME: { file: 'assets/sounds/bgMusic.mp3', volume: 1.0 },
+    DEV_ROOM_THEME: { file: 'assets/sounds/prison.mp3', volume: 1.0 },
     BOSS_THEME: { file: 'assets/sounds/soundEffects/antNoises/focusedByPlayer/dabuu.wav', volume: 0.01 },
 
     // ==================================== Ant Sounds ====================================

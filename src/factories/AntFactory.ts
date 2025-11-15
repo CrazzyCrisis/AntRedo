@@ -46,6 +46,7 @@ export class AntFactory {
         jobType: number = AntJobComponent.JOB_GATHERER
     ): Ant {
         // Create the ant model with all 9 components
+        console.log(`[AntFactory] Creating ant at grid (${gridX}, ${gridY}) for faction ${factionId}`);
         const ant = new Ant(gridX, gridY, factionId);
 
         // Set initial job if not default
