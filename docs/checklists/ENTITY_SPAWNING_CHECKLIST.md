@@ -7,38 +7,38 @@ Complete implementation guide for the universal entity spawning system that work
 ## Phase 1: Core Spawning Infrastructure
 
 ### Task 1.1: SpawnConfig Interface
-- [ ] Create `src/config/spawnConfig.ts`
-  - [ ] Define `SpawnConfig` interface (full level spawn configuration)
-  - [ ] Define `QueenSpawnConfig` (position, faction)
-  - [ ] Define `AntClusterConfig` (center, count, radius, faction, jobDistribution)
-  - [ ] Define `ResourceVeinConfig` (bounds, type, noiseLayer, threshold, density)
-  - [ ] Define `EnemyNestConfig` (center, patrolPath, bossType, antCount, faction)
-  - [ ] Define `DecorationConfig` (bounds, type, density, tileTypes)
-  - [ ] Define `SafeZoneConfig` (center, radius, duration)
-  - [ ] Define `SpawnConstraints` interface (tileTypes, minDistance, noiseThreshold)
-  - [ ] Define `NoiseLayers` interface (resources, enemies, decorations - each with scale and seed)
-  - [ ] Create `DEFAULT_SPAWN_CONFIG` constant
+- [x] Create `src/config/spawnConfig.ts`
+  - [x] Define `SpawnConfig` interface (full level spawn configuration)
+  - [x] Define `QueenSpawnConfig` (position, faction)
+  - [x] Define `AntClusterConfig` (center, count, radius, faction, jobDistribution)
+  - [x] Define `ResourceVeinConfig` (bounds, type, noiseLayer, threshold, density)
+  - [x] Define `EnemyNestConfig` (center, patrolPath, bossType, antCount, faction)
+  - [x] Define `DecorationConfig` (bounds, type, density, tileTypes)
+  - [x] Define `SafeZoneConfig` (center, radius, duration)
+  - [x] Define `SpawnConstraints` interface (tileTypes, minDistance, noiseThreshold)
+  - [x] Define `NoiseLayers` interface (resources, enemies, decorations - each with scale and seed)
+  - [x] Create `DEFAULT_SPAWN_CONFIG` constant
   - [ ] **TEST:** Interface validation, default config completeness
 
 ### Task 1.2: SpawnRule System
-- [ ] Create `src/spawning/SpawnRule.ts`
-  - [ ] Interface `SpawnRule` (entityType, probability, clustering, constraints)
-  - [ ] Enum `ClusterType` ('single', 'small', 'medium', 'large', 'radial', 'poisson', 'noise')
-  - [ ] Interface `SpawnConstraints` with validation methods
-  - [ ] Method `canSpawnAt(x, y, tileGrid, entityManager, noiseGen): boolean`
-  - [ ] Tile type validation (ants: dirt/grass/sand, resources: no water, decorations: tile-specific)
-  - [ ] Minimum distance validation from other entities
-  - [ ] Perlin noise threshold validation
+- [x] Create `src/spawning/SpawnRule.ts`
+  - [x] Interface `SpawnRule` (entityType, probability, clustering, constraints)
+  - [x] Enum `ClusterType` ('single', 'small', 'medium', 'large', 'radial', 'poisson', 'noise')
+  - [x] Interface `SpawnConstraints` with validation methods
+  - [x] Method `canSpawnAt(x, y, tileGrid, entityManager, noiseGen): boolean`
+  - [x] Tile type validation (ants: dirt/grass/sand, resources: no water, decorations: tile-specific)
+  - [x] Minimum distance validation from other entities
+  - [x] Perlin noise threshold validation
   - [ ] **TEST:** Constraint validation for all entity types
 
 ### Task 1.3: LevelData Interface
-- [ ] Create `src/world/LevelData.ts`
-  - [ ] Interface `LevelData` (name, worldSize, worldGenConfig, spawnConfig, noiseLayers)
-  - [ ] Method `save(filePath: string): void` - Export to JSON
-  - [ ] Method `load(filePath: string): LevelData` - Import from JSON
-  - [ ] Method `validate(): boolean` - Check data integrity
-  - [ ] Support for procedural generation (seed-based)
-  - [ ] Support for level editor created data (handmade spawn points)
+- [x] Create `src/world/LevelData.ts`
+  - [x] Interface `LevelData` (name, worldSize, worldGenConfig, spawnConfig, noiseLayers)
+  - [x] Method `save(filePath: string): void` - Export to JSON
+  - [x] Method `load(filePath: string): LevelData` - Import from JSON
+  - [x] Method `validate(): boolean` - Check data integrity
+  - [x] Support for procedural generation (seed-based)
+  - [x] Support for level editor created data (handmade spawn points)
   - [ ] **TEST:** Save/load round trip, validation checks
 
 ---
@@ -46,43 +46,48 @@ Complete implementation guide for the universal entity spawning system that work
 ## Phase 2: Spawning Algorithms
 
 ### Task 2.1: ClusterSpawner
-- [ ] Create `src/spawning/ClusterSpawner.ts`
-  - [ ] Method `spawnRadialCluster(center, count, radius, validator): Point[]`
+- [x] Create `src/spawning/ClusterSpawner.ts`
+  - [x] Method `spawnRadialCluster(center, count, radius, validator): Point[]`
     - Spawn entities in circle around center point
     - Use random angle + distance for natural variation
     - Validate each position with constraints
-  - [ ] Method `spawnPoissonDisk(bounds, minDistance, maxAttempts): Point[]`
+  - [x] Method `spawnPoissonDisk(bounds, minDistance, maxAttempts): Point[]`
     - Even distribution for resources/decorations
     - Ensures minimum distance between spawns
     - Natural-looking scattered placement
-  - [ ] Method `spawnNoiseCluster(bounds, noiseGen, threshold, density): Point[]`
+  - [x] Method `spawnNoiseCluster(bounds, noiseGen, threshold, density): Point[]`
     - Follow Perlin noise patterns (veins, features)
     - Sample noise at each position
     - Spawn where noise in threshold range
-  - [ ] Method `spawnGridFormation(center, rows, cols, spacing): Point[]`
+  - [x] Method `spawnGridFormation(center, rows, cols, spacing): Point[]`
     - Structured formations (enemy patrols)
     - Aligned grid with offset variation
+  - [x] Method `spawnLineFormation(start, end, count): Point[]`
+    - Entities along a line path
   - [ ] **TEST:** All cluster algorithms, constraint validation, distribution quality
 
 ### Task 2.2: NoiseLayerManager
-- [ ] Create `src/spawning/NoiseLayerManager.ts`
-  - [ ] Manage multiple Perlin noise generators (resources, enemies, decorations)
-  - [ ] Property `noiseLayers: Map<string, PerlinNoise>`
-  - [ ] Method `createLayer(name, scale, seed?): void`
-  - [ ] Method `getLayer(name): PerlinNoise`
-  - [ ] Method `sampleAt(layerName, x, y): number` - Get normalized noise value
-  - [ ] Method `clearLayers(): void`
-  - [ ] Default layers: 'resources', 'enemies', 'decorations'
+- [x] Create `src/spawning/NoiseLayerManager.ts`
+  - [x] Manage multiple Perlin noise generators (resources, enemies, decorations)
+  - [x] Property `noiseLayers: Map<string, PerlinNoise>`
+  - [x] Method `createLayer(name, scale, seed?): void`
+  - [x] Method `getLayer(name): PerlinNoise`
+  - [x] Method `sampleAt(layerName, x, y): number` - Get normalized noise value
+  - [x] Method `clearLayers(): void`
+  - [x] Method `initializeFromConfig(config): void` - Auto-setup default layers
+  - [x] Default layers: 'resources', 'enemies', 'decorations'
   - [ ] **TEST:** Layer creation, sampling, isolation between layers
 
 ### Task 2.3: SafeZone System
-- [ ] Create `src/spawning/SafeZone.ts`
-  - [ ] Class `SafeZone` (center, radius, active, timer)
-  - [ ] Method `isPointInside(x, y): boolean` - Check if position is safe
-  - [ ] Method `update(deltaTime): void` - Timer countdown (optional expiration)
-  - [ ] Method `expand(newRadius): void` - Grow safe zone over time
-  - [ ] Method `deactivate(): void` - Remove safe zone
-  - [ ] EventBus emit `SAFE_ZONE_EXPIRED` when timer runs out
+- [x] Create `src/spawning/SafeZone.ts`
+  - [x] Class `SafeZone` (center, radius, active, timer)
+  - [x] Method `isPositionSafe(x, y): boolean` - Check if position is safe
+  - [x] Method `update(deltaTime): void` - Timer countdown + radius contraction
+  - [x] Method `expandRadius(amount): void` - Grow safe zone over time
+  - [x] Method `deactivate(): void` - Remove safe zone
+  - [x] Method `getDistanceToEdge(x, y): number` - Distance calculations
+  - [x] EventBus emit `SAFE_ZONE_EXPIRED` when timer runs out
+  - [x] EventBus emit `SAFE_ZONE_FULLY_CONTRACTED` when radius reaches 0
   - [ ] **TEST:** Boundary detection, timer expiration, expansion
 
 ---
@@ -90,37 +95,42 @@ Complete implementation guide for the universal entity spawning system that work
 ## Phase 3: Entity Spawners
 
 ### Task 3.1: AntSpawner
-- [ ] Create `src/spawning/AntSpawner.ts`
-  - [ ] Constructor takes `AntFactory`, `TileGrid`, `EntityManager`
-  - [ ] Method `spawnStarterAnts(queenPos, config): Ant[]`
-    - 3 builders, 2 gatherers, 2 scouts (from config)
-    - Spawn in radial cluster around Queen (2-4 tile radius)
+- [x] Create `src/spawning/AntSpawner.ts`
+  - [x] Constructor takes `Renderer`, `getTileAt`, `getEntitiesInRadius`
+  - [x] Method `registerSprite(jobType, sprite)` - Register ant sprites
+  - [x] Method `spawnStarterAnts(queenPos, config): AntSpawnResult`
+    - Extract job counts from config.jobDistribution
+    - Spawn in radial cluster around Queen using ClusterSpawner
     - Validate spawn positions (dirt/grass/sand only)
-    - Set jobs via `setJob(jobType)`
-    - Set to follow Queen via `setCommander(queenId)`
-  - [ ] Method `spawnAntCluster(center, count, radius, faction, jobDistribution): Ant[]`
-    - Spawn N ants in cluster
+    - Uses AntFactory.create() for each ant
+    - Returns ants, positions, jobCounts
+  - [x] Method `spawnAntCluster(center, count, radius, faction, jobDistribution): AntSpawnResult`
+    - Spawn N ants in cluster using Poisson disk
     - Apply job distribution (e.g., {gatherer: 0.5, warrior: 0.3, builder: 0.2})
-    - Return array of created ants
-  - [ ] Method `spawnEnemyAnts(nestCenter, count, faction): Ant[]`
-    - Spawn enemy ants around nest/boss
-    - Default to warrior job
-    - Set autonomous mode enabled
+    - Shuffle job types for variety
+    - Return array of created ants with positions
+  - [x] Method `spawnEnemyAnts(nestCenter, count, radius, faction): AntSpawnResult`
+    - Spawn enemy ants around nest/boss using radial cluster
+    - Default to warrior job (aggressive)
+    - Uses AntFactory for creation
   - [ ] **TEST:** Starter ants, job distribution, constraint validation
 
 ### Task 3.2: ResourceSpawner
-- [ ] Create `src/spawning/ResourceSpawner.ts`
-  - [ ] Constructor takes `ResourceFactory`, `TileGrid`, `NoiseLayerManager`
-  - [ ] Method `spawnResourceVein(bounds, type, noiseLayer, threshold, density): Resource[]`
+- [x] Create `src/spawning/ResourceSpawner.ts`
+  - [x] Constructor takes `Renderer`, `getTileAt`, `getEntitiesInRadius`
+  - [x] Method `setNoiseManager(manager)` - Set noise layer manager
+  - [x] Method `registerSprite(resourceType, sprite)` - Register resource sprites
+  - [x] Method `spawnResourceVein(bounds, config, noiseLayer): ResourceSpawnResult`
     - Sample Perlin noise across bounds
     - Spawn where noise in threshold range
-    - Validate no water tiles
+    - Validate no water tiles using SpawnRuleValidator
     - Create veins/clusters following noise
     - Density controls spawn probability (0-1)
-  - [ ] Method `spawnResourceCluster(center, type, count, radius): Resource[]`
-    - Spawn N resources in cluster (alternative to noise)
-    - Poisson disk sampling for even distribution
-  - [ ] Track spawned resources for depletion (no respawn)
+    - Uses ResourceFactory.create()
+  - [x] Method `spawnResourceCluster(center, type, radius, amountPerNode): ResourceSpawnResult`
+    - Spawn resources in cluster using Poisson disk
+    - Even distribution for resources
+  - [x] Track spawned resources for depletion (no respawn)
   - [ ] **TEST:** Noise-based veins, clustering, constraint validation
 
 ### Task 3.3: DecorationSpawner
@@ -136,21 +146,25 @@ Complete implementation guide for the universal entity spawning system that work
   - [ ] **TEST:** Tile-specific spawning, density control, distribution
 
 ### Task 3.4: EnemySpawner
-- [ ] Create `src/spawning/EnemySpawner.ts`
-  - [ ] Constructor takes `BossFactory`, `AntFactory`, `SafeZone`
-  - [ ] Method `spawnEnemyNest(config, safeZone): {boss: Boss, ants: Ant[]}`
+- [x] Create `src/spawning/EnemySpawner.ts`
+  - [x] Constructor takes `Renderer`, `AntSpawner`, `getTileAt`, `getEntitiesInRadius`
+  - [x] Method `setSafeZone(safeZone)` - Set safe zone for validation
+  - [x] Method `registerBossSprite(sprite)` - Register boss sprite
+  - [x] Method `spawnEnemyNest(config): EnemyNestResult`
     - Check nest center outside safe zone
-    - Spawn Boss at nest center with patrol path
-    - Spawn enemy ants in cluster around boss
-    - Set ants to follow boss
-  - [ ] Method `canSpawnEnemy(x, y, safeZone): boolean`
+    - Spawn Boss at nest center with patrol path using BossFactory
+    - Spawn enemy ants in cluster around boss via AntSpawner
+    - Returns {boss, ants, nestCenter}
+  - [x] Method `canSpawnEnemy(x, y): boolean`
     - Check position outside safe zone
-    - Validate tile type (dirt/grass/sand)
+    - Validate tile type (dirt/grass/sand) using SpawnRuleValidator
     - Check minimum distance from player entities
-  - [ ] Method `spawnWave(waveConfig, safeZone): {boss?: Boss, ants: Ant[]}`
+  - [x] Method `spawnWave(waveConfig): WaveSpawnResult`
+    - Find spawn position outside safe zone
     - Spawn enemies in waves (increasing difficulty)
-    - Wave data: {antCount, hasBoss, positions}
-    - Emit `ENEMY_WAVE_SPAWNED` event
+    - Spawn boss if waveConfig.hasBoss
+    - Emit `ENEMY_SPAWN` event
+  - [x] Method `getDistanceFromSafeZone(x, y): number` - Distance helper
   - [ ] **TEST:** Safe zone validation, wave spawning, nest creation
 
 ---
@@ -158,6 +172,40 @@ Complete implementation guide for the universal entity spawning system that work
 ## Phase 4: Spawn Manager
 
 ### Task 4.1: SpawnManager (Core Controller)
+- [x] Create `src/managers/SpawnManager.ts` singleton
+  - [x] Constructor takes `Renderer`, spawner dependencies
+  - [x] Method `initialize(renderer, getTileAt, getEntitiesInRadius)` - Setup spawners
+  - [x] Method `registerSprites(sprites)` - Register all entity sprites
+  - [x] Method `spawnLevel(config, worldSeed): SpawnResult`
+    - Initialize noise layers from seed
+    - Create safe zone
+    - Spawn Queen at configured position
+    - Spawn starter ants around Queen (converted from config format)
+    - Spawn resource veins (all configured veins)
+    - Spawn enemy nests (all configured nests)
+    - Setup wave spawning system (generate waves from config)
+    - Return all spawned entities
+  - [x] Method `update(deltaTime)` - Handle wave timers and safe zone
+  - [x] Method `spawnNextWave()`
+    - Increment wave number
+    - Spawn enemies outside safe zone
+    - Increase difficulty (more ants, add boss)
+    - Emit `ENEMY_SPAWN` event
+  - [x] Method `clearAllSpawns(): void` - Remove all spawned entities
+  - [x] Method `getEntityCount(category): number` - Entity counting
+  - [x] Method `getSafeZone(): SafeZone` - Access safe zone
+  - [ ] **TEST:** Full spawn sequence, wave spawning, safe zone integration
+
+### Task 4.2: Entity Tracking
+- [x] Add to SpawnManager
+  - [x] Property `trackedEntities` with Maps for each category
+  - [x] Method `trackAnts(ants)` - Track spawned ants
+  - [x] Method `trackResources(resources)` - Track spawned resources
+  - [x] Method `trackBoss(boss)` - Track spawned boss
+  - [x] Listen to `ENTITY_DESTROYED` event for automatic untracking
+  - [x] Method `getEntityCount(category): number`
+  - [x] Method `getEntitiesByFaction(factionId): Ant[]`
+  - [ ] **TEST:** Registration, unregistration, queries
 - [ ] Create `src/managers/SpawnManager.ts` singleton
   - [ ] Properties:
     - `spawnConfig: SpawnConfig`
@@ -208,37 +256,51 @@ Complete implementation guide for the universal entity spawning system that work
 ## Phase 5: Level Integration
 
 ### Task 5.1: Level Loader
-- [ ] Create `src/world/LevelLoader.ts`
-  - [ ] Method `loadLevel(filePath: string): LevelData`
+- [x] Create `src/managers/LevelLoader.ts`
+  - [x] Method `loadLevel(filePath: string): Promise<LevelData>`
     - Load JSON from `assets/levels/`
-    - Validate level data
+    - Validate level data structure
     - Return parsed LevelData
-  - [ ] Method `loadProceduralLevel(seed: number, size: {width, height}): LevelData`
-    - Generate level data from seed
-    - Use default spawn config with seed-based variations
-    - Return procedural LevelData
-  - [ ] Method `saveLevel(levelData: LevelData, filePath: string): void`
-    - Export level to JSON (for level editor)
-  - [ ] Error handling for missing/corrupt files
-  - [ ] **TEST:** Load handmade levels, procedural generation, save/load round trip
+  - [x] Method `loadProceduralLevel(params: ProceduralLevelParams, seed): LevelData`
+    - Generate level data from difficulty/parameters
+    - Create starter ants, resource veins, enemy nests
+    - Return procedural LevelData with metadata
+  - [x] Method `saveLevel(levelData: LevelData): string`
+    - Export level to JSON string (for level editor)
+  - [x] Validation with error messages for corrupt data
+  - [ ] **TEST:** Load handmade levels, procedural generation, validation
 
-### Task 5.2: Scene Integration
-- [ ] Update `DevRoomScene` (or create `GameScene`)
-  - [ ] Property `spawnManager: SpawnManager`
-  - [ ] Property `levelData: LevelData`
-  - [ ] In `enter()`:
-    - Load level data (from file or procedural)
-    - Initialize SpawnManager with level data
-    - Execute `spawnManager.spawnLevel()`
-    - Start wave timer
-  - [ ] In `update(deltaTime)`:
-    - Call `spawnManager.update(deltaTime)` for waves
-  - [ ] In `exit()`:
-    - Call `spawnManager.clearAllSpawns()`
-  - [ ] Listen to `ENEMY_WAVE_SPAWNED` for UI updates
+### Task 5.2: Example Level Files
+- [x] Create `assets/levels/tutorial.json`
+  - Easy difficulty, large safe zone (35 radius, 120s)
+  - Abundant resources (0.5/0.4 density)
+  - Single enemy nest, gentle waves (1.2x multiplier)
+- [x] Create `assets/levels/standard.json`
+  - Medium difficulty, moderate safe zone (25 radius, 90s)
+  - Normal resources (0.3/0.25/0.2/0.1 density)
+  - Three enemy nests, balanced waves (1.5x multiplier)
+- [x] Create `assets/levels/survival.json`
+  - Hard difficulty, small safe zone (18 radius, 60s)
+  - Scarce resources (0.2/0.15 density)
+  - Four enemy nests, aggressive waves (1.8x multiplier, boss every 3)
+
+### Task 5.3: Scene Integration
+- [x] Update `DevRoomScene` (or create `GameScene`)
+  - [x] Property `spawnManager: SpawnManager`
+  - [x] Property `levelData: LevelData`
+  - [x] In `enter()`:
+    - Load level data (from file or procedural) ✓
+    - Initialize SpawnManager with level data ✓
+    - Execute `spawnManager.spawnLevel()` ✓
+    - Start wave timer ✓
+  - [x] In `update(deltaTime)`:
+    - Call `spawnManager.update(deltaTime)` for waves ✓
+  - [x] In `exit()`:
+    - Call `spawnManager.clearAllSpawns()` ✓
+  - [x] Listen to `ENEMY_SPAWN` for UI updates ✓
   - [ ] **TEST:** Scene lifecycle, level loading, spawn execution
 
-### Task 5.3: Example Level Files
+### Task 5.4: Level Selection UI (Optional)### Task 5.3: Example Level Files
 - [ ] Create `assets/levels/tutorial.json`
   - Small map (50x50)
   - Queen at center

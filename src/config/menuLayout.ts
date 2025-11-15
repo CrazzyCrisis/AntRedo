@@ -100,56 +100,62 @@ export const MENU_ANIMATIONS = {
 
 /**
  * Audio Settings Screen Layout
- * Volume sliders and mute toggles
+ * Clean slider-based volume controls
  */
 export const AUDIO_SETTINGS_LAYOUT = {
     TITLE: {
         offsetX: 0,
         offsetY: 0.6
     },
-    MASTER_VOLUME_LABEL: {
-        offsetX: -0.4,
-        offsetY: 0.3
-    },
     MASTER_VOLUME_SLIDER: {
-        offsetX: 0.15,
+        offsetX: 0,
         offsetY: 0.3
     },
-    MUSIC_VOLUME_LABEL: {
-        offsetX: -0.4,
+    MASTER_LABEL: {
+        offsetX: 0.25,
+        offsetY: 0.3
+    },
+    BGM_VOLUME_SLIDER: {
+        offsetX: 0,
         offsetY: 0.1
     },
-    MUSIC_VOLUME_SLIDER: {
-        offsetX: 0.15,
+    BGM_LABEL: {
+        offsetX: 0.25,
         offsetY: 0.1
-    },
-    MUSIC_MUTE_LABEL: {
-        offsetX: -0.4,
-        offsetY: -0.1
-    },
-    MUSIC_MUTE_TOGGLE: {
-        offsetX: 0.15,
-        offsetY: -0.1
-    },
-    SFX_VOLUME_LABEL: {
-        offsetX: -0.4,
-        offsetY: -0.3
     },
     SFX_VOLUME_SLIDER: {
-        offsetX: 0.15,
+        offsetX: 0,
+        offsetY: -0.1
+    },
+    SFX_LABEL: {
+        offsetX: 0.25,
+        offsetY: -0.1
+    },
+    VOICES_VOLUME_SLIDER: {
+        offsetX: 0,
         offsetY: -0.3
     },
-    SFX_MUTE_LABEL: {
-        offsetX: -0.4,
+    VOICES_LABEL: {
+        offsetX: 0.25,
+        offsetY: -0.3
+    },
+    SYSTEM_VOLUME_SLIDER: {
+        offsetX: 0,
         offsetY: -0.5
     },
-    SFX_MUTE_TOGGLE: {
-        offsetX: 0.15,
+    SYSTEM_LABEL: {
+        offsetX: 0.25,
         offsetY: -0.5
     },
     BACK_BUTTON: {
-        offsetX: -0.85,
+        offsetX: 0,
         offsetY: -0.75
+    },
+    PANEL: {
+        offsetX: 0,      // Center of panel
+        offsetY: 0,      // Center vertically
+        width: 0.6,      // 60% of screen width
+        height: 0.85     // 85% of screen height
     }
 } as const;
 

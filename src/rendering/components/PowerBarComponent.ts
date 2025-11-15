@@ -175,9 +175,15 @@ export class PowerBarComponent implements Renderable {
             
             if (power.isLocked) {
                 // Locked: grayscale tint
-                graphics.tint(128, 128, 128, this.lockedTintAlpha);
-                graphics.image(power.sprite, powerX, powerY, this.iconSize, this.iconSize);
-                graphics.noTint();
+                if (power.sprite) {
+                    graphics.tint(128, 128, 128, this.lockedTintAlpha);
+                    graphics.image(power.sprite, powerX, powerY, this.iconSize, this.iconSize);
+                    graphics.noTint();
+                } else {
+                    // Placeholder for missing sprite
+                    graphics.fill(128, 128, 128);
+                    graphics.rect(powerX - this.iconSize/2, powerY - this.iconSize/2, this.iconSize, this.iconSize);
+                }
                 
                 // Draw lock icon overlay (🔒)
                 graphics.fill(255, 255, 255);
@@ -186,7 +192,13 @@ export class PowerBarComponent implements Renderable {
                 graphics.text('🔒', powerX, powerY);
             } else {
                 // Normal icon
-                graphics.image(power.sprite, powerX, powerY, this.iconSize, this.iconSize);
+                if (power.sprite) {
+                    graphics.image(power.sprite, powerX, powerY, this.iconSize, this.iconSize);
+                } else {
+                    // Placeholder for missing sprite
+                    graphics.fill(150, 50, 200);
+                    graphics.rect(powerX - this.iconSize/2, powerY - this.iconSize/2, this.iconSize, this.iconSize);
+                }
                 
                 // Draw cooldown overlay if on cooldown
                 if (power.currentCooldown > 0) {

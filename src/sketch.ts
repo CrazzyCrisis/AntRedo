@@ -5,11 +5,14 @@
 import { CONFIG } from './config';
 import { EventBus, GameEvents } from './utils/eventBus';
 import { SceneManager } from './managers/SceneManager';
+import { InputManager } from './managers/InputManager';
 import { AudioManager } from './managers/AudioManager';
 import { Renderer } from './rendering/Renderer';
+import { Camera } from './rendering/Camera';
 import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
 import { AudioSettingsScene } from './scenes/AudioSettingsScene';
+import { EntityShowcaseScene } from './scenes/EntityShowcaseScene';
 import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
@@ -31,6 +34,9 @@ declare const loadSound: any;
 // Global renderer instance
 let renderer: Renderer;
 
+// Global camera instance
+let camera: Camera;
+
 // Preloaded menu images
 let menuImages: {
     title: any;
@@ -51,6 +57,15 @@ let tileSprites: { [key: number]: any } | null = null;
 
 // Preloaded tile edge sprites (keyed by full path)
 let tileEdgeSprites: { [path: string]: any } | null = null;
+
+// Preloaded entity sprites for showcase scene
+let entitySprites: {
+    ant: any;
+    queen: any;
+    boss: any;
+    building: any;
+    resource: any;
+} | null = null;
 
 function preload() {
     // Load menu assets
@@ -75,6 +90,15 @@ function preload() {
         const spritePath = TILE_SPRITE_BASE_PATH + TILE_SPRITE_MAP[tileType];
         tileSprites[tileType] = loadImage(spritePath);
     }
+    
+    // Load entity sprites for showcase scene
+    entitySprites = {
+        ant: loadImage('assets/images/creatures/ants/gray_ant.png'),
+        queen: loadImage('assets/images/creatures/ants/gray_ant_queen.png'),
+        boss: loadImage('assets/images/creatures/spider/spider.png'),
+        building: loadImage('assets/images/16x16 Tiles/anthill.png'),
+        resource: loadImage('assets/images/16x16 Tiles/pebble_1.png')
+    };
     
     // Load tile edge sprites (frills)
     tileEdgeSprites = {};
@@ -119,6 +143,9 @@ function setup() {
     // Create renderer
     renderer = new Renderer(window as any, window.innerWidth, window.innerHeight);
     
+    // Initialize camera
+    camera = new Camera(0, 0, window.innerWidth, window.innerHeight);
+    
     // Initialize AudioManager with event-driven playback
     AudioManager.getInstance().initialize();
     
@@ -138,7 +165,8 @@ function setup() {
                 window.innerHeight,
                 menuImages.backButton,
                 tileSprites,
-                tileEdgeSprites
+                tileEdgeSprites,
+                entitySprites
             );
             SceneManager.getInstance().switchScene(devRoomScene, 'DevRoom');
         }
@@ -157,8 +185,10 @@ function setup() {
     // Listen for audio settings navigation
     EventBus.on(GameEvents.MENU_AUDIO_SETTINGS_CLICKED, () => {
         console.log('Switching to Audio Settings scene...');
-        const audioSettingsScene = new AudioSettingsScene(renderer, window.innerWidth, window.innerHeight);
-        SceneManager.getInstance().switchScene(audioSettingsScene, 'AudioSettings');
+        if (menuImages) {
+            const audioSettingsScene = new AudioSettingsScene(renderer, window.innerWidth, window.innerHeight, menuImages.backButton);
+            SceneManager.getInstance().switchScene(audioSettingsScene, 'AudioSettings');
+        }
     });
     
     EventBus.emit(GameEvents.GAME_START);
@@ -167,18 +197,52 @@ function setup() {
 function draw() {
     background(CONFIG.COLORS.BACKGROUND);
     
-    // Update current scene
+    // Update scene FIRST (checks input state)
     SceneManager.getInstance().update();
+    
+    // Update input manager LAST (clears just-pressed/released flags for next frame)
+    InputManager.getInstance().update();
     
     // Render all layers
     renderer.render();
 }
 
 function keyPressed() {
+    // Feed input to InputManager for action binding
+    console.log(`⌨️ Key pressed: "${key}" (keyCode: ${keyCode})`);
+    InputManager.getInstance().handleKeyPress(key);
+    
     EventBus.emit(GameEvents.INPUT_KEY_PRESS, keyCode, key);
     
     // Forward to scene manager
     SceneManager.getInstance().handleKeyPress(key);
+    
+    // Launch EntityShowcaseScene with 'T' key
+    if (key === 't' || key === 'T') {
+        console.log('🎮 Launching Entity Showcase Scene!');
+        
+        // Ensure sprites are loaded
+        if (!entitySprites) {
+            console.error('❌ Entity sprites not loaded! Press T again after assets load.');
+            return;
+        }
+        
+        if (!tileSprites || !tileEdgeSprites) {
+            console.error('❌ Tile sprites not loaded! Press T again after assets load.');
+            return;
+        }
+        
+        const showcaseScene = new EntityShowcaseScene(
+            renderer,
+            camera,
+            window.innerWidth,
+            window.innerHeight,
+            entitySprites,
+            tileSprites,
+            tileEdgeSprites
+        );
+        SceneManager.getInstance().switchScene(showcaseScene, 'EntityShowcase');
+    }
     
     // if (gameManager) {
     //     gameManager.handleKeyPressed(keyCode);
@@ -186,6 +250,9 @@ function keyPressed() {
 }
 
 function keyReleased() {
+    // Feed key release to InputManager
+    InputManager.getInstance().handleKeyRelease(key);
+    
     EventBus.emit(GameEvents.INPUT_KEY_RELEASE, keyCode, key);
     
     // if (gameManager) {
@@ -208,6 +275,13 @@ function mouseMoved() {
     EventBus.emit(GameEvents.INPUT_MOUSE_MOVE, mouseX, mouseY);
     
     // Forward to current scene
+    SceneManager.getInstance().handleMouseMove(mouseX, mouseY);
+}
+
+function mouseDragged() {
+    EventBus.emit(GameEvents.INPUT_MOUSE_MOVE, mouseX, mouseY);
+    
+    // Forward to current scene (dragging is just move while pressed)
     SceneManager.getInstance().handleMouseMove(mouseX, mouseY);
 }
 
@@ -236,5 +310,6 @@ function windowResized() {
 (window as any).keyReleased = keyReleased;
 (window as any).mousePressed = mousePressed;
 (window as any).mouseMoved = mouseMoved;
+(window as any).mouseDragged = mouseDragged;
 (window as any).mouseReleased = mouseReleased;
 (window as any).windowResized = windowResized;

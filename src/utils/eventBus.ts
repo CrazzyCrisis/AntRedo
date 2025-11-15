@@ -146,6 +146,7 @@ export const GameEvents = {
     GAME_OVER: 'game:over',
     GAME_WIN: 'game:win',
     LEVEL_START: 'level:start',
+    LEVEL_LOAD: 'level:load',
     LEVEL_COMPLETE: 'level:complete',
     LEVEL_CHANGED: 'level:changed',
     
@@ -237,9 +238,11 @@ export const GameEvents = {
     ENTITY_UPDATED: 'entity:updated',
     
     // Ant events
+    ANT_CREATED: 'ant:created',
     ANT_SPAWNED: 'ant:spawned',
     ANT_STATE_CHANGED: 'ant:state:changed',
     ANT_DIED: 'ant:died',
+    ENTITY_DIED: 'entity:died',
     ANT_ATTACKED: 'ant:attacked',
     ANT_JOB_CHANGED: 'ant:job:changed',
     ANT_HUNGER_CHANGED: 'ant:hunger:changed',
@@ -255,6 +258,7 @@ export const GameEvents = {
     UI_POPULATION_TOGGLED: 'ui:population:toggled',
     
     // Queen events
+    QUEEN_CREATED: 'queen:created',
     QUEEN_SPAWNED: 'queen:spawned',
     QUEEN_COMMAND_ISSUED: 'queen:command:issued',
     QUEEN_COMMAND_SELECTED: 'queen:command:selected',
@@ -276,6 +280,7 @@ export const GameEvents = {
     ENTITY_HEALTH_CHANGED: 'entity:health:changed',
     
     // Boss events
+    BOSS_CREATED: 'boss:created',
     BOSS_SPAWNED: 'boss:spawned',
     BOSS_ATTACKED: 'boss:attacked',
     BOSS_DIED: 'boss:died',
@@ -285,6 +290,7 @@ export const GameEvents = {
     BOSS_VISION_DETECTED: 'boss:vision:detected',
     
     // Resource events (extended)
+    RESOURCE_CREATED: 'resource:created',
     RESOURCE_SPAWNED: 'resource:spawned',
     RESOURCE_COLLECTED: 'resource:collected',
     RESOURCE_DEPOSITED: 'resource:deposited',
@@ -353,7 +359,17 @@ export const GameEvents = {
     ENTITY_HUNGRY: 'entity:hungry',
     ENTITY_STARVING: 'entity:starving',
     ENTITY_ATE: 'entity:ate',
-    STARVATION_DAMAGE: 'starvation:damage'
+    STARVATION_DAMAGE: 'starvation:damage',
+    
+    // Minimap UI events
+    MINIMAP_CLICKED: 'minimap:clicked',
+    MINIMAP_HOVER_START: 'minimap:hover:start',
+    MINIMAP_HOVER_END: 'minimap:hover:end',
+    
+    // Safe zone events
+    SAFE_ZONE_EXPIRED: 'safezone:expired',
+    SAFE_ZONE_FULLY_CONTRACTED: 'safezone:fully_contracted',
+    SAFE_ZONE_DEACTIVATED: 'safezone:deactivated'
 } as const;
 
 // Type for event names

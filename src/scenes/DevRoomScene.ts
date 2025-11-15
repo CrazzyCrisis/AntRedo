@@ -9,6 +9,8 @@ import { EventBus, GameEvents } from '../utils/eventBus';
 import { GameStateManager } from '../managers/GameStateManager';
 import { AudioManager } from '../managers/AudioManager';
 import { WorldGenerator } from '../world/WorldGenerator';
+import { SpawnManager } from '../managers/SpawnManager';
+import { LevelLoader } from '../managers/LevelLoader';
 import { TileGrid } from '../world/TileGrid';
 import { RenderLayer } from '../rendering/RenderLayer';
 import { TILE_SIZE } from '../world/TileSystem';
@@ -40,16 +42,35 @@ export class DevRoomScene implements IScene {
     private worldGenConfigMenu: WorldGenConfigMenu | null = null;
     private tileRendererUnregister: (() => void)[] = [];
     
+    // Spawning system
+    private spawnManager: SpawnManager | null = null;
+    private levelLoader: LevelLoader | null = null;
+    private entitySprites: {
+        ant: any;
+        queen: any;
+        boss: any;
+        resource: any;
+    } | null = null;
+    
     // Tile colors from config (fallback)
     private tileColors: { [key: number]: string };
 
-    constructor(renderer: Renderer, canvasWidth: number, canvasHeight: number, backButtonImg: any, tileSprites: { [key: number]: any }, tileEdgeSprites: { [path: string]: any }) {
+    constructor(
+        renderer: Renderer, 
+        canvasWidth: number, 
+        canvasHeight: number, 
+        backButtonImg: any, 
+        tileSprites: { [key: number]: any }, 
+        tileEdgeSprites: { [path: string]: any },
+        entitySprites: { ant: any; queen: any; boss: any; resource: any } | null = null
+    ) {
         this.renderer = renderer;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.backButtonImg = backButtonImg;
         this.tileSprites = tileSprites;
         this.tileEdgeSprites = tileEdgeSprites;
+        this.entitySprites = entitySprites;
         this.gameState = GameStateManager.getInstance();
         this.worldGenerator = new WorldGenerator();
         this.inputManager = InputManager.getInstance();
@@ -147,6 +168,13 @@ export class DevRoomScene implements IScene {
 
         // Create a simple tile renderer component
         this.createTileRenderer(tileGrid);
+        
+        // Initialize spawning system if entity sprites available
+        if (this.entitySprites) {
+            this.initializeSpawningSystem(tileGrid);
+        } else {
+            console.log('[DevRoomScene] Entity sprites not loaded - spawning system disabled');
+        }
     }
 
     private createBackButton(): void {
@@ -276,6 +304,14 @@ export class DevRoomScene implements IScene {
         // Stop dev room music
         AudioManager.getInstance().stopMusic();
         
+        // Cleanup spawning system
+        if (this.spawnManager) {
+            this.spawnManager.clearAllSpawns();
+        }
+        if (this.levelLoader) {
+            this.levelLoader.clearLevel();
+        }
+        
         // Unregister all renderables
         this.unregisterFunctions.forEach(unregister => unregister());
         this.unregisterFunctions = [];
@@ -294,6 +330,11 @@ export class DevRoomScene implements IScene {
         // Update world gen config menu if visible
         if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
             this.worldGenConfigMenu.update();
+        }
+        
+        // Update spawn manager (wave spawning, safe zone)
+        if (this.spawnManager) {
+            this.spawnManager.update(16.67); // ~60fps
         }
         
         // Update button animations
@@ -380,14 +421,7 @@ export class DevRoomScene implements IScene {
         // Only allow other keys when not paused
         if (this.isPaused) return;
         
-        // Save World
-        if (this.inputManager.isKeyBoundToAction(key.toString(), 'saveWorld')) {
-            const presetName = prompt('Enter a name for this world preset:');
-            if (presetName && presetName.trim()) {
-                this.saveCurrentWorld(presetName.trim());
-                alert(`World "${presetName}" saved!\n\nSeed: ${this.currentWorldSeed}\n\nYou can reload this exact world by adding ?seed=${this.currentWorldSeed} to the URL.`);
-            }
-        }
+        // Removed saveWorld keybinding - now handled in PauseMenuScene with Ctrl+S
     }
     
     /**
@@ -523,6 +557,102 @@ export class DevRoomScene implements IScene {
         
         // Recreate tile renderer
         this.createTileRenderer(tileGrid);
+        
+        // Reinitialize spawning system if available
+        if (this.entitySprites) {
+            // Clear old spawns first
+            if (this.spawnManager) {
+                this.spawnManager.clearAllSpawns();
+            }
+            this.initializeSpawningSystem(tileGrid);
+        }
+    }
+
+    /**
+     * Initialize the entity spawning system
+     */
+    private initializeSpawningSystem(tileGrid: TileGrid): void {
+        if (!this.entitySprites) {
+            return;
+        }
+        
+        console.log('[DevRoomScene] Initializing spawning system...');
+        
+        // Get singletons
+        this.spawnManager = SpawnManager.getInstance();
+        this.levelLoader = LevelLoader.getInstance();
+        
+        // Initialize spawn manager with tileGrid array
+        this.spawnManager.initialize(
+            this.renderer,
+            tileGrid.getGrid(),
+            (_x: number, _y: number, _radius: number) => {
+                // TODO: Replace with EntityManager when available
+                // For now, return empty array (no collision checking)
+                return [];
+            }
+        );
+        
+        // Register entity sprites
+        // Note: We'll use the single ant sprite for all job types for now
+        this.spawnManager.registerSprites({
+            ants: new Map([
+                [0, this.entitySprites.ant], // Gatherer
+                [1, this.entitySprites.ant], // Builder
+                [2, this.entitySprites.ant], // Warrior
+                [3, this.entitySprites.ant]  // Scout
+            ]),
+            resources: new Map([
+                ['food', this.entitySprites.resource],
+                ['wood', this.entitySprites.resource],
+                ['stone', this.entitySprites.resource],
+                ['magicCrystal', this.entitySprites.resource]
+            ]),
+            boss: this.entitySprites.boss,
+            queen: this.entitySprites.queen
+        });
+        
+        // Generate a procedural level (tutorial difficulty)
+        const levelData = this.levelLoader.loadProceduralLevel({
+            difficulty: 'easy',
+            worldSize: { 
+                width: DEV_ROOM_CONFIG.WORLD.WIDTH, 
+                height: DEV_ROOM_CONFIG.WORLD.HEIGHT 
+            },
+            resourceAbundance: 'normal',
+            enemyDensity: 'low',
+            safeZoneDuration: 120, // 2 minutes
+            wavesEnabled: true
+        }, this.currentWorldSeed);
+        
+        console.log(`[DevRoomScene] Generated level: ${levelData.metadata.name}`);
+        
+        // Spawn everything
+        const spawnResult = this.spawnManager.spawnLevel(
+            levelData.spawnConfig,
+            levelData.worldSeed
+        );
+        
+        console.log('[DevRoomScene] Spawn results:');
+        console.log(`  ✓ Queen: ${spawnResult.queen ? 'spawned' : 'failed'}`);
+        console.log(`  ✓ Ants: ${spawnResult.ants.length}`);
+        console.log(`  ✓ Resources: ${spawnResult.resources.length}`);
+        console.log(`  ✓ Enemies: ${spawnResult.enemies.bosses.length} bosses, ${spawnResult.enemies.ants.length} ants`);
+        
+        // Listen for spawn events
+        const waveListener = EventBus.on(GameEvents.ENEMY_SPAWN, (data: any) => {
+            if (data.type === 'wave') {
+                console.log(`⚔️ Wave ${data.waveNumber} spawned: ${data.antCount} enemies${data.hasBoss ? ' + BOSS' : ''}`);
+            }
+        });
+        
+        const safeZoneListener = EventBus.on(GameEvents.SAFE_ZONE_EXPIRED, () => {
+            console.log('⚠️ Safe zone expired - enemies can spawn closer!');
+        });
+        
+        this.unregisterFunctions.push(waveListener, safeZoneListener);
+        
+        EventBus.emit(GameEvents.LEVEL_START);
     }
 
     /**

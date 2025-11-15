@@ -168,7 +168,7 @@
 
 ---
 
-## Phase 3: Specialized Entities (MVC + Testable)
+## Phase 3: Specialized Entities (MVC + Testable) ✅ ALL COMPLETE
 
 ### ✅ Task 3.1: Ant Class (MODEL) - 30 tests passing
 - [x] Create `src/classes/Ant.ts` extends `GameObject`
@@ -192,50 +192,50 @@
   - [x] **NO RENDERING CODE** - Factory handles visuals
   - [x] **TEST:** Power cooldowns, unlocking, upgrading, command radius, death triggers game over (60 tests passing)
 
-### Task 3.3: Boss Class (MODEL)
-- [ ] Create `src/classes/Boss.ts` extends `GameObject`
-  - [ ] Attach components: StateMachine, Pathfinding, Health, Combat, Vision, AIBehavior
-  - [ ] Properties: `patrolPath: PathNode[]`, `projectileType: 'homing' | 'straight'`, `weakestTargetId: string`, `patrolIndex: number`
-  - [ ] AI Loop: Patrol → Vision cone scans → Detect weakest ant → Chase → Attack (projectile or melee)
-  - [ ] Methods: `setPatrolPath(path)`, `shootProjectile(targetId)`, `findWeakestTarget()`, `resumePatrol()`
-  - [ ] Vision cone: Use VisionComponent with angle and direction
-  - [ ] Weakest target: Query EntityManager for ants, find lowest health
-  - [ ] EventBus: Emit `BOSS_PATROLLING`, `BOSS_TARGET_ACQUIRED`, `BOSS_ATTACKING`, `BOSS_PROJECTILE_FIRED`
-  - [ ] **NO RENDERING CODE** - Factory handles visuals (vision cone in debug layer)
+### ✅ Task 3.3: Boss Class (MODEL) - COMPLETE
+- [x] Create `src/classes/Boss.ts` extends `GameObject`
+  - [x] Attach components: StateMachine, Pathfinding, Health, Combat, Vision, AIBehavior
+  - [x] Properties: `patrolPath: PathNode[]`, `projectileType: 'homing' | 'straight'`, `weakestTargetId: string`, `patrolIndex: number`
+  - [x] AI Loop: Patrol → Vision cone scans → Detect weakest ant → Chase → Attack (projectile or melee)
+  - [x] Methods: `setPatrolPath(path)`, `shootProjectile(targetId)`, `findWeakestTarget()`, `resumePatrol()`
+  - [x] Vision cone: Use VisionComponent with angle and direction
+  - [x] Weakest target: Query EntityManager for ants, find lowest health
+  - [x] EventBus: Emit `BOSS_PATROLLING`, `BOSS_TARGET_ACQUIRED`, `BOSS_ATTACKING`, `BOSS_PROJECTILE_FIRED`
+  - [x] **NO RENDERING CODE** - Factory handles visuals (vision cone in debug layer)
   - [ ] **TEST:** Patrol behavior, target detection, weakest selection, projectile firing, state transitions
 
-### Task 3.4: Resource Class (MODEL - Simple)
-- [ ] Create `src/classes/Resource.ts` extends `GameObject`
-  - [ ] Properties: `resourceType: 'FOOD' | 'WOOD' | 'STONE' | 'MAGIC_CRYSTALS'`, `amount: number`, `isCollectable: boolean`
-  - [ ] Methods: `collect(amount)`, `isEmpty()`, `getType()`, `getAmount()`
-  - [ ] Smell system: Ants detect in range using `distance()` helper
-  - [ ] EventBus: Emit `RESOURCE_COLLECTED` (antId, resourceType, amount), `RESOURCE_DEPLETED` (resourceId)
-  - [ ] **NO RENDERING CODE** - Factory registers sprite
+### ✅ Task 3.4: Resource Class (MODEL - Simple) - COMPLETE
+- [x] Create `src/classes/Resource.ts` extends `GameObject`
+  - [x] Properties: `resourceType: 'FOOD' | 'WOOD' | 'STONE' | 'MAGIC_CRYSTALS'`, `amount: number`, `isCollectable: boolean`
+  - [x] Methods: `collect(amount)`, `isEmpty()`, `getType()`, `getAmount()`
+  - [x] Smell system: Ants detect in range using `distance()` helper
+  - [x] EventBus: Emit `RESOURCE_COLLECTED` (antId, resourceType, amount), `RESOURCE_DEPLETED` (resourceId)
+  - [x] **NO RENDERING CODE** - Factory registers sprite
   - [ ] **TEST:** Collection, depletion, type validation
 
-### Task 3.5: Building Class (MODEL)
-- [ ] Create `src/classes/Building.ts` extends `GameObject`
-  - [ ] Properties: `buildingType: string`, `size: {width, height}`, `level: number`, `maxLevel: number`, `isConstructed: boolean`, `constructionProgress: number`, `blocksPathfinding: boolean`, `boosts: {}`, `workers: Set<string>`, `resourceProduction: {type, rate}`
-  - [ ] Methods: `startConstruction()`, `addProgress(amount)`, `completeConstruction()`, `levelUp()`, `applyBoost(ant)`, `generateResources()`, `assignWorker(antId)`, `removeWorker(antId)`
-  - [ ] Level system: Each level increases ant cap, resource rate, or stat boosts (from config)
-  - [ ] Types: Warehouse (stores resources), Barracks (spawns ants), ResourceGenerator (produces resources), TurretTower (defends)
-  - [ ] Construction: Starts as "construction site", ants build over time, completes when progress reaches 100%
-  - [ ] Pathfinding: Occupies grid cells (width × height), marks as blocked in PathfindingManager
-  - [ ] EventBus: Emit `BUILDING_PLACED`, `CONSTRUCTION_PROGRESS`, `BUILDING_COMPLETED`, `BUILDING_LEVELED_UP`, `BUILDING_DESTROYED`
-  - [ ] **NO RENDERING CODE** - Factory handles sprites (construction site vs completed)
+### ✅ Task 3.5: Building Class (MODEL) - COMPLETE
+- [x] Create `src/classes/Building.ts` extends `GameObject`
+  - [x] Properties: `buildingType: string`, `size: {width, height}`, `level: number`, `maxLevel: number`, `isConstructed: boolean`, `constructionProgress: number`, `blocksPathfinding: boolean`, `boosts: {}`, `workers: Set<string>`, `resourceProduction: {type, rate}`
+  - [x] Methods: `startConstruction()`, `addProgress(amount)`, `completeConstruction()`, `levelUp()`, `applyBoost(ant)`, `generateResources()`, `assignWorker(antId)`, `removeWorker(antId)`
+  - [x] Level system: Each level increases ant cap, resource rate, or stat boosts (from config)
+  - [x] Types: Warehouse (stores resources), Barracks (spawns ants), ResourceGenerator (produces resources), TurretTower (defends)
+  - [x] Construction: Starts as "construction site", ants build over time, completes when progress reaches 100%
+  - [x] Pathfinding: Occupies grid cells (width × height), marks as blocked in PathfindingManager
+  - [x] EventBus: Emit `BUILDING_PLACED`, `CONSTRUCTION_PROGRESS`, `BUILDING_COMPLETED`, `BUILDING_LEVELED_UP`, `BUILDING_DESTROYED`
+  - [x] **NO RENDERING CODE** - Factory handles sprites (construction site vs completed)
   - [ ] **TEST:** Construction progress, leveling, worker assignment, resource generation, pathfinding blocking
 
-### Task 3.6: Projectile Class (MODEL)
-- [ ] Create `src/classes/Projectile.ts` extends `GameObject`
-  - [ ] Properties: `damage: number`, `speed: number`, `targetId: string`, `ownerId: string`, `projectileType: 'homing' | 'straight'`, `lifeTime: number`
-  - [ ] Methods: `moveTowardsTarget(deltaTime)`, `onHit(targetId)`, `updateHomingDirection()`
-  - [ ] Homing: Use `angleBetween()`, `vectorNormalize()`, turn speed from config
-  - [ ] Straight: Move in initial direction using `vectorNormalize()`, `vectorLimit()`
-  - [ ] Collision: Check against entities using EntityManager spatial queries
-  - [ ] Auto-destroy: On hit or lifetime expires
-  - [ ] EventBus: Emit `PROJECTILE_HIT` (projectileId, targetId, damage), `PROJECTILE_EXPIRED`
-  - [ ] Used by: Queen powers (fireball), Boss attacks
-  - [ ] **NO RENDERING CODE** - Factory handles trail/sprite
+### ✅ Task 3.6: Projectile Class (MODEL) - COMPLETE
+- [x] Create `src/classes/Projectile.ts` extends `GameObject`
+  - [x] Properties: `damage: number`, `speed: number`, `targetId: string`, `ownerId: string`, `projectileType: 'homing' | 'straight'`, `lifeTime: number`
+  - [x] Methods: `moveTowardsTarget(deltaTime)`, `onHit(targetId)`, `updateHomingDirection()`
+  - [x] Homing: Use `angleBetween()`, `vectorNormalize()`, turn speed from config
+  - [x] Straight: Move in initial direction using `vectorNormalize()`, `vectorLimit()`
+  - [x] Collision: Check against entities using EntityManager spatial queries
+  - [x] Auto-destroy: On hit or lifetime expires
+  - [x] EventBus: Emit `PROJECTILE_HIT` (projectileId, targetId, damage), `PROJECTILE_EXPIRED`
+  - [x] Used by: Queen powers (fireball), Boss attacks
+  - [x] **NO RENDERING CODE** - Factory handles trail/sprite
   - [ ] **TEST:** Homing vs straight movement, hit detection, lifetime expiration
 
 ---
@@ -313,12 +313,12 @@
 
 ## Phase 5: Manager Systems (CONTROLLERS)
 
-### Task 5.1: Faction Manager (CONTROLLER) 🚧 IN PROGRESS
-- [ ] Create `src/managers/FactionManager.ts` singleton
-  - [ ] Track factions: `Map<string, Faction>` where Faction = {id, color, antIds: Set<string>, queenId, isPlayerFaction, antCap, currentAnts}
-  - [ ] Methods: `createFaction(id, color, isPlayer)`, `addAntToFaction(antId, factionId)`, `removeAntFromFaction(antId)`, `getFactionColor(factionId)`, `isEnemy(factionId1, factionId2)`, `getAntCap(factionId)`, `canSpawnAnt(factionId)`
-  - [ ] Ant cap: Track current ants vs cap (cap increases with building levels)
-  - [ ] EventBus listeners: Update ant counts on `ANT_CREATED`, `ANT_DIED`
+### ✅ Task 5.1: Faction Manager (CONTROLLER) - COMPLETE
+- [x] Create `src/managers/FactionManager.ts` singleton
+  - [x] Track factions: `Map<string, Faction>` where Faction = {id, color, antIds: Set<string>, queenId, isPlayerFaction, antCap, currentAnts}
+  - [x] Methods: `createFaction(id, color, isPlayer)`, `addAntToFaction(antId, factionId)`, `removeAntFromFaction(antId)`, `getFactionColor(factionId)`, `isEnemy(factionId1, factionId2)`, `getAntCap(factionId)`, `canSpawnAnt(factionId)`
+  - [x] Ant cap: Track current ants vs cap (cap increases with building levels)
+  - [x] EventBus listeners: Update ant counts on `ANT_CREATED`, `ANT_DIED`
   - [ ] **TEST:** Faction creation, ant tracking, enemy detection, ant cap limits
 
 ### Task 5.2: Resource Manager (CONTROLLER) ✅ COMPLETE
@@ -627,23 +627,39 @@
   - [x] Registered on `RenderLayer.UI` with depth 900
 - [ ] **TEST:** Display, border animation, sprite swapping, positioning
 
-### Task 8.8: Minimap UI (VIEW - NEW)
-- [ ] Create `src/rendering/components/MinimapComponent.ts`
-  - [ ] **Overhead view** of entire map in small rectangle
-  - [ ] Display elements:
+### ✅ Task 8.8: Minimap UI (VIEW - NEW) - COMPLETE
+- [x] Create `src/rendering/components/MinimapComponent.ts`
+  - [x] **Overhead view** of entire map in small rectangle
+  - [x] Display elements:
     - Player/Queen position (bright marker)
     - Resources (color-coded dots)
     - Buildings (small rectangles)
     - Enemies (red dots)
     - Fog of war (optional - unexplored areas darkened)
-  - [ ] Click to navigate: Click on minimap to move camera/queen
-  - [ ] View rectangle: Shows current camera viewport on minimap
-  - [ ] Layout: Bottom right corner, fixed size (150x150 or similar)
-  - [ ] Methods: `updateEntityPosition(id, x, y)`, `addMinimapMarker(type, x, y)`, `removeMinimapMarker(id)`, `handleClick(x, y)`
-  - [ ] Camera integration: Sync with Camera for viewport display, emit camera move events
-  - [ ] EventBus integration: Listen to `ENTITY_MOVED`, `RESOURCE_SPAWNED`, `BUILDING_PLACED`, etc.
-  - [ ] Registered on `RenderLayer.UI` with high depth
+  - [x] Click to navigate: Click on minimap to move camera/queen
+  - [x] View rectangle: Shows current camera viewport on minimap
+  - [x] Layout: Bottom right corner, fixed size (150x150 or similar)
+  - [x] Methods: `updateEntityPosition(id, x, y)`, `addMinimapMarker(type, x, y)`, `removeMinimapMarker(id)`, `handleClick(x, y)`
+  - [x] Camera integration: Sync with Camera for viewport display, emit camera move events
+  - [x] EventBus integration: Listen to `ENTITY_MOVED`, `RESOURCE_SPAWNED`, `BUILDING_PLACED`, etc.
+  - [x] Registered on `RenderLayer.UI` with high depth
 - [ ] **TEST:** Entity tracking, click navigation, viewport display, marker accuracy
+
+---
+
+## Phase 8 Summary: ✅ ALL COMPLETE
+**All 8 Phase 8 UI components have been implemented:**
+- ✅ Resource Display UI (8.1) - Shows faction resources with icons and counts
+- ✅ Building Placement UI (8.2) - Ghost preview, validation, grid snapping
+- ✅ Ant State Display (8.3) - Debug overlay with state labels, pathfinding visualization
+- ✅ Queen Power UI (8.4) - Power bar with cooldown overlays and lock states
+- ✅ Population Display (8.5) - Expandable ant population breakdown by type
+- ✅ Queen Commands UI (8.6) - Command buttons with selection states
+- ✅ Queen Portrait UI (8.7) - Static queen portrait with animated border
+- ✅ Minimap UI (8.8) - Overhead tactical map with entity markers and click-to-navigate
+
+**Build Status:** ✅ All UI components compile successfully (dist/bundle.js 228.8kb)
+**Test Status:** Implementation complete, integration tests pending (Phase 9)
 
 ---
 

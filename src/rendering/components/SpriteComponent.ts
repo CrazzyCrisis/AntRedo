@@ -36,8 +36,16 @@ export class SpriteComponent implements Renderable {
         this.y = y;
         this.layer = layer;
         this.depth = depth;
-        this.width = width || sprite.width;
-        this.height = height || sprite.height;
+        
+        // Handle null sprites gracefully
+        if (sprite) {
+            this.width = width || sprite.width;
+            this.height = height || sprite.height;
+        } else {
+            this.width = width || 16; // Default tile size
+            this.height = height || 16;
+        }
+        
         this.offsetX = offsetX;
         this.offsetY = offsetY;
     }
@@ -55,8 +63,10 @@ export class SpriteComponent implements Renderable {
      */
     setSprite(sprite: any): void {
         this.sprite = sprite;
-        this.width = sprite.width;
-        this.height = sprite.height;
+        if (sprite) {
+            this.width = sprite.width;
+            this.height = sprite.height;
+        }
     }
 
     /**
@@ -92,7 +102,44 @@ export class SpriteComponent implements Renderable {
      * Render sprite to graphics context
      */
     render(graphics: any): void {
-        if (!this.sprite) return;
+        // If no sprite, render bright magenta placeholder
+        if (!this.sprite) {
+            console.warn(`⚠️ NULL sprite at (${this.x}, ${this.y}) layer=${this.layer} depth=${this.depth}`);
+            graphics.fill(255, 0, 255); // Magenta
+            graphics.stroke(255, 255, 0); // Yellow border
+            graphics.strokeWeight(2);
+            graphics.rect(
+                this.x + this.offsetX,
+                this.y + this.offsetY,
+                this.width * this.scale,
+                this.height * this.scale
+            );
+            
+            // Draw X through it
+            graphics.stroke(0);
+            graphics.strokeWeight(1);
+            graphics.line(
+                this.x + this.offsetX,
+                this.y + this.offsetY,
+                this.x + this.offsetX + this.width * this.scale,
+                this.y + this.offsetY + this.height * this.scale
+            );
+            graphics.line(
+                this.x + this.offsetX + this.width * this.scale,
+                this.y + this.offsetY,
+                this.x + this.offsetX,
+                this.y + this.offsetY + this.height * this.scale
+            );
+            return;
+        }
+        
+        // Debug: Validate sprite before using
+        if (!this.sprite.width || !this.sprite.height) {
+            console.error(`❌ INVALID sprite at (${this.x}, ${this.y}):`, this.sprite);
+            console.error('  Keys:', Object.keys(this.sprite || {}));
+            console.error('  Type:', typeof this.sprite);
+            return;
+        }
         
         // Save graphics state if transform needed
         if (this.rotation !== 0 || this.scale !== 1) {

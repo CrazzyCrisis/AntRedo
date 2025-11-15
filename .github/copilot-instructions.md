@@ -181,6 +181,7 @@ docs/
 - Keep checklists clean - reference code snippets, don't embed large code blocks
 - Update relevant docs when adding new patterns or systems
 - **Create checklists for multi-step tasks** - Break down complex work into tracked subtasks in `docs/checklists/`
+- **ALWAYS update checklists** - When working from a checklist, mark tasks complete with `[x]` as you finish them
 
 ## Key Conventions
 

@@ -40,12 +40,12 @@ export class PathfindingManager {
      */
     private setupEventListeners(): void {
         // Listen for building placement to block tiles
-        EventBus.on('BUILDING_PATHFINDING_BLOCK', (tiles: Array<{ col: number; row: number }>) => {
+        EventBus.on('BUILDING_PATHFINDING_BLOCK', (_buildingId: string, tiles: Array<{ gridX: number; gridY: number }>) => {
             this.markBlocked(tiles);
         });
 
         // Listen for building destruction to unblock tiles
-        EventBus.on('BUILDING_PATHFINDING_UNBLOCK', (tiles: Array<{ col: number; row: number }>) => {
+        EventBus.on('BUILDING_PATHFINDING_UNBLOCK', (_buildingId: string, tiles: Array<{ gridX: number; gridY: number }>) => {
             this.markWalkable(tiles);
         });
 
@@ -112,9 +112,9 @@ export class PathfindingManager {
      * Mark multiple tiles as blocked
      * @param tiles - Array of tile positions
      */
-    public markBlocked(tiles: Array<{ col: number; row: number }>): void {
+    public markBlocked(tiles: Array<{ gridX: number; gridY: number }>): void {
         for (const tile of tiles) {
-            this.updateGrid(tile.col, tile.row, false);
+            this.updateGrid(tile.gridX, tile.gridY, false);
         }
         EventBus.emit('PATHFINDING_TILES_BLOCKED', tiles.length);
     }
@@ -123,9 +123,9 @@ export class PathfindingManager {
      * Mark multiple tiles as walkable
      * @param tiles - Array of tile positions
      */
-    public markWalkable(tiles: Array<{ col: number; row: number }>): void {
+    public markWalkable(tiles: Array<{ gridX: number; gridY: number }>): void {
         for (const tile of tiles) {
-            this.updateGrid(tile.col, tile.row, true);
+            this.updateGrid(tile.gridX, tile.gridY, true);
         }
         EventBus.emit('PATHFINDING_TILES_UNBLOCKED', tiles.length);
     }

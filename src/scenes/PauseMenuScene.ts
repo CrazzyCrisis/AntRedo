@@ -314,19 +314,34 @@ export class PauseMenuScene implements IScene {
     handleKeyPress(key: string | number): void {
         const keyStr = key.toString();
         
+        // Debug logging
+        console.log(`[PauseMenu] Key pressed: "${keyStr}"`);
+        
+        // Ctrl+S - Save World Preset (check if CONTROL key is held down)
+        if ((keyStr === 's' || keyStr === 'S')) {
+            // Check if Control key (keyCode 17) is currently pressed
+            const keyIsDown = (window as any).keyIsDown;
+            const CONTROL = 17;
+            
+            console.log(`[PauseMenu] S key detected. keyIsDown exists: ${!!keyIsDown}, Control pressed: ${keyIsDown ? keyIsDown(CONTROL) : 'N/A'}`);
+            
+            if (keyIsDown && keyIsDown(CONTROL)) {
+                console.log('[PauseMenu] Ctrl+S detected - showing save dialog');
+                // Show save dialog
+                const presetName = prompt('Enter a name for this world preset:');
+                if (presetName && presetName.trim()) {
+                    EventBus.emit(GameEvents.SAVE_WORLD_PRESET, presetName.trim());
+                    console.log(`✅ World preset "${presetName}" saved!`);
+                }
+            } else {
+                console.log('[PauseMenu] S pressed without Ctrl - ignoring');
+            }
+            return;
+        }
+        
         // Pause - Resume game
         if (this.inputManager.isKeyBoundToAction(keyStr, 'pause')) {
             EventBus.emit(GameEvents.GAME_RESUME);
-            return;
-        }
-
-        // Save World
-        if (this.inputManager.isKeyBoundToAction(keyStr, 'saveWorld')) {
-            const presetName = prompt('Enter a name for this world preset:');
-            if (presetName && presetName.trim()) {
-                EventBus.emit(GameEvents.SAVE_WORLD_PRESET, presetName.trim());
-                alert(`World "${presetName}" saved!`);
-            }
             return;
         }
 

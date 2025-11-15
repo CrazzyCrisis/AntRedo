@@ -1,16 +1,17 @@
 import { IScene } from './IScene';
 import { Renderer } from '../rendering/Renderer';
 import { RenderLayer } from '../rendering/RenderLayer';
-import { SliderComponent } from '../rendering/components/SliderComponent';
-import { ToggleComponent } from '../rendering/components/ToggleComponent';
+import { SliderWithArrowsComponent } from '../rendering/components/SliderWithArrowsComponent';
 import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { AudioManager } from '../managers/AudioManager';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { AUDIO_SETTINGS_LAYOUT, SETTINGS_SCALES } from '../config/menuLayout';
+import { TextRenderable } from '../rendering/components/TextRenderable';
+import { PanelRenderable } from '../rendering/components/PanelRenderable';
 
 /**
  * Audio Settings Scene
- * Provides UI for adjusting volume levels and mute settings
+ * Clean volume control interface with sliders and arrows
  * Wired directly to AudioManager for real-time audio control
  */
 export class AudioSettingsScene implements IScene {
@@ -18,24 +19,35 @@ export class AudioSettingsScene implements IScene {
     private canvasWidth: number;
     private canvasHeight: number;
     private audioManager: AudioManager;
+    private backButtonImage: any;
     
     // UI Components
-    public masterVolumeSlider!: SliderComponent;
-    public musicVolumeSlider!: SliderComponent;
-    public sfxVolumeSlider!: SliderComponent;
-    public musicMuteToggle!: ToggleComponent;
-    public sfxMuteToggle!: ToggleComponent;
+    public backgroundPanel!: PanelRenderable;
+    public titleText!: TextRenderable;
+    public masterVolumeSlider!: SliderWithArrowsComponent;
+    public bgmVolumeSlider!: SliderWithArrowsComponent;
+    public sfxVolumeSlider!: SliderWithArrowsComponent;
+    public voicesVolumeSlider!: SliderWithArrowsComponent;
+    public systemVolumeSlider!: SliderWithArrowsComponent;
     public backButton!: ButtonComponent;
+    
+    // Labels
+    public masterLabel!: TextRenderable;
+    public bgmLabel!: TextRenderable;
+    public sfxLabel!: TextRenderable;
+    public voicesLabel!: TextRenderable;
+    public systemLabel!: TextRenderable;
     
     // Lifecycle management
     private unregisterFunctions: Array<() => void> = [];
-    private components: Array<SliderComponent | ToggleComponent | ButtonComponent> = [];
+    private components: Array<PanelRenderable | SliderWithArrowsComponent | ButtonComponent | TextRenderable> = [];
     
-    constructor(renderer: Renderer, canvasWidth: number, canvasHeight: number) {
+    constructor(renderer: Renderer, canvasWidth: number, canvasHeight: number, backButtonImage: any) {
         this.renderer = renderer;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.audioManager = AudioManager.getInstance();
+        this.backButtonImage = backButtonImage;
     }
     
     enter(): void {
@@ -55,6 +67,9 @@ export class AudioSettingsScene implements IScene {
         if (this.backButton.update) {
             this.backButton.update();
         }
+        
+        // Mark UI layer dirty to show animations and hover states
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
     
     handleMouseClick(x: number, y: number): void {
@@ -64,52 +79,49 @@ export class AudioSettingsScene implements IScene {
             return;
         }
         
-        // Check toggles
-        if (this.musicMuteToggle.isMouseOver(x, y)) {
-            this.musicMuteToggle.handleClick(x, y);
-        }
-        if (this.sfxMuteToggle.isMouseOver(x, y)) {
-            this.sfxMuteToggle.handleClick(x, y);
-        }
+        // Check all sliders for clicks (arrows or track)
+        this.masterVolumeSlider.handleClick(x, y);
+        this.bgmVolumeSlider.handleClick(x, y);
+        this.sfxVolumeSlider.handleClick(x, y);
+        this.voicesVolumeSlider.handleClick(x, y);
+        this.systemVolumeSlider.handleClick(x, y);
         
-        // Check sliders for drag start
-        if (this.masterVolumeSlider.isMouseOver(x, y)) {
-            this.masterVolumeSlider.handleMouseDown(x, y);
-        }
-        if (this.musicVolumeSlider.isMouseOver(x, y)) {
-            this.musicVolumeSlider.handleMouseDown(x, y);
-        }
-        if (this.sfxVolumeSlider.isMouseOver(x, y)) {
-            this.sfxVolumeSlider.handleMouseDown(x, y);
-        }
+        // Also check for drag start on sliders
+        this.masterVolumeSlider.handleMouseDown(x, y);
+        this.bgmVolumeSlider.handleMouseDown(x, y);
+        this.sfxVolumeSlider.handleMouseDown(x, y);
+        this.voicesVolumeSlider.handleMouseDown(x, y);
+        this.systemVolumeSlider.handleMouseDown(x, y);
+        
+        // Mark UI layer dirty for visual updates
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
     
     handleMouseMove(x: number, y: number): void {
-        // Update hover states
-        this.masterVolumeSlider.setHovered(this.masterVolumeSlider.isMouseOver(x, y));
-        this.musicVolumeSlider.setHovered(this.musicVolumeSlider.isMouseOver(x, y));
-        this.sfxVolumeSlider.setHovered(this.sfxVolumeSlider.isMouseOver(x, y));
-        this.musicMuteToggle.setHovered(this.musicMuteToggle.isMouseOver(x, y));
-        this.sfxMuteToggle.setHovered(this.sfxMuteToggle.isMouseOver(x, y));
+        // Update hover states for all sliders
+        this.masterVolumeSlider.handleMouseMove(x, y);
+        this.bgmVolumeSlider.handleMouseMove(x, y);
+        this.sfxVolumeSlider.handleMouseMove(x, y);
+        this.voicesVolumeSlider.handleMouseMove(x, y);
+        this.systemVolumeSlider.handleMouseMove(x, y);
+        
+        // Update back button hover
         this.backButton.setHovered(this.backButton.isMouseOver(x, y));
         
-        // Handle slider dragging
-        if (this.masterVolumeSlider['dragging']) {
-            this.masterVolumeSlider.handleMouseDrag(x, y);
-        }
-        if (this.musicVolumeSlider['dragging']) {
-            this.musicVolumeSlider.handleMouseDrag(x, y);
-        }
-        if (this.sfxVolumeSlider['dragging']) {
-            this.sfxVolumeSlider.handleMouseDrag(x, y);
-        }
+        // Mark UI layer dirty for hover state updates
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
     
     handleMouseUp(_x: number, _y: number): void {
         // Release all sliders
         this.masterVolumeSlider.handleMouseUp();
-        this.musicVolumeSlider.handleMouseUp();
+        this.bgmVolumeSlider.handleMouseUp();
         this.sfxVolumeSlider.handleMouseUp();
+        this.voicesVolumeSlider.handleMouseUp();
+        this.systemVolumeSlider.handleMouseUp();
+        
+        // Mark UI layer dirty for visual updates
+        this.renderer.markLayerDirty(RenderLayer.UI);
     }
     
     onResize(width: number, height: number): void {
@@ -142,79 +154,144 @@ export class AudioSettingsScene implements IScene {
         const toPixelX = (offsetX: number) => centerX + (offsetX * halfWidth);
         const toPixelY = (offsetY: number) => centerY - (offsetY * halfHeight);
         
-        // Mock sprite for UI components (when no asset loaded)
-        const mockSprite = { width: 200, height: 20 };
-        const mockButtonSprite = { width: 100, height: 40 };
+        // Create background panel first (draws behind everything)
+        const panelWidth = AUDIO_SETTINGS_LAYOUT.PANEL.width * this.canvasWidth;
+        const panelHeight = AUDIO_SETTINGS_LAYOUT.PANEL.height * this.canvasHeight;
+        const panelX = toPixelX(AUDIO_SETTINGS_LAYOUT.PANEL.offsetX) - panelWidth / 2;
+        const panelY = toPixelY(AUDIO_SETTINGS_LAYOUT.PANEL.offsetY) - panelHeight / 2;
         
-        // Create sliders (min, max, initialValue, id)
-        this.masterVolumeSlider = new SliderComponent(
-            mockSprite as any,
+        this.backgroundPanel = new PanelRenderable(
+            panelX,
+            panelY,
+            panelWidth,
+            panelHeight,
+            'audio_settings_panel',
+            '#2C2C2C',  // Dark gray background
+            220,        // Alpha (slightly transparent)
+            12          // Corner radius
+        );
+        
+        // Mock sprite for sliders (wide track)
+        const mockSliderSprite = { width: 300, height: 20 };
+        
+        // Title text
+        this.titleText = new TextRenderable(
+            'Audio Settings',
+            toPixelX(AUDIO_SETTINGS_LAYOUT.TITLE.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.TITLE.offsetY),
+            32,
+            255,
+            'audio_title'
+        );
+        
+        // Create sliders with arrows
+        this.masterVolumeSlider = new SliderWithArrowsComponent(
+            mockSliderSprite as any,
             toPixelX(AUDIO_SETTINGS_LAYOUT.MASTER_VOLUME_SLIDER.offsetX),
             toPixelY(AUDIO_SETTINGS_LAYOUT.MASTER_VOLUME_SLIDER.offsetY),
-            0, // min
-            1, // max
-            this.audioManager.getMasterVolume(), // initialValue
-            'master_volume' // id
+            0, 1,
+            this.audioManager.getMasterVolume(),
+            'master_volume'
         );
+        this.masterVolumeSlider.setArrowStep(0.05); // 5% increments
         this.masterVolumeSlider.onChange((value: number) => {
             this.audioManager.setMasterVolume(value);
         });
         
-        this.musicVolumeSlider = new SliderComponent(
-            mockSprite as any,
-            toPixelX(AUDIO_SETTINGS_LAYOUT.MUSIC_VOLUME_SLIDER.offsetX),
-            toPixelY(AUDIO_SETTINGS_LAYOUT.MUSIC_VOLUME_SLIDER.offsetY),
-            0,
-            1,
+        this.bgmVolumeSlider = new SliderWithArrowsComponent(
+            mockSliderSprite as any,
+            toPixelX(AUDIO_SETTINGS_LAYOUT.BGM_VOLUME_SLIDER.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.BGM_VOLUME_SLIDER.offsetY),
+            0, 1,
             this.audioManager.getMusicVolume(),
-            'music_volume'
+            'bgm_volume'
         );
-        this.musicVolumeSlider.onChange((value: number) => {
+        this.bgmVolumeSlider.setArrowStep(0.05);
+        this.bgmVolumeSlider.onChange((value: number) => {
             this.audioManager.setMusicVolume(value);
         });
         
-        this.sfxVolumeSlider = new SliderComponent(
-            mockSprite as any,
+        this.sfxVolumeSlider = new SliderWithArrowsComponent(
+            mockSliderSprite as any,
             toPixelX(AUDIO_SETTINGS_LAYOUT.SFX_VOLUME_SLIDER.offsetX),
             toPixelY(AUDIO_SETTINGS_LAYOUT.SFX_VOLUME_SLIDER.offsetY),
-            0,
-            1,
+            0, 1,
             this.audioManager.getSFXVolume(),
             'sfx_volume'
         );
+        this.sfxVolumeSlider.setArrowStep(0.05);
         this.sfxVolumeSlider.onChange((value: number) => {
             this.audioManager.setSFXVolume(value);
         });
         
-        // Create toggles (initialState, id)
-        const mockToggleSprite = { width: 60, height: 30 };
-        this.musicMuteToggle = new ToggleComponent(
-            mockToggleSprite as any,
-            toPixelX(AUDIO_SETTINGS_LAYOUT.MUSIC_MUTE_TOGGLE.offsetX),
-            toPixelY(AUDIO_SETTINGS_LAYOUT.MUSIC_MUTE_TOGGLE.offsetY),
-            this.audioManager.isMusicMuted(),
-            'music_mute'
+        // Voices and System sliders (currently map to SFX, can be extended later)
+        this.voicesVolumeSlider = new SliderWithArrowsComponent(
+            mockSliderSprite as any,
+            toPixelX(AUDIO_SETTINGS_LAYOUT.VOICES_VOLUME_SLIDER.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.VOICES_VOLUME_SLIDER.offsetY),
+            0, 1,
+            this.audioManager.getSFXVolume(), // Currently same as SFX
+            'voices_volume'
         );
-        this.musicMuteToggle.setLabel('Mute Music');
-        this.musicMuteToggle.onChange((state: boolean) => {
-            this.audioManager.setMusicMuted(state);
+        this.voicesVolumeSlider.setArrowStep(0.05);
+        this.voicesVolumeSlider.onChange((value: number) => {
+            // Could extend AudioManager to have separate voices volume
+            this.audioManager.setSFXVolume(value);
         });
         
-        this.sfxMuteToggle = new ToggleComponent(
-            mockToggleSprite as any,
-            toPixelX(AUDIO_SETTINGS_LAYOUT.SFX_MUTE_TOGGLE.offsetX),
-            toPixelY(AUDIO_SETTINGS_LAYOUT.SFX_MUTE_TOGGLE.offsetY),
-            this.audioManager.isSFXMuted(),
-            'sfx_mute'
+        this.systemVolumeSlider = new SliderWithArrowsComponent(
+            mockSliderSprite as any,
+            toPixelX(AUDIO_SETTINGS_LAYOUT.SYSTEM_VOLUME_SLIDER.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.SYSTEM_VOLUME_SLIDER.offsetY),
+            0, 1,
+            this.audioManager.getSFXVolume(), // Currently same as SFX
+            'system_volume'
         );
-        this.sfxMuteToggle.setLabel('Mute SFX');
-        this.sfxMuteToggle.onChange((state: boolean) => {
-            this.audioManager.setSFXMuted(state);
+        this.systemVolumeSlider.setArrowStep(0.05);
+        this.systemVolumeSlider.onChange((value: number) => {
+            // Could extend AudioManager to have separate system volume
+            this.audioManager.setSFXVolume(value);
         });
         
-        // Create back button
+        // Create labels using config positions
+        this.masterLabel = new TextRenderable(
+            'Master',
+            toPixelX(AUDIO_SETTINGS_LAYOUT.MASTER_LABEL.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.MASTER_LABEL.offsetY),
+            18, 255, 'master_label'
+        );
+        
+        this.bgmLabel = new TextRenderable(
+            'BGM',
+            toPixelX(AUDIO_SETTINGS_LAYOUT.BGM_LABEL.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.BGM_LABEL.offsetY),
+            18, 255, 'bgm_label'
+        );
+        
+        this.sfxLabel = new TextRenderable(
+            'SFX',
+            toPixelX(AUDIO_SETTINGS_LAYOUT.SFX_LABEL.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.SFX_LABEL.offsetY),
+            18, 255, 'sfx_label'
+        );
+        
+        this.voicesLabel = new TextRenderable(
+            'Voices',
+            toPixelX(AUDIO_SETTINGS_LAYOUT.VOICES_LABEL.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.VOICES_LABEL.offsetY),
+            18, 255, 'voices_label'
+        );
+        
+        this.systemLabel = new TextRenderable(
+            'System',
+            toPixelX(AUDIO_SETTINGS_LAYOUT.SYSTEM_LABEL.offsetX),
+            toPixelY(AUDIO_SETTINGS_LAYOUT.SYSTEM_LABEL.offsetY),
+            18, 255, 'system_label'
+        );
+        
+        // Create back button with proper image
         this.backButton = new ButtonComponent(
-            mockButtonSprite as any,
+            this.backButtonImage,
             toPixelX(AUDIO_SETTINGS_LAYOUT.BACK_BUTTON.offsetX),
             toPixelY(AUDIO_SETTINGS_LAYOUT.BACK_BUTTON.offsetY),
             'audio_back_button'
@@ -226,11 +303,18 @@ export class AudioSettingsScene implements IScene {
         
         // Store all components for batch operations
         this.components = [
+            this.backgroundPanel,  // Panel first (draws behind)
+            this.titleText,
             this.masterVolumeSlider,
-            this.musicVolumeSlider,
+            this.bgmVolumeSlider,
             this.sfxVolumeSlider,
-            this.musicMuteToggle,
-            this.sfxMuteToggle,
+            this.voicesVolumeSlider,
+            this.systemVolumeSlider,
+            this.masterLabel,
+            this.bgmLabel,
+            this.sfxLabel,
+            this.voicesLabel,
+            this.systemLabel,
             this.backButton
         ];
     }
@@ -279,9 +363,9 @@ export class AudioSettingsScene implements IScene {
      */
     private syncComponentsWithAudioManager(): void {
         this.masterVolumeSlider.setValue(this.audioManager.getMasterVolume());
-        this.musicVolumeSlider.setValue(this.audioManager.getMusicVolume());
+        this.bgmVolumeSlider.setValue(this.audioManager.getMusicVolume());
         this.sfxVolumeSlider.setValue(this.audioManager.getSFXVolume());
-        this.musicMuteToggle.setOn(this.audioManager.isMusicMuted());
-        this.sfxMuteToggle.setOn(this.audioManager.isSFXMuted());
+        this.voicesVolumeSlider.setValue(this.audioManager.getSFXVolume());
+        this.systemVolumeSlider.setValue(this.audioManager.getSFXVolume());
     }
 }

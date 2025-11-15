@@ -1,0 +1,96 @@
+{
+  "metadata": {
+    "id": "survival_01",
+    "name": "Survival Mode: Last Stand",
+    "description": "Endless waves of enemies with increasing difficulty. How long can your colony survive?",
+    "difficulty": "hard",
+    "author": "AntRedo Team",
+    "version": 1,
+    "tags": ["survival", "endless", "hard", "challenge"]
+  },
+  "spawnConfig": {
+    "queen": {
+      "position": { "x": 50, "y": 50 },
+      "factionId": "player"
+    },
+    "starterAnts": {
+      "builders": 2,
+      "gatherers": 4,
+      "scouts": 2
+    },
+    "resourceVeins": [
+      {
+        "bounds": { "x": 5, "y": 5, "width": 90, "height": 90 },
+        "resourceType": "food",
+        "noiseLayer": "resources",
+        "threshold": { "min": 0.7, "max": 1.0 },
+        "density": 0.2
+      },
+      {
+        "bounds": { "x": 5, "y": 5, "width": 90, "height": 90 },
+        "resourceType": "wood",
+        "noiseLayer": "resources",
+        "threshold": { "min": 0.4, "max": 0.7 },
+        "density": 0.15
+      },
+      {
+        "bounds": { "x": 5, "y": 5, "width": 90, "height": 90 },
+        "resourceType": "stone",
+        "noiseLayer": "resources",
+        "threshold": { "min": 0.1, "max": 0.4 },
+        "density": 0.15
+      },
+      {
+        "bounds": { "x": 5, "y": 5, "width": 90, "height": 90 },
+        "resourceType": "magicCrystal",
+        "noiseLayer": "resources",
+        "threshold": { "min": 0.9, "max": 1.0 },
+        "density": 0.05
+      }
+    ],
+    "enemyNests": [
+      {
+        "center": { "x": 15, "y": 15 },
+        "bossType": "scorpion",
+        "antCount": 6,
+        "factionId": "enemy_1"
+      },
+      {
+        "center": { "x": 85, "y": 15 },
+        "bossType": "spider",
+        "antCount": 6,
+        "factionId": "enemy_2"
+      },
+      {
+        "center": { "x": 85, "y": 85 },
+        "bossType": "scorpion",
+        "antCount": 7,
+        "factionId": "enemy_3"
+      },
+      {
+        "center": { "x": 15, "y": 85 },
+        "bossType": "spider",
+        "antCount": 7,
+        "factionId": "enemy_4"
+      }
+    ],
+    "safeZone": {
+      "center": { "x": 50, "y": 50 },
+      "radius": 18,
+      "duration": 60
+    },
+    "waves": {
+      "enabled": true,
+      "baseDelay": 20,
+      "baseAntCount": 5,
+      "antCountMultiplier": 1.8,
+      "bossInterval": 3
+    },
+    "noiseLayers": {
+      "resources": { "scale": 0.05, "seed": 24680 },
+      "enemies": { "scale": 0.08, "seed": 13579 },
+      "decorations": { "scale": 0.1, "seed": 22222 }
+    }
+  },
+  "worldSeed": 24680
+}
