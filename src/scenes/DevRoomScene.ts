@@ -7,6 +7,7 @@ import { IScene } from './IScene';
 import { Renderer } from '../rendering/Renderer';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { GameStateManager } from '../managers/GameStateManager';
+import { AudioManager } from '../managers/AudioManager';
 import { WorldGenerator } from '../world/WorldGenerator';
 import { TileGrid } from '../world/TileGrid';
 import { RenderLayer } from '../rendering/RenderLayer';
@@ -58,6 +59,9 @@ export class DevRoomScene implements IScene {
     }
 
     enter(): void {
+        // Start dev room music
+        AudioManager.getInstance().playMusic('DEV_ROOM_THEME', true);
+        
         // Check if user provided a custom seed via URL parameter or config
         const urlParams = typeof window !== 'undefined' && window.location 
             ? new URLSearchParams(window.location.search) 
@@ -269,6 +273,9 @@ export class DevRoomScene implements IScene {
     }
 
     exit(): void {
+        // Stop dev room music
+        AudioManager.getInstance().stopMusic();
+        
         // Unregister all renderables
         this.unregisterFunctions.forEach(unregister => unregister());
         this.unregisterFunctions = [];

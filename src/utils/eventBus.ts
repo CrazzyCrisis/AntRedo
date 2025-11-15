@@ -247,6 +247,12 @@ export const GameEvents = {
     ANT_STARVED: 'ant:starved',
     ANT_TARGET_ACQUIRED: 'ant:target:acquired',
     ANT_TARGET_LOST: 'ant:target:lost',
+    ANT_PATH_UPDATED: 'ant:path:updated',
+    ANT_TYPE_COUNT_CHANGED: 'ant:type:count:changed',
+    
+    // Population events
+    POPULATION_CHANGED: 'population:changed',
+    UI_POPULATION_TOGGLED: 'ui:population:toggled',
     
     // Queen events
     QUEEN_SPAWNED: 'queen:spawned',
@@ -258,6 +264,10 @@ export const GameEvents = {
     QUEEN_POWER_UPGRADED: 'queen:power:upgraded',
     QUEEN_POWER_COOLDOWN_READY: 'queen:power:cooldown:ready',
     QUEEN_INTERACTED: 'queen:interacted',
+    POWER_USED: 'power:used',
+    POWER_COOLDOWN_TICK: 'power:cooldown:tick',
+    POWER_UNLOCKED: 'power:unlocked',
+    POWER_LOCKED: 'power:locked',
     CAMERA_FOLLOW_ENTITY: 'camera:follow:entity',
     ENTITY_HEALTH_CHANGED: 'entity:health:changed',
     
@@ -276,9 +286,14 @@ export const GameEvents = {
     RESOURCE_DEPOSITED: 'resource:deposited',
     RESOURCE_DEPLETED: 'resource:depleted',
     RESOURCE_SMELLED: 'resource:smelled',
+    RESOURCE_UPDATED: 'resource:updated', // For UI updates
     
     // Building events
     BUILDING_PLACED: 'building:placed',
+    BUILDING_PLACEMENT_STARTED: 'building:placement:started',
+    BUILDING_PLACEMENT_CANCELLED: 'building:placement:cancelled',
+    BUILDING_PLACEMENT_VALIDATE: 'building:placement:validate',
+    BUILDING_PLACEMENT_REQUESTED: 'building:placement:requested',
     BUILDING_CONSTRUCTION_STARTED: 'building:construction:started',
     BUILDING_CONSTRUCTION_PROGRESS: 'building:construction:progress',
     BUILDING_COMPLETED: 'building:completed',

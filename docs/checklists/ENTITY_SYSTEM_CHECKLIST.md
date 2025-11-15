@@ -523,67 +523,123 @@
   - [x] EventBus listeners: Create effects on power events (LIGHTNING_STRIKE, FIREBALL_EXPLODE, etc.)
 - [ ] **TEST:** Effect creation, timing, cleanup, visual appearance
 
-### Task 7.4: Vision Cone Visualization (VIEW - Debug)
-- [ ] Create debug rendering for boss vision cone
-  - [ ] Draw cone shape: Arc from boss position, direction, angle
-  - [ ] Use p5.js `arc()` or custom triangle mesh
-  - [ ] Color: Semi-transparent red for cone, green for detected entities
-  - [ ] Register on `RenderLayer.DEBUG` (only visible when debug mode enabled)
-  - [ ] EventBus listener: Update cone on boss direction change
-  - [ ] **TEST:** Cone angle accuracy, direction updates, debug toggle
+### Task 7.4: Vision Cone Visualization (VIEW - Debug) ✅
+- [x] Created `VisionConeComponent` for debug rendering
+  - [x] Draw cone shape using p5.js arc() with PIE mode
+  - [x] Properties: position, direction, angle, range, detectedEntities
+  - [x] Color: Semi-transparent red for cone, green when entities detected
+  - [x] Direction indicator: Line from center showing facing direction
+  - [x] Range circle outline for visual reference
+  - [x] Methods: setPosition(), setDirection(), setVisionParams(), setDetectedEntities(), setActive()
+  - [x] Helper method: isPointInCone() for testing cone math
+  - [x] Registered on `RenderLayer.DEBUG` (only visible when debug mode enabled)
+- [ ] **TEST:** Cone angle accuracy, direction updates, detection coloring, debug toggle
 
 ---
 
 ## Phase 8: UI Integration (VIEW)
 
-### Task 8.1: Resource Display UI (VIEW)
-- [ ] Create `src/rendering/components/ResourceDisplayComponent.ts`
-  - [ ] Show resource counts: Food, Wood, Stone, Magic Crystals
-  - [ ] Layout: Top-right corner, icon + count for each resource
-  - [ ] Methods: `updateResourceCount(type, amount)`, `render(graphics)`
-  - [ ] EventBus listener: Update on `RESOURCE_UPDATED` event
-  - [ ] Register on `RenderLayer.UI`
-  - [ ] **TEST:** Display updates, formatting, positioning
+### Task 8.1: Resource Display UI (VIEW) ✅
+- [x] Created `ResourceDisplayComponent` in `src/rendering/components/`
+  - [x] Show resource counts: Food (🍖), Wood (🪵), Stone (🪨), Magic Crystals (💎)
+  - [x] Layout: Top area with semi-transparent background panel, horizontal layout with spacing
+  - [x] Icon + count display with color coding (orange, brown, gray, purple)
+  - [x] Number formatting: Commas for readability (e.g., "1,000")
+  - [x] Methods: `updateResourceCount(type, amount)`, `setResources(resources)`, `setPosition(x, y)`
+  - [x] EventBus listener: Update on `RESOURCE_UPDATED` event (added to GameEvents)
+  - [x] Registered on `RenderLayer.UI` with high depth (1000)
+- [ ] **TEST:** Display updates, formatting, positioning, multi-faction support
 
 ### Task 8.2: Building Placement UI (VIEW)
-- [ ] Create `src/rendering/components/BuildingPlacementComponent.ts`
-  - [ ] Build menu: Show building icons, costs, availability
-  - [ ] Ghost preview: Semi-transparent building sprite follows mouse, snapped to grid
-  - [ ] Validation: Green tint = valid placement, Red tint = invalid (blocked, no resources, overlaps)
-  - [ ] Methods: `enterPlacementMode(buildingType)`, `exitPlacementMode()`, `validatePlacement(gridX, gridY)`, `placeBuilding()`
-  - [ ] Use helpers: `worldToGrid()` for snap, `rectIntersect()` for overlap check
-  - [ ] EventBus: Emit `BUILDING_PLACEMENT_REQUESTED` on click
-  - [ ] Register on `RenderLayer.UI`
-  - [ ] **TEST:** Ghost movement, validation, placement, cancellation
+- [x] Create `src/rendering/components/BuildingPlacementComponent.ts`
+  - [x] Ghost preview with semi-transparent sprite, grid snapping via `worldToGrid()`
+  - [x] Validation coloring: Green tint = valid, red tint = invalid
+  - [x] Tile overlay grid visualization, building info display (name, size, costs)
+  - [x] Methods: `enterPlacementMode(buildingType, sprite)`, `exitPlacementMode()`, `validatePlacement()`, `placeBuilding()`
+  - [x] EventBus integration: Listens to `INPUT_MOUSE_MOVE`, `INPUT_MOUSE_CLICK`, `INPUT_KEY_PRESS`
+  - [x] Emits: `BUILDING_PLACEMENT_STARTED`, `CANCELLED`, `VALIDATE`, `REQUESTED` (all added to GameEvents)
+  - [x] Registered on `RenderLayer.UI`, toggleable with ESC key
+- [ ] **TEST:** Placement flow, validation, grid snapping, event emissions
 
 ### Task 8.3: Ant State Display (VIEW - Debug)
-- [ ] Create debug overlay for ant states
-  - [ ] Show state label above ant sprite (e.g., "GATHERING", "IDLE")
-  - [ ] Show pathfinding lines (current path as connected line segments)
-  - [ ] Show target indicator (arrow pointing to target resource/enemy)
-  - [ ] Use p5.js `text()`, `line()` for rendering
-  - [ ] Register on `RenderLayer.DEBUG`
-  - [ ] EventBus listener: Update on `ANT_STATE_CHANGED`
-  - [ ] **TEST:** Label positioning, path visualization, debug toggle
+- [x] Create debug overlay for ant states
+  - [x] State label above ant with color-coded background (10 states: IDLE, GATHERING, RETURNING, etc.)
+  - [x] Pathfinding visualization: green line segments with waypoint dots
+  - [x] Target indicator: crosshair + arrow pointing from ant to target
+  - [x] EventBus integration: Listens to `ANT_STATE_CHANGED`, `ENTITY_MOVED`, `ANT_PATH_UPDATED`, `ANT_TARGET_ACQUIRED`, `ANT_TARGET_LOST`
+  - [x] Methods: `setPosition()`, `setState()`, `setPath()`, `setTarget()`, `setActive()`
+  - [x] Registered on `RenderLayer.DEBUG`, toggleable visibility
+  - [x] Helper: `hexToRgb()` for color conversion, semi-transparent overlays
+- [ ] **TEST:** Label positioning, path visualization, target indicator, event updates, debug toggle
 
 ### Task 8.4: Queen Power UI (VIEW)
-- [ ] Create `src/rendering/components/PowerBarComponent.ts`
-  - [ ] Show power icons: 1,2,3,4,5 with labels (Lightning, Fireball, etc.)
-  - [ ] Cooldown overlay: Circular or bar fill showing remaining cooldown
-  - [ ] Locked indicator: Grayed out icon for locked powers
-  - [ ] Level display: Show power level (1/2/3) on icon
-  - [ ] Keybind display: Show "1", "2", etc. on each icon
-  - [ ] Methods: `updateCooldown(powerName, remaining)`, `updateLevel(powerName, level)`, `setPowerUnlocked(powerName)`
-  - [ ] EventBus listeners: Update on `QUEEN_POWER_USED`, `QUEEN_POWER_UNLOCKED`, `QUEEN_POWER_UPGRADED`
-  - [ ] Register on `RenderLayer.UI` (bottom-center)
-  - [ ] **TEST:** Cooldown animation, lock state, level display, positioning
+- [x] Create `src/rendering/components/PowerBarComponent.ts`
+  - [x] Power bar with 5 power slots (keys 1-5), horizontal layout with spacing
+  - [x] Each power shows: icon, key number, cooldown overlay
+  - [x] **NEW HELPER:** `drawRadialCooldown()` in helpers.ts - reusable cooldown visualization
+  - [x] Cooldown visualization: darkened icon + radial "pie slice" that shrinks counter-clockwise
+  - [x] Locked state: grayscale tint + lock icon (🔒) overlay
+  - [x] Cooldown text: displays seconds remaining on active cooldowns
+  - [x] Methods: `addPower()`, `removePower()`, `setCooldown()`, `setLocked()`, `setPosition()`
+  - [x] EventBus integration: `POWER_USED`, `POWER_COOLDOWN_TICK`, `POWER_UNLOCKED`, `POWER_LOCKED` (all added to GameEvents)
+  - [x] Registered on `RenderLayer.UI` with depth 900
+- [ ] **TEST:** Power display, cooldown animation, lock/unlock, event updates
 
 ### Task 8.5: Ant Cap Display (VIEW - NEW)
-- [ ] Add to Resource Display or separate component
-  - [ ] Show: "Ants: 15/20" (current/cap)
-  - [ ] Update on `ANT_CREATED`, `ANT_DIED`, building level up events
-  - [ ] EventBus listener: Update on faction ant count changes
-  - [ ] **TEST:** Count accuracy, cap updates from buildings
+- [x] Create `src/rendering/components/PopulationDisplayComponent.ts`
+  - [x] **Main display:** "Total Ants: 45/50" with ant icon (🐜)
+  - [x] **Expandable breakdown** (click to toggle):
+    - Workers: 20 (🐜 gold)
+    - Warriors: 10 (⚔️ red)
+    - Scouts: 15 (👁️ green)
+  - [x] Layout: Left side panel (180px wide), semi-transparent background with rounded corners
+  - [x] Visual feedback: Hover effect (brightness increase), smooth height animation on expand/collapse
+  - [x] Expand indicator: ▶/▼ arrow with "Breakdown" label
+  - [x] Fade-in animation: Type breakdown fades in smoothly during expansion
+  - [x] Methods: `updateTotal()`, `updateTypeCount()`, `setExpanded()`, `toggleExpanded()`, `handleClick()`, `update()`
+  - [x] EventBus integration: Listen to `ANT_SPAWNED`, `ANT_DIED`, `ANT_TYPE_COUNT_CHANGED`, `POPULATION_CHANGED`, `BUILDING_LEVELED_UP`
+  - [x] Events added: `POPULATION_CHANGED`, `UI_POPULATION_TOGGLED`, `ANT_TYPE_COUNT_CHANGED`
+  - [x] Registered on `RenderLayer.UI` with depth 950
+- [ ] **TEST:** Count accuracy, expand/collapse animation, type breakdown, cap updates, click handling
+
+### Task 8.6: Queen Commands UI (VIEW - NEW)
+- [ ] Create `src/rendering/components/QueenCommandsComponent.ts`
+  - [ ] **4 command buttons:** Fight (⚔️), Build (🔨), Gather (🌾), Follow (👥)
+  - [ ] Button states: Normal, Selected (highlighted), Disabled (grayed out)
+  - [ ] Visual feedback: Hover effects, selection indicator
+  - [ ] Layout: Bottom mid-left, horizontal row with spacing
+  - [ ] Methods: `selectCommand(command)`, `deselectCommand()`, `setCommandEnabled(command, enabled)`
+  - [ ] EventBus integration: Emit `QUEEN_COMMAND_SELECTED`, `QUEEN_COMMAND_DESELECTED`, listen to range/availability changes
+  - [ ] Registered on `RenderLayer.UI`
+- [ ] **TEST:** Button clicks, selection state, command activation, hover effects
+
+### Task 8.7: Queen Portrait UI (VIEW - NEW)
+- [ ] Create `src/rendering/components/QueenPortraitComponent.ts`
+  - [ ] **Static queen sprite** display in decorative frame
+  - [ ] Layout: Bottom left corner, fixed size (128x128 or similar)
+  - [ ] Optional fun feature: Small animated ant running around the border
+  - [ ] Semi-transparent background panel
+  - [ ] Methods: `setQueenSprite(sprite)`, `setAnimatedBorder(enabled)`
+  - [ ] Registered on `RenderLayer.UI`
+- [ ] **TEST:** Display, border animation (if implemented), positioning
+
+### Task 8.8: Minimap UI (VIEW - NEW)
+- [ ] Create `src/rendering/components/MinimapComponent.ts`
+  - [ ] **Overhead view** of entire map in small rectangle
+  - [ ] Display elements:
+    - Player/Queen position (bright marker)
+    - Resources (color-coded dots)
+    - Buildings (small rectangles)
+    - Enemies (red dots)
+    - Fog of war (optional - unexplored areas darkened)
+  - [ ] Click to navigate: Click on minimap to move camera/queen
+  - [ ] View rectangle: Shows current camera viewport on minimap
+  - [ ] Layout: Bottom right corner, fixed size (150x150 or similar)
+  - [ ] Methods: `updateEntityPosition(id, x, y)`, `addMinimapMarker(type, x, y)`, `removeMinimapMarker(id)`, `handleClick(x, y)`
+  - [ ] Camera integration: Sync with Camera for viewport display, emit camera move events
+  - [ ] EventBus integration: Listen to `ENTITY_MOVED`, `RESOURCE_SPAWNED`, `BUILDING_PLACED`, etc.
+  - [ ] Registered on `RenderLayer.UI` with high depth
+- [ ] **TEST:** Entity tracking, click navigation, viewport display, marker accuracy
 
 ---
 

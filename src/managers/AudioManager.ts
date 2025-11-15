@@ -2,12 +2,15 @@
  * AudioManager - Centralized audio management
  * Handles music and sound effects with volume control and muting
  * Singleton pattern with SettingsManager integration
+ * Event-driven: automatically plays sounds in response to game events
  */
 
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { SettingsManager } from './SettingsManager';
 import { AudioSettings } from '../config/defaultSettings';
 import { clamp } from '../utils/helpers';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { AUDIO_SOUNDS, AUDIO_EVENT_MAPPINGS, AUDIO_CATEGORIES, SoundKey } from '../config/audioConfig';
 
 export class AudioManager {
     private static instance: AudioManager;
@@ -20,16 +23,21 @@ export class AudioManager {
     
     private loadedSounds: Set<string>;
     private currentMusic: string | null;
+    private unsubscribeFunctions: Array<() => void>;
     
-    // Store actual audio objects (p5.SoundFile would go here in browser)
+    // Store actual audio objects (p5.SoundFile)
     private musicTracks: Map<string, any>;
     private sfxSounds: Map<string, any>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private sounds: Map<SoundKey, any>; // All loaded sounds by key
 
     private constructor() {
         this.loadedSounds = new Set();
         this.musicTracks = new Map();
         this.sfxSounds = new Map();
+        this.sounds = new Map();
         this.currentMusic = null;
+        this.unsubscribeFunctions = [];
         
         // Load settings from SettingsManager
         const settingsManager = SettingsManager.getInstance();
@@ -42,9 +50,11 @@ export class AudioManager {
         this.sfxMuted = !audioSettings.sfxEnabled;
         
         // Listen for settings changes
-        EventBus.on(GameEvents.SETTING_AUDIO_CHANGED, (settings: AudioSettings) => {
-            this.handleSettingsChange(settings);
-        });
+        this.unsubscribeFunctions.push(
+            EventBus.on(GameEvents.SETTING_AUDIO_CHANGED, (settings: AudioSettings) => {
+                this.handleSettingsChange(settings);
+            })
+        );
     }
 
     /**
@@ -285,66 +295,188 @@ export class AudioManager {
         this.currentMusic = musicId;
     }
 
+    // ============ Event-Driven Sound Loading & Playback ============
+
     /**
-     * Play music
-     * In browser, this would use p5.SoundFile
+     * Initialize audio system - call after p5.js preload
+     * Sets up event listeners for automatic sound playback
      */
-    public playMusic(musicId: string, shouldLoop: boolean = true): void {
-        try {
-            this.currentMusic = musicId;
-            // Placeholder: In browser, load and play p5.SoundFile
-            // const music = loadSound(path);
-            // music.setVolume(this.getEffectiveMusicVolume());
-            // if (shouldLoop) music.loop(); else music.play();
-            console.log(`Playing music: ${musicId}, loop: ${shouldLoop}`);
-        } catch (error) {
-            console.error(`Failed to play music: ${musicId}`, error);
+    public initialize(): void {
+        this.setupEventListeners();
+        console.log('AudioManager initialized with event-driven playback');
+    }
+
+    /**
+     * Load a sound file by key
+     * @param key - Sound key from AUDIO_SOUNDS
+     * @param soundFile - Loaded p5.SoundFile
+     */
+    public loadSound(key: SoundKey, soundFile: any): void {
+        this.sounds.set(key, soundFile);
+        this.registerSound(key);
+    }
+
+    /**
+     * Play a sound by key
+     * @param key - Sound key to play
+     */
+    public play(key: SoundKey): void {
+        const sound = this.sounds.get(key);
+        if (!sound) {
+            // Silently fail if sound not loaded (asset may not exist yet)
+            return;
         }
+
+        // Check if sound should be muted based on category
+        const category = this.getSoundCategory(key);
+        if (category === 'SFX' && this.sfxMuted) return;
+        if (category === 'MUSIC' && this.musicMuted) return;
+        if (category === 'UI' && this.sfxMuted) return; // UI uses SFX mute
+
+        // Don't play if already playing (prevents overlapping)
+        if (sound.isPlaying && sound.isPlaying()) {
+            return;
+        }
+
+        // Calculate final volume
+        const soundConfig = AUDIO_SOUNDS[key];
+        const categoryVolume = category === 'MUSIC' ? this.musicVolume : this.sfxVolume;
+        const finalVolume = this.masterVolume * categoryVolume * soundConfig.volume;
+
+        sound.setVolume(finalVolume);
+        sound.play();
+    }
+
+    /**
+     * Stop a specific sound by key
+     * @param key - Sound key to stop
+     */
+    public stopSound(key: SoundKey): void {
+        const sound = this.sounds.get(key);
+        if (sound && sound.isPlaying && sound.isPlaying()) {
+            sound.stop();
+        }
+    }
+
+    /**
+     * Stop all loaded sounds
+     */
+    public stopAll(): void {
+        this.sounds.forEach(sound => {
+            if (sound && sound.isPlaying && sound.isPlaying()) {
+                sound.stop();
+            }
+        });
+    }
+
+    /**
+     * Play background music with looping
+     * @param key - Sound key for music track
+     * @param loop - Whether to loop (default true)
+     */
+    public playMusic(key: SoundKey, loop: boolean = true): void {
+        const sound = this.sounds.get(key);
+        if (!sound) {
+            return;
+        }
+
+        // Stop current music if different track
+        if (this.currentMusic && this.currentMusic !== key) {
+            const currentSound = this.sounds.get(this.currentMusic as SoundKey);
+            if (currentSound && currentSound.isPlaying && currentSound.isPlaying()) {
+                currentSound.stop();
+            }
+        }
+
+        // Check if music is muted
+        if (this.musicMuted) return;
+
+        // Calculate volume
+        const soundConfig = AUDIO_SOUNDS[key];
+        const finalVolume = this.masterVolume * this.musicVolume * soundConfig.volume;
+
+        sound.setVolume(finalVolume);
+        
+        if (loop) {
+            sound.loop();
+        } else {
+            sound.play();
+        }
+
+        this.currentMusic = key;
     }
 
     /**
      * Stop currently playing music
      */
     public stopMusic(): void {
-        this.currentMusic = null;
-        // Placeholder: In browser, stop p5.SoundFile
-    }
-
-    /**
-     * Pause music
-     */
-    public pauseMusic(): void {
-        // Placeholder: In browser, pause p5.SoundFile
-    }
-
-    /**
-     * Resume music
-     */
-    public resumeMusic(): void {
-        // Placeholder: In browser, resume p5.SoundFile
-    }
-
-    // ============ SFX Playback ============
-
-    /**
-     * Play sound effect
-     * In browser, this would use p5.SoundFile
-     */
-    public playSFX(sfxId: string): void {
-        try {
-            // Placeholder: In browser, load and play p5.SoundFile
-            // const sfx = loadSound(path);
-            // sfx.setVolume(this.getEffectiveSFXVolume());
-            // sfx.play();
-        } catch (error) {
-            console.error(`Failed to play SFX: ${sfxId}`, error);
+        if (this.currentMusic) {
+            const sound = this.sounds.get(this.currentMusic as SoundKey);
+            if (sound && sound.isPlaying && sound.isPlaying()) {
+                sound.stop();
+            }
+            this.currentMusic = null;
         }
     }
 
     /**
-     * Stop all sound effects
+     * Pause currently playing music
      */
-    public stopAllSFX(): void {
-        // Placeholder: In browser, stop all SFX p5.SoundFiles
+    public pauseMusic(): void {
+        if (this.currentMusic) {
+            const sound = this.sounds.get(this.currentMusic as SoundKey);
+            if (sound && sound.isPlaying && sound.isPlaying()) {
+                sound.pause();
+            }
+        }
+    }
+
+    /**
+     * Resume paused music
+     */
+    public resumeMusic(): void {
+        if (this.currentMusic) {
+            const sound = this.sounds.get(this.currentMusic as SoundKey);
+            if (sound && sound.isPaused && sound.isPaused()) {
+                sound.play();
+            }
+        }
+    }
+
+    /**
+     * Setup event listeners for automatic sound playback
+     * Maps game events to sound effects
+     */
+    private setupEventListeners(): void {
+        // Subscribe to all mapped events
+        Object.entries(AUDIO_EVENT_MAPPINGS).forEach(([eventName, soundKey]) => {
+            const unsubscribe = EventBus.on(eventName, () => {
+                this.play(soundKey);
+            });
+            this.unsubscribeFunctions.push(unsubscribe);
+        });
+    }
+
+    /**
+     * Get category of a sound
+     * @param key - Sound key
+     * @returns Category name
+     */
+    private getSoundCategory(key: SoundKey): 'SFX' | 'UI' | 'MUSIC' {
+        for (const [category, sounds] of Object.entries(AUDIO_CATEGORIES)) {
+            if ((sounds as readonly SoundKey[]).includes(key)) {
+                return category as 'SFX' | 'UI' | 'MUSIC';
+            }
+        }
+        return 'SFX'; // Default to SFX
+    }
+
+    /**
+     * Cleanup - unsubscribe from all events
+     */
+    public cleanup(): void {
+        this.unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+        this.unsubscribeFunctions = [];
+        this.stopAll();
     }
 }

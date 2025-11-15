@@ -87,6 +87,21 @@ export function normalizeAngle(angle: number): number {
     return angle;
 }
 
+// Get perpendicular angle (rotate by 90 degrees / π/2 radians)
+export function perpendicularAngle(angle: number): number {
+    return angle + Math.PI / 2;
+}
+
+// Calculate fade-out alpha based on progress (0-1)
+export function fadeOutAlpha(progress: number, maxAlpha: number = 255): number {
+    return maxAlpha * (1 - progress);
+}
+
+// Calculate fade-in alpha based on progress (0-1)
+export function fadeInAlpha(progress: number, maxAlpha: number = 255): number {
+    return maxAlpha * progress;
+}
+
 // Deep clone an object (simple version)
 export function deepClone<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
@@ -578,3 +593,163 @@ export function destroyAndEmit(entity: any, eventName: string): void {
     EventBus.emit(eventName, entity.id, entity.type);
     entity.destroy();
 }
+
+// ============================================================================
+// UI RENDERING HELPERS
+// ============================================================================
+
+/**
+ * Draw radial cooldown overlay (counter-clockwise progress indicator)
+ * Draws a darkened icon + radial "pie slice" that shrinks as cooldown progresses
+ * Common pattern for ability/power cooldowns in games
+ * 
+ * @param graphics - p5.Graphics context to draw on
+ * @param x - Center X position of the icon
+ * @param y - Center Y position of the icon
+ * @param size - Diameter of the cooldown circle
+ * @param progress - Cooldown progress (0 = ready, 1 = full cooldown)
+ * @param darkenAlpha - Alpha value for darkening overlay (default 150)
+ * @param radialColor - Color of radial overlay (default semi-transparent black)
+ * 
+ * @example
+ * // Power on 50% cooldown
+ * drawRadialCooldown(graphics, powerX, powerY, 64, 0.5);
+ * 
+ * // Custom styling
+ * drawRadialCooldown(graphics, x, y, 48, progress, 180, '#FF0000');
+ */
+export function drawRadialCooldown(
+    graphics: any,
+    x: number,
+    y: number,
+    size: number,
+    progress: number,
+    darkenAlpha: number = 150,
+    radialColor: string = '#000000'
+): void {
+    graphics.push();
+    
+    // 1. Draw darkening overlay on entire icon
+    if (progress > 0) {
+        graphics.fill(0, 0, 0, darkenAlpha);
+        graphics.noStroke();
+        graphics.circle(x, y, size);
+    }
+    
+    // 2. Draw radial cooldown "pie slice"
+    if (progress > 0) {
+        // Convert hex color to RGB
+        const rgb = hexToRgb(radialColor);
+        if (rgb) {
+            graphics.fill(rgb.r, rgb.g, rgb.b, 180);
+        } else {
+            graphics.fill(0, 0, 0, 180);
+        }
+        graphics.noStroke();
+        
+        // Calculate angles (counter-clockwise from top)
+        const startAngle = -Math.PI / 2; // Top (270° / -90°)
+        const sweepAngle = progress * Math.PI * 2; // Full circle = 2π
+        
+        // Draw arc (PIE mode for filled wedge)
+        graphics.arc(
+            x, y,
+            size, size,
+            startAngle,
+            startAngle + sweepAngle,
+            'PIE' as any
+        );
+    }
+    
+    graphics.pop();
+}
+
+/**
+ * Draw UI panel with rounded corners and semi-transparent background
+ * Common pattern for all UI components (resource display, power bar, etc.)
+ * 
+ * @param graphics - p5.Graphics context to draw on
+ * @param x - X position (top-left corner)
+ * @param y - Y position (top-left corner)
+ * @param width - Panel width
+ * @param height - Panel height
+ * @param backgroundColor - Hex color string (default dark gray)
+ * @param alpha - Background alpha transparency (0-255, default 200)
+ * @param cornerRadius - Rounded corner radius (default 8)
+ * 
+ * @example
+ * // Standard UI panel
+ * drawUIPanel(graphics, 10, 10, 200, 100);
+ * 
+ * // Custom styling
+ * drawUIPanel(graphics, x, y, w, h, '#3C3C3C', 180, 12);
+ */
+export function drawUIPanel(
+    graphics: any,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    backgroundColor: string = '#2C2C2C',
+    alpha: number = 200,
+    cornerRadius: number = 8
+): void {
+    const rgb = hexToRgb(backgroundColor);
+    if (rgb) {
+        graphics.fill(rgb.r, rgb.g, rgb.b, alpha);
+    } else {
+        graphics.fill(44, 44, 44, alpha); // Fallback to default gray
+    }
+    graphics.noStroke();
+    graphics.rect(x, y, width, height, cornerRadius);
+}
+
+/**
+ * Format number with comma thousands separators
+ * Common pattern for displaying resource counts, population, etc.
+ * 
+ * @param num - Number to format
+ * @returns Formatted string with commas (e.g., 1000 → "1,000")
+ * 
+ * @example
+ * formatNumberWithCommas(1000) // "1,000"
+ * formatNumberWithCommas(1234567) // "1,234,567"
+ */
+export function formatNumberWithCommas(num: number): string {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * Smooth animation helper using lerp interpolation
+ * Returns new value that smoothly transitions toward target
+ * Common pattern for UI animations (expand/collapse, fade, slide)
+ * 
+ * @param current - Current value
+ * @param target - Target value
+ * @param speed - Interpolation speed (0-1, default 0.2)
+ * @param snapThreshold - Snap to target when within this distance (default 1)
+ * @returns New current value
+ * 
+ * @example
+ * // Smooth height animation
+ * this.currentHeight = smoothTransition(this.currentHeight, targetHeight, 0.2, 1);
+ * 
+ * // Faster animation
+ * this.alpha = smoothTransition(this.alpha, 255, 0.4, 2);
+ */
+export function smoothTransition(
+    current: number,
+    target: number,
+    speed: number = 0.2,
+    snapThreshold: number = 1
+): number {
+    const newValue = current + (target - current) * speed;
+    
+    // Snap to target when close enough
+    if (Math.abs(newValue - target) < snapThreshold) {
+        return target;
+    }
+    
+    return newValue;
+}
+

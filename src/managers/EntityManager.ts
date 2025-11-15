@@ -174,4 +174,11 @@ export class EntityManager {
         this.entities.clear();
         this.entitiesByType.clear();
     }
+
+    /**
+     * Reinitialize EventBus listeners (for testing after EventBus.clear())
+     */
+    public reinitializeListeners(): void {
+        this.setupEventListeners();
+    }
 }

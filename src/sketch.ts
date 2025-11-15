@@ -5,12 +5,15 @@
 import { CONFIG } from './config';
 import { EventBus, GameEvents } from './utils/eventBus';
 import { SceneManager } from './managers/SceneManager';
+import { AudioManager } from './managers/AudioManager';
 import { Renderer } from './rendering/Renderer';
 import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
+import { AudioSettingsScene } from './scenes/AudioSettingsScene';
 import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
+import { AUDIO_SOUNDS, SoundKey } from './config/audioConfig';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -23,6 +26,7 @@ declare const mouseY: any;
 declare const mouseButton: any;
 declare const resizeCanvas: any;
 declare const loadImage: any;
+declare const loadSound: any;
 
 // Global renderer instance
 let renderer: Renderer;
@@ -86,7 +90,26 @@ function preload() {
         }
     }
     
-    console.log('Assets preloaded: menu images, tile sprites, and frill overlays');
+    // Load audio files (optional - silently fails if files don't exist)
+    const audioManager = AudioManager.getInstance();
+    Object.entries(AUDIO_SOUNDS).forEach(([key, config]) => {
+        try {
+            // loadSound will fail silently if file doesn't exist
+            // This allows development without audio assets
+            const sound = loadSound(config.file, 
+                () => {
+                    audioManager.loadSound(key as SoundKey, sound);
+                },
+                () => {
+                    // Silently fail - audio is optional during development
+                }
+            );
+        } catch (error) {
+            // Silently fail - audio is optional
+        }
+    });
+    
+    console.log('Assets preloaded: menu images, tile sprites, frill overlays, and audio (if available)');
 }
 
 function setup() {
@@ -95,6 +118,9 @@ function setup() {
     
     // Create renderer
     renderer = new Renderer(window as any, window.innerWidth, window.innerHeight);
+    
+    // Initialize AudioManager with event-driven playback
+    AudioManager.getInstance().initialize();
     
     // Create and set menu scene
     if (menuImages) {
@@ -121,11 +147,18 @@ function setup() {
     // Listen for back button in dev room
     EventBus.on(GameEvents.MENU_BACK_CLICKED, () => {
         const currentScene = SceneManager.getInstance().getCurrentScene();
-        if (currentScene instanceof DevRoomScene && menuImages) {
-            console.log('Returning to menu from DevRoom...');
+        if ((currentScene instanceof DevRoomScene || currentScene instanceof AudioSettingsScene) && menuImages) {
+            console.log('Returning to menu...');
             const menuScene = new MenuScene(renderer, window.innerWidth, window.innerHeight, menuImages);
             SceneManager.getInstance().switchScene(menuScene, 'Menu');
         }
+    });
+    
+    // Listen for audio settings navigation
+    EventBus.on(GameEvents.MENU_AUDIO_SETTINGS_CLICKED, () => {
+        console.log('Switching to Audio Settings scene...');
+        const audioSettingsScene = new AudioSettingsScene(renderer, window.innerWidth, window.innerHeight);
+        SceneManager.getInstance().switchScene(audioSettingsScene, 'AudioSettings');
     });
     
     EventBus.emit(GameEvents.GAME_START);

@@ -12,12 +12,10 @@ describe('EntityManager (Controller)', () => {
     let entityManager: EntityManager;
 
     beforeEach(() => {
-        // Get EntityManager instance first (sets up its EventBus listeners)
+        EventBus.clear();
         entityManager = EntityManager.getInstance();
-        // Then clear entities (but keep EntityManager's listeners)
         entityManager.clear();
-        // Clear other EventBus listeners (but EntityManager's listener persists)
-        // Note: We can't call EventBus.clear() here as it would remove EntityManager's auto-cleanup listener
+        entityManager.reinitializeListeners(); // Restore EventBus listeners after clear
     });
 
     describe('Singleton Pattern', () => {

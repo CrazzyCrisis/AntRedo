@@ -7,6 +7,7 @@ import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 import { Renderer } from '../Renderer';
+import { lerp, perpendicularAngle, fadeOutAlpha } from '../../utils/helpers';
 
 /**
  * Base class for temporary visual effects
@@ -77,11 +78,11 @@ export class LightningEffect extends TemporaryEffect {
 
         for (let i = 1; i < numSegments; i++) {
             const t = i / numSegments;
-            const x = x1 + (x2 - x1) * t;
-            const y = y1 + (y2 - y1) * t;
+            const x = lerp(x1, x2, t);
+            const y = lerp(y1, y2, t);
             
             // Add perpendicular jitter
-            const angle = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+            const angle = perpendicularAngle(Math.atan2(y2 - y1, x2 - x1));
             const offset = (Math.random() - 0.5) * jitter * 2;
             
             segments.push({
@@ -96,7 +97,7 @@ export class LightningEffect extends TemporaryEffect {
 
     render(graphics: any): void {
         const progress = this.getProgress();
-        const alpha = 255 * (1 - progress); // Fade out
+        const alpha = fadeOutAlpha(progress);
 
         graphics.stroke(200, 200, 255, alpha); // Blue-white lightning
         graphics.strokeWeight(3);
@@ -128,12 +129,12 @@ export class ExplosionEffect extends TemporaryEffect {
     update(deltaTime: number): void {
         super.update(deltaTime);
         const progress = this.getProgress();
-        this.radius = this.maxRadius * progress;
+        this.radius = lerp(0, this.maxRadius, progress);
     }
 
     render(graphics: any): void {
         const progress = this.getProgress();
-        const alpha = 255 * (1 - progress); // Fade out
+        const alpha = fadeOutAlpha(progress);
 
         // Outer ring (fire)
         graphics.fill(255, 100, 0, alpha);
@@ -165,7 +166,7 @@ export class BlackholeEffect extends TemporaryEffect {
 
     render(graphics: any): void {
         const progress = this.getProgress();
-        const alpha = 180 * (1 - progress * 0.5); // Fade slightly
+        const alpha = fadeOutAlpha(progress * 0.5, 180); // Fade slightly
 
         graphics.push();
         graphics.translate(this.x, this.y);
@@ -181,7 +182,7 @@ export class BlackholeEffect extends TemporaryEffect {
         for (let i = 0; i <= 100; i++) {
             const t = i / 100;
             const angle = t * Math.PI * 2 * spiralTurns;
-            const r = this.radius * t;
+            const r = lerp(0, this.radius, t);
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;
             graphics.vertex(x, y);
@@ -208,12 +209,12 @@ export class TidalwaveEffect extends TemporaryEffect {
     update(deltaTime: number): void {
         super.update(deltaTime);
         const progress = this.getProgress();
-        this.radius = this.maxRadius * progress;
+        this.radius = lerp(0, this.maxRadius, progress);
     }
 
     render(graphics: any): void {
         const progress = this.getProgress();
-        const alpha = 200 * (1 - progress); // Fade out
+        const alpha = fadeOutAlpha(progress, 200);
 
         graphics.noFill();
         graphics.stroke(0, 150, 255, alpha); // Blue water
@@ -245,10 +246,10 @@ export class ScreenFlashEffect extends TemporaryEffect {
         
         if (progress < 0.2) {
             // Quick flash in
-            alpha = 255 * (progress / 0.2);
+            alpha = lerp(0, 255, progress / 0.2);
         } else {
             // Slower fade out
-            alpha = 255 * (1 - ((progress - 0.2) / 0.8));
+            alpha = fadeOutAlpha((progress - 0.2) / 0.8);
         }
 
         graphics.fill(255, 255, 255, alpha);
@@ -270,7 +271,7 @@ export class SootStainEffect extends TemporaryEffect {
 
     render(graphics: any): void {
         const progress = this.getProgress();
-        const alpha = 150 * (1 - progress * 0.5); // Slow fade
+        const alpha = fadeOutAlpha(progress * 0.5, 150); // Slow fade
 
         graphics.fill(30, 30, 30, alpha); // Dark gray/black
         graphics.noStroke();

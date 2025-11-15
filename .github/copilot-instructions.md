@@ -285,13 +285,15 @@ export const MAIN_MENU_BUTTONS = {
 ### Utilities (`helpers.ts`)
 - 70+ tested pure functions - **always check here before implementing common math/collision/array operations**
 - Grid/tile helpers: `worldToGrid()`, `gridToWorld()`, `getNeighbors4/8()`
-- Vector math: `vectorNormalize()`, `vectorLimit()`, `angleBetween()`
+- Vector math: `vectorNormalize()`, `vectorLimit()`, `angleBetween()`, `perpendicularAngle()`
+- Interpolation: `lerp()`, `lerpColor()` for smooth transitions
+- Visual effects: `fadeOutAlpha()`, `fadeInAlpha()` for alpha calculations, `drawRadialCooldown()` for ability cooldowns
 - Entity queries: `getEntitiesInRadius()`, `isEntityEnemy()`
 - Factory helpers: `setupEntitySpriteBinding()` - auto sprite registration + event cleanup
 - EventBus helpers: `emitEntityEvent()`, `destroyAndEmit()`
 - Force calculations: `distanceFalloff()`, `calculatePushForce()`
 - Classes: `Timer`, `FPSCounter`, `StateMachine<T>` for common patterns
-- Import needed functions: `import { clamp, distance, setupEntitySpriteBinding } from './utils/helpers'`
+- Import needed functions: `import { clamp, distance, setupEntitySpriteBinding, lerp, fadeOutAlpha, drawRadialCooldown } from './utils/helpers'`
 
 ### Component System Architecture
 **All components MUST extend `BaseComponent`** - Never implement `IComponent` directly.

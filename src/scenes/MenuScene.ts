@@ -5,6 +5,7 @@ import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { RenderLayer } from '../rendering/RenderLayer';
 import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT, MENU_SCALES, MENU_ANIMATIONS } from '../config/menuLayout';
+import { AudioManager } from '../managers/AudioManager';
 
 /**
  * MenuScene - Main menu implementation
@@ -94,6 +95,9 @@ export class MenuScene implements IScene {
         const centerY = this.canvasHeight / 2;
         const halfWidth = this.canvasWidth / 2;
         const halfHeight = this.canvasHeight / 2;
+        
+        // Start menu music
+        AudioManager.getInstance().playMusic('MENU_THEME', true);
         
         // Create animated title (persists across menu states)
         // Convert normalized coordinates (-1 to 1) to pixel positions
@@ -334,6 +338,9 @@ export class MenuScene implements IScene {
      * Called when scene is deactivated
      */
     exit(): void {
+        // Stop menu music
+        AudioManager.getInstance().stopMusic();
+        
         // Unregister buttons
         this.clearButtons();
         
