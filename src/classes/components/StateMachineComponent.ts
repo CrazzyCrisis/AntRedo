@@ -4,8 +4,7 @@
  * Used by: Ants (all jobs), Boss, Buildings (construction states)
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 
 /**
@@ -28,8 +27,7 @@ export enum EntityState {
  * State Machine Component
  * Tracks current state, previous state, and state history for debugging
  */
-export class StateMachineComponent implements IComponent {
-    public owner!: GameObject;
+export class StateMachineComponent extends BaseComponent {
 
     private currentState: EntityState;
     private previousState?: EntityState;
@@ -43,21 +41,8 @@ export class StateMachineComponent implements IComponent {
      * @param initialState - Starting state
      */
     constructor(initialState: EntityState) {
+        super();
         this.currentState = initialState;
-    }
-
-    /**
-     * Lifecycle: Attach to GameObject
-     */
-    onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Lifecycle: Detach from GameObject
-     */
-    onDetach(): void {
-        this.owner = undefined!;
     }
 
     /**

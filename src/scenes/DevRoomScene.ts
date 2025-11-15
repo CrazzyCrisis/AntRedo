@@ -59,7 +59,9 @@ export class DevRoomScene implements IScene {
 
     enter(): void {
         // Check if user provided a custom seed via URL parameter or config
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = typeof window !== 'undefined' && window.location 
+            ? new URLSearchParams(window.location.search) 
+            : new URLSearchParams('');
         const urlSeed = urlParams.get('seed');
         const customSeed = urlSeed ? parseInt(urlSeed) : null;
         

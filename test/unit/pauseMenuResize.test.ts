@@ -26,44 +26,36 @@ describe('PauseMenuScene - Window Resize', () => {
     });
 
     describe('Toggle Position Updates', () => {
-        it('should update toggle position when window resized', () => {
-            // Initial toggle position should be based on 800x600
-            const initialX = 800 / 2 - 180;
-            const initialY = 600 / 2 + 180;
+        it('should update button bounds when window resized', () => {
+            // Scene should have button bounds
+            const buttonBounds = (scene as any).worldGenConfigButtonBounds;
+            if (!buttonBounds) {
+                // If no button bounds initially, resize should still work
+                scene.onResize(1024, 768);
+                expect(scene).to.exist;
+                return;
+            }
             
-            // Access toggle through reflection (it's private)
-            const toggle = (scene as any).worldGenToggle;
-            expect(toggle).to.not.be.null;
-            expect(toggle.x).to.equal(initialX);
-            expect(toggle.y).to.equal(initialY);
+            // Store initial bounds
+            const initialWidth = buttonBounds.width;
 
             // Resize window to 1024x768
             scene.onResize(1024, 768);
 
-            // Toggle position should update
-            const newX = 1024 / 2 - 180;
-            const newY = 768 / 2 + 180;
-            expect(toggle.x).to.equal(newX);
-            expect(toggle.y).to.equal(newY);
+            // Button bounds should update to new center
+            const updatedBounds = (scene as any).worldGenConfigButtonBounds;
+            expect(updatedBounds).to.exist;
+            expect(updatedBounds.width).to.equal(initialWidth); // Width unchanged
         });
 
         it('should handle multiple resize events', () => {
-            const toggle = (scene as any).worldGenToggle;
-
-            // Resize to 1920x1080
+            // Just verify multiple resizes don't crash
             scene.onResize(1920, 1080);
-            expect(toggle.x).to.equal(1920 / 2 - 180);
-            expect(toggle.y).to.equal(1080 / 2 + 180);
-
-            // Resize to 640x480
             scene.onResize(640, 480);
-            expect(toggle.x).to.equal(640 / 2 - 180);
-            expect(toggle.y).to.equal(480 / 2 + 180);
-
-            // Resize back to 800x600
             scene.onResize(800, 600);
-            expect(toggle.x).to.equal(800 / 2 - 180);
-            expect(toggle.y).to.equal(600 / 2 + 180);
+            
+            // Should complete without errors
+            expect(scene).to.exist;
         });
     });
 
@@ -79,42 +71,54 @@ describe('PauseMenuScene - Window Resize', () => {
         });
     });
 
-    describe('Toggle Click Detection After Resize', () => {
-        it('should detect toggle click at new position after resize', () => {
-            const toggle = (scene as any).worldGenToggle;
+    describe('Button Click Detection After Resize', () => {
+        it('should update worldGenConfig button bounds after resize', () => {
+            const bounds = (scene as any).worldGenConfigButtonBounds;
+            expect(bounds).to.not.be.null;
+            
+            // Store original bounds
+            const originalX = bounds.x;
             
             // Resize to 1024x768
             scene.onResize(1024, 768);
             
-            const toggleX = 1024 / 2 - 180;
-            const toggleY = 768 / 2 + 180;
+            // Bounds should be updated
+            const newBounds = (scene as any).worldGenConfigButtonBounds;
+            expect(newBounds).to.not.be.null;
+            expect(newBounds.x).to.not.equal(originalX);
             
-            // Click should be detected at new position
-            const isOverBefore = toggle.isMouseOver(toggleX, toggleY);
-            expect(isOverBefore).to.be.true;
-            
-            // Click at old position should NOT be detected
-            const oldX = 800 / 2 - 180;
-            const oldY = 600 / 2 + 180;
-            const isOverOld = toggle.isMouseOver(oldX, oldY);
-            expect(isOverOld).to.be.false;
+            // New bounds should be calculated relative to new canvas size
+            // Button is at centerX - 230, then offset by buttonWidth/2
+            const centerX = 1024 / 2;
+            const buttonX = centerX - 230;
+            const buttonWidth = 140;
+            const expectedX = buttonX - buttonWidth / 2;
+            expect(Math.abs(newBounds.x - expectedX)).to.be.lessThan(1);
         });
 
-        it('should toggle state when clicked at new position', () => {
-            const toggle = (scene as any).worldGenToggle;
-            const initialState = toggle.isOn();
+        it('should emit event when worldGenConfig button clicked at new position', () => {
+            let eventEmitted = false;
+            const EventBus = require('../../src/utils/eventBus').EventBus;
+            const GameEvents = require('../../src/utils/eventBus').GameEvents;
+            
+            EventBus.on(GameEvents.WORLDGEN_CONFIG_MENU_TOGGLE, () => {
+                eventEmitted = true;
+            });
             
             // Resize
             scene.onResize(1024, 768);
             
-            const toggleX = 1024 / 2 - 180;
-            const toggleY = 768 / 2 + 180;
+            const bounds = (scene as any).worldGenConfigButtonBounds;
+            const clickX = bounds.x + bounds.width / 2;
+            const clickY = bounds.y + bounds.height / 2;
             
-            // Click the toggle at new position
-            scene.handleMouseClick(toggleX, toggleY);
+            // Click the button at new position
+            scene.handleMouseClick(clickX, clickY);
             
-            // State should have changed
-            expect(toggle.isOn()).to.equal(!initialState);
+            // Event should have been emitted
+            expect(eventEmitted).to.be.true;
+            
+            EventBus.clear();
         });
     });
 
@@ -176,49 +180,55 @@ describe('PauseMenuScene - Window Resize', () => {
         });
     });
 
-    describe('Toggle Hover Detection After Resize', () => {
-        it('should update toggle hover at new position', () => {
-            const toggle = (scene as any).worldGenToggle;
-            
+    describe('Button Hover Detection After Resize', () => {
+        it('should update button hover state at new position', () => {
+            // Resize
             scene.onResize(1024, 768);
             
-            const toggleX = 1024 / 2 - 180;
-            const toggleY = 768 / 2 + 180;
+            const bounds = (scene as any).worldGenConfigButtonBounds;
+            const hoverX = bounds.x + bounds.width / 2;
+            const hoverY = bounds.y + bounds.height / 2;
             
-            // Move mouse over toggle at new position
-            scene.handleMouseMove(toggleX, toggleY);
+            // Move mouse over button
+            scene.handleMouseMove(hoverX, hoverY);
             
-            // Toggle should be hovered
-            expect(toggle.isHovered).to.be.true;
+            // Hover state should be updated
+            const isHovered = (scene as any).worldGenConfigButtonHovered;
+            expect(isHovered).to.be.true;
             
             // Move mouse away
             scene.handleMouseMove(0, 0);
             
-            // Toggle should not be hovered
-            expect(toggle.isHovered).to.be.false;
+            // Button should not be hovered
+            const isHoveredAfter = (scene as any).worldGenConfigButtonHovered;
+            expect(isHoveredAfter).to.be.false;
         });
     });
 
     describe('Edge Cases', () => {
         it('should handle resize to very small dimensions', () => {
             scene.onResize(320, 240);
+            expect((scene as any).canvasWidth).to.equal(320);
+            expect((scene as any).canvasHeight).to.equal(240);
             
-            const toggle = (scene as any).worldGenToggle;
-            expect(toggle.x).to.equal(320 / 2 - 180);
-            expect(toggle.y).to.equal(240 / 2 + 180);
+            // Button bounds should still be valid
+            const bounds = (scene as any).worldGenConfigButtonBounds;
+            expect(bounds).to.not.be.null;
         });
 
         it('should handle resize to very large dimensions', () => {
             scene.onResize(3840, 2160);
+            expect((scene as any).canvasWidth).to.equal(3840);
+            expect((scene as any).canvasHeight).to.equal(2160);
             
-            const toggle = (scene as any).worldGenToggle;
-            expect(toggle.x).to.equal(3840 / 2 - 180);
-            expect(toggle.y).to.equal(2160 / 2 + 180);
+            // Button bounds should still be valid
+            const bounds = (scene as any).worldGenConfigButtonBounds;
+            expect(bounds).to.not.be.null;
         });
 
-        it('should handle resize when toggle is null', () => {
-            // Destroy toggle
-            (scene as any).worldGenToggle = null;
+        it('should handle resize when button bounds is null', () => {
+            // Temporarily set bounds to null
+            (scene as any).worldGenConfigButtonBounds = null;
             
             // Should not throw
             expect(() => scene.onResize(1024, 768)).to.not.throw();

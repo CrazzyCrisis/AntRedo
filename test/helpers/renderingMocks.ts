@@ -6,6 +6,17 @@
 import { Renderable } from '../../src/rendering/Renderable';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 
+// Mock p5.js constants globally for Node.js test environment
+// These must be available before any component files are imported
+if (typeof (global as any).CENTER === 'undefined') {
+    (global as any).CENTER = 'center';
+    (global as any).LEFT = 'left';
+    (global as any).RIGHT = 'right';
+    (global as any).TOP = 'top';
+    (global as any).BOTTOM = 'bottom';
+    (global as any).BASELINE = 'baseline';
+}
+
 /**
  * Setup global window mock for p5.js constants
  */
@@ -75,6 +86,19 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         textAlign: function() {
             this._textAlignSet = true;
         },
+        textWidth: function(text: string) {
+            // Mock text width calculation - roughly 8 pixels per character
+            return text.length * 8;
+        },
+        line: function(_x1: number, _y1: number, _x2: number, _y2: number) {
+            this._lineDrawn = true;
+        },
+        ellipse: function() {
+            this._ellipseDrawn = true;
+        },
+        triangle: function() {
+            this._triangleDrawn = true;
+        },
         _cleared: false,
         _imageDrawn: false,
         _pushCalled: false,
@@ -91,7 +115,10 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         _circleDrawn: false,
         _textDrawn: false,
         _textSizeSet: false,
-        _textAlignSet: false
+        _textAlignSet: false,
+        _lineDrawn: false,
+        _ellipseDrawn: false,
+        _triangleDrawn: false
     };
 }
 

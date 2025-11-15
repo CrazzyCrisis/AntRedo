@@ -4,7 +4,7 @@
  * Used by: Ants (Warrior priority), Queen (all powers), Boss (melee + projectiles)
  */
 
-import { IComponent } from './IComponent';
+import { BaseComponent } from './BaseComponent';
 import { GameObject } from '../GameObject';
 import { EventBus } from '../../utils/eventBus';
 import { GameEvents } from '../../utils/eventBus';
@@ -13,9 +13,7 @@ import { GameEvents } from '../../utils/eventBus';
  * CombatComponent
  * Manages entity combat, attacks, cooldowns, and targeting
  */
-export class CombatComponent implements IComponent {
-    public owner!: GameObject;
-
+export class CombatComponent extends BaseComponent {
     private attackDamage: number;
     private attackRange: number;
     private attackCooldown: number;        // Milliseconds between attacks
@@ -30,26 +28,19 @@ export class CombatComponent implements IComponent {
      * @param attackCooldown - Cooldown between attacks (milliseconds)
      */
     constructor(attackDamage: number, attackRange: number, attackCooldown: number) {
+        super();
         this.attackDamage = Math.max(0, attackDamage); // Clamp to zero
         this.attackRange = Math.max(0, attackRange);
         this.attackCooldown = Math.max(0, attackCooldown);
     }
 
     /**
-     * Lifecycle: Attach to GameObject
+     * Hook: Cleanup combat state before detach
      */
-    onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Lifecycle: Detach from GameObject
-     */
-    onDetach(): void {
+    protected onDetaching(): void {
         this.clearTarget();
         this.attacking = false;
         this.remainingCooldown = 0;
-        this.owner = undefined!;
     }
 
     /**

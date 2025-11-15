@@ -397,3 +397,184 @@ export function sumArray(array: number[]): number {
 export function averageArray(array: number[]): number {
     return array.length === 0 ? 0 : sumArray(array) / array.length;
 }
+
+// ============================================================================
+// ENTITY/POWER HELPERS (for power system and entity queries)
+// ============================================================================
+
+/**
+ * Get all entities within radius of a position
+ * @param entityManager - EntityManager instance
+ * @param centerX - Center X position
+ * @param centerY - Center Y position
+ * @param radius - Search radius
+ * @param activeOnly - Only return active entities (default true)
+ * @returns Array of entities within radius
+ */
+export function getEntitiesInRadius(
+    entityManager: any,
+    centerX: number,
+    centerY: number,
+    radius: number,
+    activeOnly: boolean = true
+): any[] {
+    return entityManager.getAllEntities().filter((entity: any) => {
+        if (activeOnly && !entity.isActive) return false;
+        const dist = distance(centerX, centerY, entity.gridX, entity.gridY);
+        return dist <= radius;
+    });
+}
+
+/**
+ * Check if entity is enemy to a faction
+ * @param entityManager - EntityManager instance
+ * @param factionManager - FactionManager instance
+ * @param entityId - Entity ID to check
+ * @param referenceFactionId - Faction ID to compare against
+ * @returns True if entity is enemy
+ */
+export function isEntityEnemy(
+    entityManager: any,
+    factionManager: any,
+    entityId: string,
+    referenceFactionId: string | null
+): boolean {
+    // If no faction system, all entities are enemies
+    if (!referenceFactionId) return true;
+
+    // Get entity from EntityManager
+    const entity = entityManager.getEntity(entityId);
+    if (!entity) return false;
+
+    // Check if entity has faction ID property
+    const entityFactionId = entity.factionId;
+    if (!entityFactionId) return true; // No faction = enemy
+
+    // Use FactionManager to check if enemy
+    return factionManager.isEnemy(referenceFactionId, entityFactionId);
+}
+
+/**
+ * Calculate falloff factor based on distance (1.0 at center, 0.0 at edge)
+ * @param currentDistance - Current distance from center
+ * @param maxDistance - Maximum distance (edge of radius)
+ * @returns Falloff factor (0.0 to 1.0)
+ */
+export function distanceFalloff(currentDistance: number, maxDistance: number): number {
+    if (maxDistance === 0) return 1;
+    return clamp(1 - (currentDistance / maxDistance), 0, 1);
+}
+
+/**
+ * Apply knockback/push force with distance falloff
+ * @param sourceX - Source X position (center of force)
+ * @param sourceY - Source Y position
+ * @param targetX - Target X position (entity being pushed)
+ * @param targetY - Target Y position
+ * @param maxForce - Maximum force at center
+ * @param radius - Radius of effect
+ * @returns {x, y} vector for force
+ */
+export function calculatePushForce(
+    sourceX: number,
+    sourceY: number,
+    targetX: number,
+    targetY: number,
+    maxForce: number,
+    radius: number
+): { x: number; y: number } {
+    const angle = angleBetween(sourceX, sourceY, targetX, targetY);
+    const dist = distance(sourceX, sourceY, targetX, targetY);
+    const falloff = distanceFalloff(dist, radius);
+    const actualForce = maxForce * falloff;
+
+    return {
+        x: Math.cos(angle) * actualForce,
+        y: Math.sin(angle) * actualForce
+    };
+}
+
+// ============================================================================
+// FACTORY PATTERN HELPERS
+// ============================================================================
+
+/**
+ * Setup automatic sprite-to-entity binding with EventBus listeners
+ * Handles sprite registration, ENTITY_MOVED tracking, ENTITY_DESTROYED cleanup
+ * @param entity - GameObject to bind sprite to
+ * @param sprite - SpriteComponent to register
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for sprite
+ * @param gridToWorldFn - Function to convert grid coordinates to world coordinates
+ */
+export function setupEntitySpriteBinding(
+    entity: any,
+    sprite: any,
+    renderer: any,
+    layer: any,
+    gridToWorldFn: (coord: number) => number
+): void {
+    // Import dynamically to avoid circular dependencies
+    const { EventBus } = require('./eventBus');
+    
+    // Register sprite with renderer
+    const unregister = renderer.register(sprite);
+    
+    // Listen for entity movement - update sprite position/depth
+    const moveListener = EventBus.on('ENTITY_MOVED', (entityId: string, gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
+            sprite.setPosition(gridToWorldFn(gridX), gridToWorldFn(gridY));
+            sprite.setDepth(gridY);
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for entity destruction - cleanup sprite
+    const destroyListener = EventBus.once('ENTITY_DESTROYED', (entityId: string) => {
+        if (entityId === entity.id) {
+            unregister();
+            EventBus.off('ENTITY_MOVED', moveListener);
+        }
+    });
+    
+    // Store cleanup function on entity for manual cleanup
+    entity._cleanup = () => {
+        unregister();
+        EventBus.off('ENTITY_MOVED', moveListener);
+        EventBus.off('ENTITY_DESTROYED', destroyListener);
+    };
+}
+
+// ============================================================================
+// EVENTBUS EMIT HELPERS
+// ============================================================================
+
+/**
+ * Emit entity event with owner.id check
+ * Common pattern: if (this.owner) { EventBus.emit(..., this.owner.id, ...) }
+ * @param entity - Entity or component owner (must have .id property)
+ * @param eventName - Event name to emit
+ * @param args - Additional event arguments
+ */
+export function emitEntityEvent(
+    entity: any,
+    eventName: string,
+    ...args: any[]
+): void {
+    if (entity) {
+        const { EventBus } = require('./eventBus');
+        EventBus.emit(eventName, entity.id, ...args);
+    }
+}
+
+/**
+ * Emit destruction event and destroy entity
+ * Common pattern: EventBus.emit('X_DESTROYED', id, type); entity.destroy();
+ * @param entity - GameObject to destroy (must have .id, .type, .destroy())
+ * @param eventName - Event name to emit before destruction
+ */
+export function destroyAndEmit(entity: any, eventName: string): void {
+    const { EventBus } = require('./eventBus');
+    EventBus.emit(eventName, entity.id, entity.type);
+    entity.destroy();
+}

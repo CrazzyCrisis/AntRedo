@@ -275,9 +275,8 @@ describe('AntJobComponent', () => {
         });
 
         it('should detach from owner', () => {
-            const ownerBefore = jobComponent.owner;
             jobComponent.onDetach();
-            expect(jobComponent.owner).to.equal(ownerBefore);
+            expect(jobComponent.owner).to.be.undefined;
         });
 
         it('should clear state on detach', () => {

@@ -4,7 +4,7 @@
  * Used by: Boss (cone vision for targeting), Ants (circle vision for gathering/combat)
  */
 
-import { IComponent } from './IComponent';
+import { BaseComponent } from './BaseComponent';
 import { GameObject } from '../GameObject';
 import { EventBus } from '../../utils/eventBus';
 import { GameEvents } from '../../utils/eventBus';
@@ -14,9 +14,7 @@ import { normalizeAngle } from '../../utils/helpers';
  * VisionComponent
  * Manages entity vision with circle or cone detection
  */
-export class VisionComponent implements IComponent {
-    public owner!: GameObject;
-
+export class VisionComponent extends BaseComponent {
     private visionRange: number;
     private visionAngle: number;         // Degrees (360 = full circle, < 360 = cone)
     private visionDirection: number = 0; // Radians (0 = right/east, PI/2 = up/north)
@@ -28,23 +26,16 @@ export class VisionComponent implements IComponent {
      * @param visionAngle - Vision cone angle in degrees (360 = circle, less = cone)
      */
     constructor(visionRange: number, visionAngle: number) {
+        super();
         this.visionRange = Math.max(0, visionRange);
         this.visionAngle = Math.max(0, visionAngle);
     }
 
     /**
-     * Lifecycle: Attach to GameObject
+     * Hook: Clear detected entities before detach
      */
-    onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Lifecycle: Detach from GameObject
-     */
-    onDetach(): void {
+    protected onDetaching(): void {
         this.detectedEntities.clear();
-        this.owner = undefined!;
     }
 
     /**

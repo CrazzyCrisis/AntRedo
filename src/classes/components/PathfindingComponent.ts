@@ -4,8 +4,7 @@
  * Handles movement along paths using lerp for smooth transitions
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 import { Pathfinder, PathNode } from '../../world/Pathfinder';
 import { TileData } from '../../world/TileSystem';
@@ -15,9 +14,7 @@ import { lerp } from '../../utils/helpers';
  * PathfindingComponent
  * Uses A* pathfinding to navigate entities through the world
  */
-export class PathfindingComponent implements IComponent {
-    public owner!: GameObject;
-
+export class PathfindingComponent extends BaseComponent {
     private pathfinder: Pathfinder;
     private currentPath: PathNode[] = [];
     private pathIndex: number = 0;
@@ -36,24 +33,17 @@ export class PathfindingComponent implements IComponent {
      * @param speed - Movement speed in tiles per second
      */
     constructor(speed: number) {
+        super();
         this.pathfinder = new Pathfinder();
         this.speed = speed;
     }
 
     /**
-     * Lifecycle: Attach to GameObject
+     * Hook: Initialize movement tracking after attach
      */
-    onAttach(owner: GameObject): void {
-        this.owner = owner;
-        this.fromCol = owner.gridX;
-        this.fromRow = owner.gridY;
-    }
-
-    /**
-     * Lifecycle: Detach from GameObject
-     */
-    onDetach(): void {
-        this.owner = undefined!;
+    protected onAttached(): void {
+        this.fromCol = this.owner.gridX;
+        this.fromRow = this.owner.gridY;
     }
 
     /**

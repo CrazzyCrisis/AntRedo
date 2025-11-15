@@ -19,6 +19,55 @@
 
 ---
 
+## 🎯 CODE QUALITY PRINCIPLES (CRITICAL)
+
+### DRY (Don't Repeat Yourself) - MANDATORY
+**NEVER write duplicate code.** If a pattern appears more than once, it MUST be extracted into a helper function or base class.
+
+**ALWAYS check before implementing:**
+1. **Search `helpers.ts` first** - 50+ utilities already exist (math, collision, grid operations, entity queries, etc.)
+2. **Check for existing patterns** - Look at similar implementations before writing new code
+3. **Extract common logic immediately** - If you write similar code twice, stop and extract it
+4. **Use existing base classes** - Components extend `BaseComponent`, not `IComponent` directly
+
+**Examples of extracted patterns:**
+- Factory sprite binding: `setupEntitySpriteBinding()` eliminates 15 lines per factory
+- Component lifecycle: `BaseComponent` eliminates 3 lines per component
+- Entity queries: `getEntitiesInRadius()`, `isEntityEnemy()` used across all power classes
+- EventBus helpers: `emitEntityEvent()`, `destroyAndEmit()` for common emit patterns
+
+**When you see duplicate code:**
+1. **STOP** - Don't continue implementing
+2. **Extract** - Create helper function in `helpers.ts` or base class
+3. **Refactor** - Update all instances to use the helper
+4. **Document** - Add to relevant docs if it's a new pattern
+
+### Code Tidiness Standards
+- **No magic numbers** - All values in config files
+- **No repetitive patterns** - Extract into helpers/base classes
+- **Consistent naming** - Follow existing conventions
+- **Minimal boilerplate** - Use factories, base classes, helpers to eliminate repetitive code
+- **Clear abstractions** - Hide complexity behind simple interfaces
+
+### Helper Extraction Workflow
+1. **Identify pattern** - See code appearing 2+ times
+2. **Generalize** - Make it work for all use cases
+3. **Add to helpers.ts** - Place in appropriate section (math, entity, factory, eventbus)
+4. **Add JSDoc** - Clear documentation with examples
+5. **Refactor usage** - Update all instances to use helper
+6. **Update instructions** - Document new helper in copilot instructions
+
+**Current helper categories in helpers.ts:**
+- Math utilities (clamp, lerp, distance, angle, etc.)
+- Grid/tile operations (worldToGrid, gridToWorld, getNeighbors)
+- Collision detection (pointInRect, circleIntersect, etc.)
+- Entity queries (getEntitiesInRadius, isEntityEnemy)
+- Factory patterns (setupEntitySpriteBinding)
+- EventBus patterns (emitEntityEvent, destroyAndEmit)
+- Force calculations (distanceFalloff, calculatePushForce)
+
+---
+
 ## Project Overview
 TypeScript game built with p5.js in **global mode**. Game logic compiles to `dist/` as CommonJS, then bundled with **esbuild** to browser-compatible IIFE format. Heavy use of centralized EventBus pattern for decoupled communication.
 
@@ -234,11 +283,123 @@ export const MAIN_MENU_BUTTONS = {
 - Any positioning or styling value
 
 ### Utilities (`helpers.ts`)
-- 50+ tested pure functions - **always check here before implementing common math/collision/array operations**
+- 70+ tested pure functions - **always check here before implementing common math/collision/array operations**
 - Grid/tile helpers: `worldToGrid()`, `gridToWorld()`, `getNeighbors4/8()`
 - Vector math: `vectorNormalize()`, `vectorLimit()`, `angleBetween()`
+- Entity queries: `getEntitiesInRadius()`, `isEntityEnemy()`
+- Factory helpers: `setupEntitySpriteBinding()` - auto sprite registration + event cleanup
+- EventBus helpers: `emitEntityEvent()`, `destroyAndEmit()`
+- Force calculations: `distanceFalloff()`, `calculatePushForce()`
 - Classes: `Timer`, `FPSCounter`, `StateMachine<T>` for common patterns
-- Import needed functions: `import { clamp, distance } from './utils/helpers'`
+- Import needed functions: `import { clamp, distance, setupEntitySpriteBinding } from './utils/helpers'`
+
+### Component System Architecture
+**All components MUST extend `BaseComponent`** - Never implement `IComponent` directly.
+
+**BaseComponent Pattern:**
+```typescript
+// src/classes/components/BaseComponent.ts
+// Provides automatic onAttach/onDetach lifecycle management
+export abstract class BaseComponent implements IComponent {
+    public owner!: GameObject;
+    
+    onAttach(owner: GameObject): void {
+        this.owner = owner;
+        this.onAttached(); // Hook for subclass
+    }
+    
+    onDetach(): void {
+        this.onDetaching(); // Hook for subclass
+        this.owner = undefined!;
+    }
+    
+    protected onAttached(): void {} // Override for custom logic
+    protected onDetaching(): void {} // Override for cleanup
+    
+    abstract update(deltaTime: number): void; // Must implement
+}
+```
+
+**Component Implementation:**
+```typescript
+// GOOD - Use BaseComponent
+export class MyComponent extends BaseComponent {
+    constructor(value: number) {
+        super(); // REQUIRED
+        this.value = value;
+    }
+    
+    // Optional: custom attach logic
+    protected onAttached(): void {
+        // Subscribe to events, etc.
+    }
+    
+    // Optional: custom detach logic
+    protected onDetaching(): void {
+        // Unsubscribe, cleanup, etc.
+    }
+    
+    update(deltaTime: number): void {
+        // Component logic
+    }
+}
+
+// BAD - Don't implement IComponent directly (creates boilerplate)
+export class MyComponent implements IComponent {
+    public owner!: GameObject; // Boilerplate
+    
+    onAttach(owner: GameObject): void { // Boilerplate
+        this.owner = owner; // Boilerplate
+    } // Boilerplate
+    
+    onDetach(): void { // Boilerplate
+        this.owner = undefined!; // Boilerplate
+    } // Boilerplate
+    
+    update(deltaTime: number): void { /* ... */ }
+}
+```
+
+**Benefits:**
+- Eliminates 3+ lines of boilerplate per component
+- Consistent lifecycle management across all components
+- Optional hooks (`onAttached`, `onDetaching`) for custom logic
+- Type safety with `owner` reference always available
+
+### Factory Pattern with Sprite Binding Helper
+**All factories MUST use `setupEntitySpriteBinding()`** - Never manually register sprites or wire EventBus listeners.
+
+**Pattern:**
+```typescript
+import { setupEntitySpriteBinding } from '../utils/helpers';
+
+const entity = new MyEntity(x, y);
+const sprite = new SpriteComponent(/* ... */);
+
+// ONE LINE replaces 15+ lines of boilerplate:
+// - renderer.register(sprite)
+// - EventBus.on('ENTITY_MOVED', ...)
+// - EventBus.once('ENTITY_DESTROYED', ...)
+// - entity._cleanup = () => { ... }
+setupEntitySpriteBinding(entity, sprite, renderer, layer, gridToWorld);
+
+// Add entity-specific listeners after helper setup
+// Helper creates entity._cleanup, extend it if needed:
+const originalCleanup = (entity as any)._cleanup;
+entity._cleanup = () => {
+    originalCleanup();
+    // Your custom cleanup
+};
+
+return entity;
+```
+
+**Benefits:**
+- Eliminates 15 lines per factory (~90 lines saved across 6 factories)
+- Consistent sprite registration pattern
+- Automatic movement tracking and depth sorting
+- Automatic cleanup on entity destruction
+- No missed event unsubscriptions
 
 ### EventBus Patterns
 ```typescript
@@ -255,6 +416,12 @@ EventBus.once(GameEvents.LEVEL_COMPLETE, () => { /* ... */ });
 
 // Cleanup
 EventBus.off(GameEvents.EVENT_NAME, callback);
+
+// Helper: Emit entity event with owner check
+emitEntityEvent(this.owner, GameEvents.ENTITY_MOVED, x, y);
+
+// Helper: Destroy and emit
+destroyAndEmit(entity, 'ENTITY_DESTROYED');
 ```
 
 ### TypeScript Strictness

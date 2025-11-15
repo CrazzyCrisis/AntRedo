@@ -97,6 +97,7 @@ interface QueenPowerLevel {
     range?: number;           // Cast range
     knockback?: number;       // Knockback force
     duration?: number;        // Effect duration (seconds)
+    boltCount?: number;       // Number of lightning bolts
     pullStrength?: number;    // Blackhole pull force
     pushStrength?: number;    // Tidalwave push force
 }
@@ -123,9 +124,9 @@ const QUEEN: QueenConfig = {
         lightning: {
             cooldown: 5,      // 5 second cooldown
             levels: [
-                { damage: 50, radius: 3, knockback: 5, duration: 2 },     // Level 1: Soot stain 2s
-                { damage: 100, radius: 4, knockback: 8, duration: 3 },    // Level 2: Soot stain 3s
-                { damage: 200, radius: 5, knockback: 12, duration: 4 }    // Level 3: Soot stain 4s
+                { damage: 50, radius: 3, knockback: 5, boltCount: 3, duration: 2 },     // Level 1: 3 bolts, 2s soot
+                { damage: 100, radius: 4, knockback: 8, boltCount: 5, duration: 3 },    // Level 2: 5 bolts, 3s soot
+                { damage: 200, radius: 5, knockback: 12, boltCount: 8, duration: 4 }    // Level 3: 8 bolts, 4s soot
             ]
         },
         fireball: {

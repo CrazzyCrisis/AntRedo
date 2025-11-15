@@ -3,14 +3,11 @@
  * Manages hunger, starvation, and food consumption for entities (primarily ants)
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 import { GameEvents } from '../../utils/eventBus';
 
-export class HungerComponent implements IComponent {
-    public owner!: GameObject;
-
+export class HungerComponent extends BaseComponent {
     private maxHunger: number;
     private currentHunger: number;
     private hungerThreshold: number = 30; // Below this = hungry
@@ -25,6 +22,7 @@ export class HungerComponent implements IComponent {
      * Create hunger component with max hunger value
      */
     constructor(maxHunger: number) {
+        super();
         if (maxHunger <= 0) {
             throw new Error('Max hunger must be positive');
         }
@@ -34,16 +32,9 @@ export class HungerComponent implements IComponent {
     }
 
     /**
-     * Attach component to owner GameObject
+     * Hook: Reset hunger state before detach
      */
-    public onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Detach component and reset state
-     */
-    public onDetach(): void {
+    protected onDetaching(): void {
         this.currentHunger = this.maxHunger;
         this.timeSinceStarvationDamage = 0;
         this.wasHungry = false;

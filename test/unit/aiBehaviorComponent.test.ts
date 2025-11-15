@@ -299,10 +299,9 @@ describe('AIBehaviorComponent', () => {
         });
 
         it('should detach from owner', () => {
-            const ownerBefore = ai.owner;
             ai.onDetach();
-            // Owner reference remains (TypeScript requirement), but state is cleared
-            expect(ai.owner).to.equal(ownerBefore);
+            // BaseComponent clears owner reference on detach
+            expect(ai.owner).to.be.undefined;
         });
 
         it('should clear state on detach', () => {

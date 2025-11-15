@@ -4,8 +4,7 @@
  * Used by: Ants (resource carrying), potentially Warehouses (building storage)
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 import { GameEvents } from '../../utils/eventBus';
 
@@ -13,9 +12,7 @@ import { GameEvents } from '../../utils/eventBus';
  * InventoryComponent
  * Manages entity inventory with capacity limits and item tracking
  */
-export class InventoryComponent implements IComponent {
-    public owner!: GameObject;
-
+export class InventoryComponent extends BaseComponent {
     private items: Map<string, number>;
     private capacity: number;
 
@@ -24,23 +21,16 @@ export class InventoryComponent implements IComponent {
      * @param capacity - Maximum number of items that can be stored
      */
     constructor(capacity: number) {
+        super();
         this.capacity = Math.max(0, capacity);
         this.items = new Map();
     }
 
     /**
-     * Lifecycle: Attach to GameObject
+     * Hook: Clear inventory before detach
      */
-    onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Lifecycle: Detach from GameObject
-     */
-    onDetach(): void {
+    protected onDetaching(): void {
         this.clear();
-        this.owner = undefined!;
     }
 
     /**

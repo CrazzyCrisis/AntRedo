@@ -4,16 +4,14 @@
  * Used by: Ants, Queen, Boss, Buildings
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 
 /**
  * HealthComponent
  * Manages entity health, damage, healing, and death
  */
-export class HealthComponent implements IComponent {
-    public owner!: GameObject;
+export class HealthComponent extends BaseComponent {
 
     private currentHealth: number;
     private maxHealth: number;
@@ -29,23 +27,10 @@ export class HealthComponent implements IComponent {
      * @param regenRate - Health regeneration per second (0 = no regen)
      */
     constructor(maxHealth: number, regenRate: number = 0) {
+        super();
         this.maxHealth = maxHealth;
         this.currentHealth = maxHealth;
         this.regenRate = regenRate;
-    }
-
-    /**
-     * Lifecycle: Attach to GameObject
-     */
-    onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Lifecycle: Detach from GameObject
-     */
-    onDetach(): void {
-        this.owner = undefined!;
     }
 
     /**

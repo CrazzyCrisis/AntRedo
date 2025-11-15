@@ -359,9 +359,8 @@ describe('HungerComponent', () => {
         });
 
         it('should detach from owner', () => {
-            const ownerBefore = hunger.owner;
             hunger.onDetach();
-            expect(hunger.owner).to.equal(ownerBefore);
+            expect(hunger.owner).to.be.undefined;
         });
 
         it('should reset state on detach', () => {

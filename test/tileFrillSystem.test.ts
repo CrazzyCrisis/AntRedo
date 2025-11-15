@@ -115,7 +115,7 @@ describe('TileFrillSystem - Sprite Path Generation', () => {
 
             expectedPatterns.forEach((pattern, idx) => {
                 const matchFound = paths.some(path => pattern.test(path));
-                expect(matchFound).to.be.true(`Pattern ${idx} (${pattern}) should match at least one path`);
+                expect(matchFound, `Pattern ${idx} (${pattern}) should match at least one path`).to.be.true;
             });
         });
     });

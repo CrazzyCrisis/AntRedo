@@ -251,11 +251,15 @@ export const GameEvents = {
     // Queen events
     QUEEN_SPAWNED: 'queen:spawned',
     QUEEN_COMMAND_ISSUED: 'queen:command:issued',
+    QUEEN_DEATH: 'queen:death',
     QUEEN_DIED: 'queen:died',
     QUEEN_POWER_USED: 'queen:power:used',
     QUEEN_POWER_UNLOCKED: 'queen:power:unlocked',
     QUEEN_POWER_UPGRADED: 'queen:power:upgraded',
     QUEEN_POWER_COOLDOWN_READY: 'queen:power:cooldown:ready',
+    QUEEN_INTERACTED: 'queen:interacted',
+    CAMERA_FOLLOW_ENTITY: 'camera:follow:entity',
+    ENTITY_HEALTH_CHANGED: 'entity:health:changed',
     
     // Boss events
     BOSS_SPAWNED: 'boss:spawned',

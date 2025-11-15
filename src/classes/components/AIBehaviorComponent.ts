@@ -3,13 +3,11 @@
  * Manages autonomous behavior, decision-making, and blackboard memory for AI entities
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 import { GameEvents } from '../../utils/eventBus';
 
-export class AIBehaviorComponent implements IComponent {
-    public owner!: GameObject;
+export class AIBehaviorComponent extends BaseComponent {
     private autonomous: boolean = true;
     private currentBehavior: string | null = null;
     private currentTarget: string | null = null;
@@ -17,16 +15,9 @@ export class AIBehaviorComponent implements IComponent {
     private elapsedTime: number = 0;
 
     /**
-     * Attach component to owner GameObject
+     * Hook: Cleanup AI state before detach
      */
-    public onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Detach component and cleanup state
-     */
-    public onDetach(): void {
+    protected onDetaching(): void {
         this.clearBehavior();
         this.clearTarget();
         this.clearBlackboard();

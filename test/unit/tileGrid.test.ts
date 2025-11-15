@@ -157,8 +157,8 @@ describe('TileGrid', () => {
         it('should return false for out of bounds world coordinates', () => {
             expect(grid.isInWorldBounds(-1, 0)).to.be.false;
             expect(grid.isInWorldBounds(0, -1)).to.be.false;
-            expect(grid.isInWorldBounds(80, 0)).to.be.false;
-            expect(grid.isInWorldBounds(0, 80)).to.be.false;
+            expect(grid.isInWorldBounds(161, 0)).to.be.false; // 5 tiles * 32px = 160, so 161 is out
+            expect(grid.isInWorldBounds(0, 161)).to.be.false;
         });
     });
 
@@ -256,23 +256,23 @@ describe('TileGrid', () => {
 
     describe('Coordinate Conversion Helpers', () => {
         it('should convert world to grid coordinates', () => {
-            const result = grid.worldToGrid(40, 40);
+            const result = grid.worldToGrid(64, 64); // 64px / 32px = 2
             expect(result).to.not.be.null;
             expect(result!.col).to.equal(2);
             expect(result!.row).to.equal(2);
         });
 
         it('should handle world coordinates at tile boundaries', () => {
-            const result = grid.worldToGrid(16, 16);
+            const result = grid.worldToGrid(32, 32); // 32px / 32px = 1
             expect(result).to.not.be.null;
             expect(result!.col).to.equal(1);
             expect(result!.row).to.equal(1);
         });
 
         it('should convert grid to world coordinates', () => {
-            const { x, y } = grid.gridToWorld(2, 2);
-            expect(x).to.equal(32);
-            expect(y).to.equal(32);
+            const { x, y } = grid.gridToWorld(2, 2); // 2 * 32px = 64
+            expect(x).to.equal(64);
+            expect(y).to.equal(64);
         });
 
         it('should return null for world to grid conversion outside bounds', () => {

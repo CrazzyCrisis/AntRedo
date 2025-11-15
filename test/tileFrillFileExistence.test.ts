@@ -31,7 +31,7 @@ describe('TileFrillSystem - File Existence', () => {
                 missingFiles.forEach(f => console.log(`  - ${f.path}`));
             }
 
-            expect(results.every(r => r.exists)).to.be.true('All 10 GRASS sprites should exist');
+            expect(results.every(r => r.exists), 'All 10 GRASS sprites should exist').to.be.true;
         });
 
         it('should have all sprite files for each supported tile type', () => {
@@ -83,14 +83,14 @@ describe('TileFrillSystem - File Existence', () => {
             console.log('\n=== CHECKING DIRECTORY STRUCTURE ===');
             console.log(`Base path: ${baseDir}`);
             
-            expect(fs.existsSync(baseDir)).to.be.true('Base directory should exist');
+            expect(fs.existsSync(baseDir), 'Base directory should exist').to.be.true;
             
             const folders = ['grass', 'dirt', 'moss', 'sand', 'stone', 'water'];
             folders.forEach(folder => {
                 const folderPath = path.join(baseDir, folder);
                 const exists = fs.existsSync(folderPath);
                 console.log(`${exists ? '✓' : '✗'} ${folder}/`);
-                expect(exists).to.be.true(`Folder ${folder} should exist`);
+                expect(exists, `Folder ${folder} should exist`).to.be.true;
             });
         });
 
@@ -163,7 +163,7 @@ describe('TileFrillSystem - File Existence', () => {
                 
                 console.log(`${exists ? '✓' : '✗'} ${folder}/${filename}`);
                 
-                expect(exists).to.be.true(`${filename} should exist`);
+                expect(exists, `${filename} should exist`).to.be.true;
             });
         });
     });

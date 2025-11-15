@@ -148,7 +148,7 @@ describe('TileFrillSystem - Sprite Loading Integration', () => {
             grassCorners.forEach(path => {
                 const exists = tileEdgeSprites[path] !== undefined;
                 console.log(`${exists ? '✓' : '✗'} ${path}`);
-                expect(exists).to.be.true(`${path} should be in dictionary`);
+                expect(exists, `${path} should be in dictionary`).to.be.true;
             });
         });
 

@@ -3,14 +3,11 @@
  * Manages ant job types (Gatherer, Builder, Warrior, Scout) with priority system
  */
 
-import { IComponent } from './IComponent';
-import { GameObject } from '../GameObject';
+import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 import { GameEvents } from '../../utils/eventBus';
 
-export class AntJobComponent implements IComponent {
-    public owner!: GameObject;
-
+export class AntJobComponent extends BaseComponent {
     // Job type constants
     public static readonly JOB_GATHERER = 0;
     public static readonly JOB_BUILDER = 1;
@@ -25,6 +22,7 @@ export class AntJobComponent implements IComponent {
      * Create job component with priorities [gatherer, builder, warrior, scout]
      */
     constructor(priorities: number[]) {
+        super();
         if (priorities.length !== 4) {
             throw new Error('Priorities array must have exactly 4 elements');
         }
@@ -37,16 +35,9 @@ export class AntJobComponent implements IComponent {
     }
 
     /**
-     * Attach component to owner GameObject
+     * Hook: Clear job state before detach
      */
-    public onAttach(owner: GameObject): void {
-        this.owner = owner;
-    }
-
-    /**
-     * Detach component and cleanup state
-     */
-    public onDetach(): void {
+    protected onDetaching(): void {
         this.clearJob();
         this.clearTask();
     }
