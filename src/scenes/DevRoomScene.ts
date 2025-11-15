@@ -15,19 +15,20 @@ import {
     LevelLoader,
     TileGrid,
     RenderLayer,
-    TILE_SIZE,
     ButtonComponent,
     DEV_ROOM_CONFIG,
     TILE_CONFIG,
-    TileFrillSystem,
     updateMaterialPriorities,
     CONFIG,
     WorldPresetManager,
     WorldPreset,
     PauseMenuScene,
     InputManager,
-    WorldGenConfigMenu
+    WorldGenConfigMenu,
+    EntityManager,
+    CameraManager
 } from '../imports/sceneImports';
+import { TileRenderer, TileRenderConfig } from '../world/TileRenderer';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -210,96 +211,42 @@ export class DevRoomScene implements IScene {
     }
 
     private createTileRenderer(tileGrid: TileGrid): void {
-        const grid = tileGrid.getGrid();
+        // Create TileRenderer with camera culling for optimized rendering
+        const tileRenderConfig: TileRenderConfig = {
+            tileSprites: this.tileSprites,
+            tileEdgeSprites: this.tileEdgeSprites,
+            tileColors: this.tileColors,
+            canvasWidth: this.canvasWidth,
+            canvasHeight: this.canvasHeight
+        };
         
-        // Create a renderable that draws all tiles with frill overlays
+        const tileRenderer = new TileRenderer(tileGrid, tileRenderConfig);
+        const camera = CameraManager.getInstance().getCamera();
+        
+        // Create optimized tile renderable with camera culling
         const tileRenderable = {
             id: 'tile_grid',
             layer: RenderLayer.GROUND,
             depth: 0,
-            render: (graphics: any) => {
-                // Draw each tile
-                for (let row = 0; row < grid.length; row++) {
-                    for (let col = 0; col < grid[row].length; col++) {
-                        const tile = grid[row][col];
-                        const x = col * TILE_SIZE;
-                        const y = row * TILE_SIZE;
-                        
-                        if (TILE_CONFIG.USE_SPRITES) {
-                            // Step 1: Draw base tile sprite
-                            if (this.tileSprites[tile.type]) {
-                                graphics.image(this.tileSprites[tile.type], x, y, TILE_SIZE, TILE_SIZE);
-                            }
-                            
-                            // Step 2: Overlay frill sprites on top (if enabled)
-                            if (TILE_CONFIG.USE_EDGES) {
-                                const frillData = TileFrillSystem.getFrillOverlays(tileGrid, col, row);
-                                
-                                if (frillData.hasFrill) {
-                                    // Render each frill overlay
-                                    for (const frillPath of frillData.frillPaths) {
-                                        const sprite = this.tileEdgeSprites[frillPath];
-                                        if (sprite) {
-                                            graphics.image(sprite, x, y, TILE_SIZE, TILE_SIZE);
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            // Draw colored rectangle (fallback)
-                            const color = this.tileColors[tile.type] || '#FFFFFF';
-                            graphics.fill(color);
-                            graphics.noStroke();
-                            graphics.rect(x, y, TILE_SIZE, TILE_SIZE);
-                            
-                            // Draw border for clarity
-                            graphics.stroke(0, 50);
-                            graphics.noFill();
-                            graphics.rect(x, y, TILE_SIZE, TILE_SIZE);
-                        }
-                    }
-                }
-            }
+            render: tileRenderer.createTileRenderable(camera)
         };
 
         this.tileRendererUnregister.push(this.renderer.register(tileRenderable));
         this.renderer.markLayerDirty(RenderLayer.GROUND);
         
-        // Add grid overlay on top of tiles
+        // Add grid overlay on top of tiles (also camera culled)
         if (TILE_CONFIG.GRID_OVERLAY.ENABLED) {
-            this.createGridOverlay(tileGrid);
+            this.createGridOverlay(tileGrid, tileRenderer, camera);
         }
     }
     
-    private createGridOverlay(tileGrid: TileGrid): void {
-        const grid = tileGrid.getGrid();
-        const gridWidth = grid[0].length * TILE_SIZE;
-        const gridHeight = grid.length * TILE_SIZE;
-        
+    private createGridOverlay(_tileGrid: TileGrid, tileRenderer: TileRenderer, camera: any): void {
+        // Use TileRenderer's optimized grid overlay with camera culling
         const gridRenderable = {
             id: 'tile_grid_overlay',
             layer: RenderLayer.GROUND_DECORATIONS,
             depth: 1000,  // Render on top of everything else in this layer
-            render: (graphics: any) => {
-                graphics.stroke(TILE_CONFIG.GRID_OVERLAY.COLOR);
-                graphics.strokeWeight(TILE_CONFIG.GRID_OVERLAY.LINE_WEIGHT);
-                (graphics as any).drawingContext.globalAlpha = TILE_CONFIG.GRID_OVERLAY.ALPHA / 255;
-                
-                // Draw vertical lines
-                for (let col = 0; col <= grid[0].length; col++) {
-                    const x = col * TILE_SIZE;
-                    graphics.line(x, 0, x, gridHeight);
-                }
-                
-                // Draw horizontal lines
-                for (let row = 0; row <= grid.length; row++) {
-                    const y = row * TILE_SIZE;
-                    graphics.line(0, y, gridWidth, y);
-                }
-                
-                // Reset alpha
-                (graphics as any).drawingContext.globalAlpha = 1.0;
-            }
+            render: tileRenderer.createGridOverlayRenderable(camera)
         };
         
         this.tileRendererUnregister.push(this.renderer.register(gridRenderable));
@@ -338,10 +285,16 @@ export class DevRoomScene implements IScene {
             this.worldGenConfigMenu.update();
         }
         
+        // Update all entities (Queen, Ants, Bosses, etc.) - EntityManager handles lifecycle
+        EntityManager.getInstance().update(16.67); // ~60fps
+        
         // Update spawn manager (wave spawning, safe zone)
         if (this.spawnManager) {
             this.spawnManager.update(16.67); // ~60fps
         }
+        
+        // Update camera (handles following and smooth movement)
+        CameraManager.getInstance().update();
         
         // Update button animations
         if (this.backButton) {

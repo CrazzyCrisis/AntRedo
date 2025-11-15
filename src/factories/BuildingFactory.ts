@@ -58,10 +58,13 @@ export class BuildingFactory {
         const building = new Building(gridX, gridY, buildingType);
 
         // Create sprite component starting with construction sprite
+        // MUST use world coordinates for initial position
+        const worldX = gridX * TILE_SIZE;
+        const worldY = gridY * TILE_SIZE;
         const spriteComponent = new SpriteComponent(
             constructionSprite,
-            gridX,
-            gridY,
+            worldX,
+            worldY,
             RenderLayer.GROUND_DECORATIONS,
             0, // Static depth for buildings
             building.size.width * 16, // Width in pixels (tile size 16)

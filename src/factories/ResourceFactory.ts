@@ -54,10 +54,13 @@ export class ResourceFactory {
 
         // Create sprite component on GROUND_DECORATIONS layer
         // Resources don't need depth sorting since they're on the ground
+        // MUST use world coordinates for initial position
+        const worldX = gridX * TILE_SIZE;
+        const worldY = gridY * TILE_SIZE;
         const spriteComponent = new SpriteComponent(
             sprite,
-            gridX,
-            gridY,
+            worldX,
+            worldY,
             RenderLayer.GROUND_DECORATIONS,
             0, // Static depth for ground decorations
             32, // width

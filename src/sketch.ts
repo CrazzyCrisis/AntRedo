@@ -7,6 +7,7 @@ import { EventBus, GameEvents } from './utils/eventBus';
 import { SceneManager } from './managers/SceneManager';
 import { InputManager } from './managers/InputManager';
 import { AudioManager } from './managers/AudioManager';
+import { CameraManager } from './managers/CameraManager';
 import { Renderer } from './rendering/Renderer';
 import { Camera } from './rendering/Camera';
 import { MenuScene } from './scenes/MenuScene';
@@ -17,6 +18,7 @@ import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
 import { AUDIO_SOUNDS, SoundKey } from './config/audioConfig';
+import { FPSCounter } from './utils/helpers';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
@@ -36,6 +38,9 @@ let renderer: Renderer;
 
 // Global camera instance
 let camera: Camera;
+
+// FPS counter
+let fpsCounter: FPSCounter;
 
 // Preloaded menu images
 let menuImages: {
@@ -146,6 +151,14 @@ function setup() {
     // Initialize camera
     camera = new Camera(0, 0, window.innerWidth, window.innerHeight);
     
+    // Initialize FPS counter
+    fpsCounter = new FPSCounter();
+    
+    // Register camera with renderer and CameraManager (centralized control)
+    renderer.setCamera(camera);
+    CameraManager.getInstance().setCamera(camera);
+    CameraManager.getInstance().setRenderer(renderer);
+    
     // Initialize AudioManager with event-driven playback
     AudioManager.getInstance().initialize();
     
@@ -197,6 +210,9 @@ function setup() {
 function draw() {
     background(CONFIG.COLORS.BACKGROUND);
     
+    // Update FPS counter
+    fpsCounter.update();
+    
     // Update scene FIRST (checks input state)
     SceneManager.getInstance().update();
     
@@ -205,6 +221,28 @@ function draw() {
     
     // Render all layers
     renderer.render();
+    
+    // Draw FPS counter on top (only when not in main menu)
+    const currentSceneName = SceneManager.getInstance().getCurrentSceneName();
+    if (currentSceneName !== 'Menu') {
+        drawFPSCounter();
+    }
+}
+
+function drawFPSCounter() {
+    const fps = fpsCounter.getFPS();
+    const p5Instance = window as any;
+    
+    // Draw background box
+    p5Instance.fill(0, 0, 0, 150);
+    p5Instance.noStroke();
+    p5Instance.rect(window.innerWidth - 80, 10, 70, 30);
+    
+    // Draw FPS text
+    p5Instance.fill(fps >= 55 ? '#00FF00' : fps >= 30 ? '#FFFF00' : '#FF0000');
+    p5Instance.textAlign(p5Instance.RIGHT, p5Instance.TOP);
+    p5Instance.textSize(18);
+    p5Instance.text(`${fps} FPS`, window.innerWidth - 15, 18);
 }
 
 function keyPressed() {

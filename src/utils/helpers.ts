@@ -530,13 +530,13 @@ export function setupEntitySpriteBinding(
     gridToWorldFn: (coord: number) => number
 ): void {
     // Import dynamically to avoid circular dependencies
-    const { EventBus } = require('./eventBus');
+    const { EventBus, GameEvents } = require('./eventBus');
     
     // Register sprite with renderer
     const unregister = renderer.register(sprite);
     
     // Listen for entity movement - update sprite position/depth
-    const moveListener = EventBus.on('ENTITY_MOVED', (entityId: string, gridX: number, gridY: number) => {
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, gridX: number, gridY: number) => {
         if (entityId === entity.id) {
             sprite.setPosition(gridToWorldFn(gridX), gridToWorldFn(gridY));
             sprite.setDepth(gridY);
@@ -545,18 +545,18 @@ export function setupEntitySpriteBinding(
     });
     
     // Listen for entity destruction - cleanup sprite
-    const destroyListener = EventBus.once('ENTITY_DESTROYED', (entityId: string) => {
+    const destroyListener = EventBus.once(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
         if (entityId === entity.id) {
             unregister();
-            EventBus.off('ENTITY_MOVED', moveListener);
+            EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
         }
     });
     
     // Store cleanup function on entity for manual cleanup
     entity._cleanup = () => {
         unregister();
-        EventBus.off('ENTITY_MOVED', moveListener);
-        EventBus.off('ENTITY_DESTROYED', destroyListener);
+        EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+        EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
     };
 }
 

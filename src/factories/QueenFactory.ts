@@ -3,8 +3,10 @@ import {
     RenderLayer,
     SpriteComponent,
     EventBus,
+    GameEvents,
     setupEntitySpriteBinding,
-    TILE_SIZE
+    TILE_SIZE,
+    EntityManager
 } from '../imports/factoryImports';
 import { Queen } from '../classes/Queen';
 
@@ -56,11 +58,13 @@ export class QueenFactory {
         // 2. Register Queen as active for this faction
         QueenFactory.activeQueens.set(factionId, queen);
 
-        // 3. Create View (SpriteComponent)
+        // 3. Create View (SpriteComponent) - MUST use world coordinates for initial position
+        const worldX = gridX * TILE_SIZE;
+        const worldY = gridY * TILE_SIZE;
         const spriteComponent = new SpriteComponent(
             sprite,
-            gridX,
-            gridY,
+            worldX,
+            worldY,
             RenderLayer.ENTITIES,
             gridY  // depth = Y position for sorting
         );
@@ -69,7 +73,13 @@ export class QueenFactory {
         // Grid coordinates → world coordinates (multiply by TILE_SIZE)
         setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
 
-        // 4. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
+        // 4. Register with EntityManager for update() lifecycle
+        EntityManager.getInstance().addEntity(queen);
+        
+        // 4.5. Request camera follow (MUST happen AFTER EntityManager registration)
+        EventBus.emit(GameEvents.CAMERA_FOLLOW_ENTITY, queen.id);
+
+        // 5. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
         const originalCleanup = (queen as any)._cleanup;
         const diedListener = EventBus.once('ENTITY_DIED', (entityId: string) => {
             if (entityId === queen.id) {
@@ -78,14 +88,14 @@ export class QueenFactory {
             }
         });
 
-        // 5. Extend cleanup to include faction tracking (handles both destroy() and death)
+        // 6. Extend cleanup to include faction tracking (handles both destroy() and death)
         (queen as any)._cleanup = () => {
             QueenFactory.activeQueens.delete(factionId); // Remove from active queens
             originalCleanup(); // Call helper's cleanup (handles ENTITY_DESTROYED)
             EventBus.off('ENTITY_DIED', diedListener);
         };
 
-        // 8. Return Model only (View is hidden)
+        // 7. Return Model only (View is hidden)
         return queen;
     }
 

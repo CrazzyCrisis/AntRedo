@@ -171,6 +171,20 @@ export class EntityManager {
     }
 
     /**
+     * Update all active entities
+     * Call this once per frame from your scene's update() method
+     * @param deltaTime - Time since last frame in milliseconds
+     */
+    public update(deltaTime: number): void {
+        // Update all active entities
+        for (const entity of this.entities.values()) {
+            if (entity.isActive) {
+                entity.update(deltaTime);
+            }
+        }
+    }
+
+    /**
      * Clear all entities (for testing/reset)
      */
     public clear(): void {

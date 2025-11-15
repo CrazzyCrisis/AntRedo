@@ -591,13 +591,12 @@ export class EntityShowcaseScene implements IScene {
         // Update queen
         if (this.queen && this.queen.isActive) {
             this.queen.update(1/60); // Assume 60 FPS
-            
-            // Camera follows queen
-            this.camera.follow(this.queen.worldX, this.queen.worldY);
+            // Camera following handled by CameraManager automatically via CAMERA_FOLLOW_ENTITY event
         }
         
-        // Update camera smoothing AFTER setting follow target
-        this.camera.update();
+        // Update camera (CameraManager handles following automatically)
+        const { CameraManager } = require('../managers/CameraManager');
+        CameraManager.getInstance().update();
         
         // Update ants
         for (const ant of this.ants) {

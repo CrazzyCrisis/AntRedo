@@ -82,6 +82,16 @@ out
 .nuxt
 dist
 
+# Compiled JavaScript files (TypeScript outputs to dist/)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+
+# Compiled test files (TypeScript test outputs)
+test/**/*.js
+test/**/*.js.map
+test/**/*.d.ts
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js

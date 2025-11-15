@@ -53,8 +53,14 @@ export class Camera {
 
     /**
      * Update camera position (call every frame)
+     * Returns true if camera moved this frame
      */
-    update(): void {
+    update(): boolean {
+        const prevX = this.x;
+        const prevY = this.y;
+        const prevShakeX = this.shakeOffsetX;
+        const prevShakeY = this.shakeOffsetY;
+        
         // Update smooth following
         if (this.targetX !== null && this.targetY !== null) {
             const dx = this.targetX - this.x;
@@ -79,6 +85,11 @@ export class Camera {
                 this.shakeIntensity = 0;
             }
         }
+        
+        // Check if camera moved (position or shake changed)
+        const moved = this.x !== prevX || this.y !== prevY || 
+                     this.shakeOffsetX !== prevShakeX || this.shakeOffsetY !== prevShakeY;
+        return moved;
     }
 
     /**

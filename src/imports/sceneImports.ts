@@ -34,6 +34,7 @@ export { GameStateManager } from '../managers/GameStateManager';
 export { AudioManager } from '../managers/AudioManager';
 export { InputManager } from '../managers/InputManager';
 export { EntityManager } from '../managers/EntityManager';
+export { CameraManager } from '../managers/CameraManager';
 export { SpawnManager } from '../managers/SpawnManager';
 export { LevelLoader } from '../managers/LevelLoader';
 export { PathfindingManager } from '../managers/PathfindingManager';

@@ -69,10 +69,13 @@ export class ProjectileFactory {
         );
 
         // Create sprite component on ABOVE_ENTITIES layer (projectiles fly over ground)
+        // MUST use world coordinates for initial position
+        const worldX = startGridX * TILE_SIZE;
+        const worldY = startGridY * TILE_SIZE;
         const spriteComponent = new SpriteComponent(
             sprite,
-            startGridX,
-            startGridY,
+            worldX,
+            worldY,
             RenderLayer.ABOVE_ENTITIES,
             1000, // High depth to render above everything
             16, // width (small projectile)

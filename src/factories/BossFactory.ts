@@ -52,10 +52,13 @@ export class BossFactory {
         const boss = new Boss(gridX, gridY, patrolPath, projectileType);
 
         // Create sprite component with Y-position as depth for proper sorting
+        // MUST use world coordinates for initial position
+        const worldX = gridX * TILE_SIZE;
+        const worldY = gridY * TILE_SIZE;
         const spriteComponent = new SpriteComponent(
             sprite,
-            gridX,
-            gridY,
+            worldX,
+            worldY,
             RenderLayer.ENTITIES,
             gridY, // Y-coordinate determines depth
             64, // width (bosses are larger)

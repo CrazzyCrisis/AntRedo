@@ -3,7 +3,8 @@ import {
     RenderLayer,
     SpriteComponent,
     setupEntitySpriteBinding,
-    TILE_SIZE
+    TILE_SIZE,
+    EntityManager
 } from '../imports/factoryImports';
 import { Ant } from '../classes/Ant';
 import { AntJobComponent } from '../classes/components/AntJobComponent';
@@ -52,10 +53,13 @@ export class AntFactory {
         }
 
         // Create sprite component with Y-position as depth for proper sorting
+        // MUST use world coordinates for initial position
+        const worldX = gridX * TILE_SIZE;
+        const worldY = gridY * TILE_SIZE;
         const spriteComponent = new SpriteComponent(
             sprite,
-            gridX,
-            gridY,
+            worldX,
+            worldY,
             RenderLayer.ENTITIES,
             gridY, // Y-coordinate determines depth (ants behind trees)
             32, // width
@@ -67,6 +71,9 @@ export class AntFactory {
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (multiply by TILE_SIZE)
         setupEntitySpriteBinding(ant, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
+
+        // Register with EntityManager for update() lifecycle
+        EntityManager.getInstance().addEntity(ant);
 
         return ant;
     }

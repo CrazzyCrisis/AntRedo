@@ -4,7 +4,7 @@
  * No rendering code - only data and EventBus emissions
  */
 
-import { EventBus } from '../utils/eventBus';
+import { EventBus, GameEvents } from '../utils/eventBus';
 import { IComponent } from './components/IComponent';
 import { rectIntersect } from '../utils/helpers';
 import { TILE_SIZE } from '../world/TileSystem';
@@ -26,6 +26,12 @@ export class GameObject {
     
     // Active state
     public isActive: boolean;
+    
+    // Movement system
+    public moveSpeed: number = 3.0; // Tiles per second
+    private moveAccumulator: number = 0; // Accumulated movement time
+    private targetMoveX: number = 0; // Pending movement direction
+    private targetMoveY: number = 0;
     
     // Collision box
     public collisionWidth: number;
@@ -72,8 +78,51 @@ export class GameObject {
     }
 
     /**
-     * Move entity to new grid position
+     * Request movement in a direction (for time-based movement)
+     * Call this every frame with desired direction
+     * @param dirX - X direction (-1, 0, or 1)
+     * @param dirY - Y direction (-1, 0, or 1)
+     */
+    public requestMove(dirX: number, dirY: number): void {
+        this.targetMoveX = dirX;
+        this.targetMoveY = dirY;
+    }
+
+    /**
+     * Process accumulated movement based on deltaTime and moveSpeed
+     * Called automatically by update()
+     * @param deltaTime - Time since last frame in milliseconds
+     */
+    private processMovement(deltaTime: number): void {
+        if (this.targetMoveX === 0 && this.targetMoveY === 0) {
+            this.moveAccumulator = 0; // Reset accumulator when not moving
+            return;
+        }
+
+        // Convert deltaTime from ms to seconds
+        const deltaSeconds = deltaTime / 1000;
+        
+        // Accumulate movement time
+        this.moveAccumulator += deltaSeconds * this.moveSpeed;
+
+        // Move one tile when accumulator reaches 1.0
+        if (this.moveAccumulator >= 1.0) {
+            const newGridX = this.gridX + this.targetMoveX;
+            const newGridY = this.gridY + this.targetMoveY;
+            this.moveTo(newGridX, newGridY);
+            
+            this.moveAccumulator -= 1.0; // Keep remainder for smooth movement
+        }
+
+        // Reset target for next frame (must be set again each frame)
+        this.targetMoveX = 0;
+        this.targetMoveY = 0;
+    }
+
+    /**
+     * Move entity to new grid position immediately
      * Emits ENTITY_MOVED event if position changes
+     * Use requestMove() for smooth time-based movement instead
      */
     public moveTo(gridX: number, gridY: number): void {
         // Check if position actually changed
@@ -86,7 +135,7 @@ export class GameObject {
         this.updateWorldPosition();
 
         // Emit movement event
-        EventBus.emit('ENTITY_MOVED', this.id, gridX, gridY);
+        EventBus.emit(GameEvents.ENTITY_MOVED, this.id, gridX, gridY);
     }
 
     /**
@@ -155,6 +204,9 @@ export class GameObject {
         if (!this.isActive) {
             return;
         }
+
+        // Process movement accumulation
+        this.processMovement(deltaTime);
 
         // Update all components
         this.components.forEach(component => {

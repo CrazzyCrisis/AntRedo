@@ -3,6 +3,7 @@ import { PathfindingComponent } from './components/PathfindingComponent';
 import { HealthComponent } from './components/HealthComponent';
 import { CombatComponent } from './components/CombatComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
+import { InputManager } from '../managers/InputManager';
 
 /**
  * QueenPower interface for power system
@@ -40,6 +41,9 @@ export class Queen extends GameObject {
     constructor(gridX: number, gridY: number, factionId: string) {
         super('queen', gridX, gridY);
         this.factionId = factionId;
+        
+        // Set movement speed (tiles per second)
+        this.moveSpeed = 4.0; // Queen moves at 4 tiles/second
 
         // Initialize components
         this.addComponent('Pathfinding', new PathfindingComponent(1.5)); // Slower than ants
@@ -54,9 +58,8 @@ export class Queen extends GameObject {
 
         // Setup health listener for death
         this.setupHealthListener();
-
-        // Request camera follow
-        EventBus.emit(GameEvents.CAMERA_FOLLOW_ENTITY, this.id);
+        
+        // Camera follow will be requested by QueenFactory after EntityManager registration
     }
 
     /**
@@ -260,10 +263,36 @@ export class Queen extends GameObject {
 
     /**
      * Update queen (components update automatically via GameObject)
+     * Handles continuous movement when keys are held
      * @param deltaTime Time since last update in ms
      */
     update(deltaTime: number): void {
-        if (!this.isActive) return;
+        if (!this.isActive || !this.playerControlled) return;
+
+        // Handle continuous movement based on held keys
+        const inputManager = InputManager.getInstance();
+        let moveX = 0;
+        let moveY = 0;
+
+        // Check for held movement keys
+        if (inputManager.isActionPressed('moveUp')) {
+            moveY = -1;
+        }
+        if (inputManager.isActionPressed('moveDown')) {
+            moveY = 1;
+        }
+        if (inputManager.isActionPressed('moveLeft')) {
+            moveX = -1;
+        }
+        if (inputManager.isActionPressed('moveRight')) {
+            moveX = 1;
+        }
+
+        // Request movement (processed by GameObject with speed/deltaTime)
+        if (moveX !== 0 || moveY !== 0) {
+            this.requestMove(moveX, moveY);
+        }
+
         super.update(deltaTime);
     }
 

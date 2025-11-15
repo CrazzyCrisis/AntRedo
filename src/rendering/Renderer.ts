@@ -126,10 +126,10 @@ export class Renderer {
         const layerConfig = LAYER_CONFIGS[layer];
         const renderables = this.renderables.get(layer) || [];
 
-        // Clear framebuffer if configured
-        if (layerConfig.clearEveryFrame) {
-            this.framebufferManager.clearFramebuffer(layer);
-        }
+        // Clear framebuffer when layer is dirty (being re-rendered)
+        // This is essential when camera moves - even static layers need clearing
+        // to prevent duplication with new camera transform
+        this.framebufferManager.clearFramebuffer(layer);
 
         // Disable smoothing for pixel art layers (crisp rendering)
         const pixelArtLayers = [
@@ -149,8 +149,9 @@ export class Renderer {
             sortedRenderables = [...renderables].sort((a, b) => a.depth - b.depth);
         }
 
-        // Apply camera transform if camera exists
-        if (this.camera) {
+        // Apply camera transform if camera exists (but NOT for UI/DEBUG layers)
+        const applyCameraTransform = this.camera && layer !== RenderLayer.UI && layer !== RenderLayer.DEBUG;
+        if (applyCameraTransform) {
             fb.push();
             this.camera.applyTransform(fb);
         }
@@ -160,7 +161,7 @@ export class Renderer {
             renderable.render(fb);
         });
 
-        if (this.camera) {
+        if (applyCameraTransform) {
             fb.pop();
         }
 
