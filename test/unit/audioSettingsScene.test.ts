@@ -64,8 +64,8 @@ describe('AudioSettingsScene', () => {
         } as any;
         
         // Create renderer with mock graphics
-        renderer = new Renderer(createMockGraphics() as any, canvasWidth, canvasHeight);
-        scene = new AudioSettingsScene(renderer, canvasWidth, canvasHeight);
+        renderer = new Renderer(() => createMockGraphics() as any, canvasWidth, canvasHeight);
+        scene = new AudioSettingsScene(renderer, canvasWidth, canvasHeight,() => Image);
     });
 
     afterEach(() => {
@@ -85,10 +85,10 @@ describe('AudioSettingsScene', () => {
             scene.enter();
             
             expect(scene.masterVolumeSlider).to.not.be.undefined;
-            expect(scene.musicVolumeSlider).to.not.be.undefined;
+            expect(scene.bgmVolumeSlider).to.not.be.undefined;
             expect(scene.sfxVolumeSlider).to.not.be.undefined;
-            expect(scene.musicMuteToggle).to.not.be.undefined;
-            expect(scene.sfxMuteToggle).to.not.be.undefined;
+            expect(scene.voicesVolumeSlider).to.not.be.undefined;
+            expect(scene.systemVolumeSlider).to.not.be.undefined;
             expect(scene.backButton).to.not.be.undefined;
         });
 
@@ -131,24 +131,14 @@ describe('AudioSettingsScene', () => {
             expect(scene.masterVolumeSlider.getValue()).to.equal(currentVolume);
         });
 
-        it('should create music volume slider with correct initial value', () => {
-            const currentVolume = audioManager.getMusicVolume();
-            expect(scene.musicVolumeSlider.getValue()).to.equal(currentVolume);
+        it('should create BGM volume slider with correct initial value', () => {
+            const currentVolume = audioManager.getBGMVolume();
+            expect(scene.bgmVolumeSlider.getValue()).to.equal(currentVolume);
         });
 
         it('should create SFX volume slider with correct initial value', () => {
             const currentVolume = audioManager.getSFXVolume();
             expect(scene.sfxVolumeSlider.getValue()).to.equal(currentVolume);
-        });
-
-        it('should create music mute toggle with correct initial state', () => {
-            const isMuted = audioManager.isMusicMuted();
-            expect(scene.musicMuteToggle.isOn()).to.equal(isMuted);
-        });
-
-        it('should create SFX mute toggle with correct initial state', () => {
-            const isMuted = audioManager.isSFXMuted();
-            expect(scene.sfxMuteToggle.isOn()).to.equal(isMuted);
         });
 
         it('should position components using layout constants', () => {
@@ -177,11 +167,11 @@ describe('AudioSettingsScene', () => {
             expect(audioManager.getMasterVolume()).to.equal(newValue);
         });
 
-        it('should update AudioManager when music volume slider changes', () => {
+        it('should update AudioManager when BGM volume slider changes', () => {
             const newValue = 0.7;
-            scene.musicVolumeSlider.setValue(newValue);
+            scene.bgmVolumeSlider.setValue(newValue);
             
-            expect(audioManager.getMusicVolume()).to.equal(newValue);
+            expect(audioManager.getBGMVolume()).to.equal(newValue);
         });
 
         it('should update AudioManager when SFX volume slider changes', () => {
@@ -189,20 +179,6 @@ describe('AudioSettingsScene', () => {
             scene.sfxVolumeSlider.setValue(newValue);
             
             expect(audioManager.getSFXVolume()).to.equal(newValue);
-        });
-
-        it('should update AudioManager when music mute toggle changes', () => {
-            const initialState = audioManager.isMusicMuted();
-            scene.musicMuteToggle.toggle();
-            
-            expect(audioManager.isMusicMuted()).to.equal(!initialState);
-        });
-
-        it('should update AudioManager when SFX mute toggle changes', () => {
-            const initialState = audioManager.isSFXMuted();
-            scene.sfxMuteToggle.toggle();
-            
-            expect(audioManager.isSFXMuted()).to.equal(!initialState);
         });
     });
 
@@ -221,22 +197,13 @@ describe('AudioSettingsScene', () => {
 
         it('should update all sliders when audio settings change', () => {
             audioManager.setMasterVolume(0.4);
-            audioManager.setMusicVolume(0.5);
+            audioManager.setBGMVolume(0.5);
             audioManager.setSFXVolume(0.6);
             EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED);
             
             expect(scene.masterVolumeSlider.getValue()).to.equal(0.4);
-            expect(scene.musicVolumeSlider.getValue()).to.equal(0.5);
+            expect(scene.bgmVolumeSlider.getValue()).to.equal(0.5);
             expect(scene.sfxVolumeSlider.getValue()).to.equal(0.6);
-        });
-
-        it('should update toggles when audio settings change', () => {
-            audioManager.setMusicMuted(true);
-            audioManager.setSFXMuted(false);
-            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED);
-            
-            expect(scene.musicMuteToggle.isOn()).to.equal(true);
-            expect(scene.sfxMuteToggle.isOn()).to.equal(false);
         });
 
         it('should emit MENU_BACK_CLICKED when back button clicked', () => {
@@ -260,16 +227,7 @@ describe('AudioSettingsScene', () => {
             
             scene.handleMouseMove(x, y);
             
-            expect(scene.masterVolumeSlider['isHovered']).to.be.true;
-        });
-
-        it('should handle hover on toggles', () => {
-            const x = scene.musicMuteToggle.x;
-            const y = scene.musicMuteToggle.y;
-            
-            scene.handleMouseMove(x, y);
-            
-            expect(scene.musicMuteToggle['isHovered']).to.be.true;
+            expect(scene.masterVolumeSlider['isMouseOverTrack']).to.be.true;
         });
 
         it('should handle slider drag', () => {
@@ -277,15 +235,6 @@ describe('AudioSettingsScene', () => {
             slider.handleMouseDown(slider.x, slider.y);
             
             expect(slider['dragging']).to.be.true;
-        });
-
-        it('should handle toggle click', () => {
-            const toggle = scene.musicMuteToggle;
-            const initialState = toggle.isOn();
-            
-            scene.handleMouseClick(toggle.x, toggle.y);
-            
-            expect(toggle.isOn()).to.equal(!initialState);
         });
 
         it('should handle back button click', () => {
@@ -337,17 +286,6 @@ describe('AudioSettingsScene', () => {
             expect(saved).to.be.true;
         });
 
-        it('should persist mute changes to localStorage', () => {
-            scene.enter();
-            
-            let saved = false;
-            const originalSave = settingsManager.saveSettings;
-            settingsManager.saveSettings = () => { saved = true; originalSave.call(settingsManager); };
-            
-            scene.musicMuteToggle.toggle();
-            
-            expect(saved).to.be.true;
-        });
     });
 
     describe('Edge Cases', () => {
@@ -361,17 +299,6 @@ describe('AudioSettingsScene', () => {
             scene.masterVolumeSlider.setValue(0.5);
             
             expect(audioManager.getMasterVolume()).to.equal(0.5);
-        });
-
-        it('should handle rapid toggle clicks', () => {
-            const toggle = scene.musicMuteToggle;
-            
-            toggle.toggle();
-            toggle.toggle();
-            toggle.toggle();
-            
-            const finalState = audioManager.isMusicMuted();
-            expect(toggle.isOn()).to.equal(finalState);
         });
 
         it('should handle clicking outside all components', () => {
@@ -395,17 +322,6 @@ describe('AudioSettingsScene', () => {
             EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED);
             
             expect(scene.masterVolumeSlider.getValue()).to.equal(audioManager.getMasterVolume());
-        });
-    });
-
-    describe('Label Rendering', () => {
-        beforeEach(() => {
-            scene.enter();
-        });
-
-        it('should have labels for all toggles', () => {
-            expect(scene.musicMuteToggle.getLabel()).to.equal('Mute Music');
-            expect(scene.sfxMuteToggle.getLabel()).to.equal('Mute SFX');
         });
     });
 });

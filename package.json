@@ -4,7 +4,7 @@
   "description": "Ant game with p5.js and TypeScript",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && esbuild dist/sketch.js --bundle --outfile=dist/bundle.js --format=iife --global-name=AntGame",
+    "build": "tsc && esbuild dist/sketch.js --bundle --outfile=dist/bundle.js --format=iife --global-name=AntGame && npm test",
     "watch": "tsc --watch & esbuild dist/sketch.js --bundle --outfile=dist/bundle.js --format=iife --global-name=AntGame --watch",
     "dev": "npm run watch",
     "test": "mocha",

@@ -4,13 +4,16 @@
  * Handles both homing and straight-line projectiles
  */
 
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    EntityManager,
+    EventBus,
+    setupEntitySpriteBinding,
+    TILE_SIZE
+} from '../imports/factoryImports';
 import { Projectile } from '../classes/Projectile';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
-import { EntityManager } from '../managers/EntityManager';
-import { EventBus } from '../utils/eventBus';
-import { setupEntitySpriteBinding } from '../utils/helpers';
 
 /**
  * ProjectileFactory creates Projectile entities with automatic rendering and entity management.
@@ -82,7 +85,8 @@ export class ProjectileFactory {
         EntityManager.getInstance().addEntity(projectile);
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        setupEntitySpriteBinding(projectile, spriteComponent, renderer, RenderLayer.ABOVE_ENTITIES, (coord) => coord);
+        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
+        setupEntitySpriteBinding(projectile, spriteComponent, renderer, RenderLayer.ABOVE_ENTITIES, (coord) => coord * TILE_SIZE);
 
         // Additional cleanup: Listen to projectile-specific events (hit, expire)
         const originalCleanup = (projectile as any)._cleanup;

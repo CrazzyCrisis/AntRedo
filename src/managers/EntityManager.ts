@@ -4,9 +4,12 @@
  * Provides fast lookups by ID, type, and spatial queries
  */
 
-import { GameObject } from '../classes/GameObject';
-import { EventBus } from '../utils/eventBus';
-import { distance, pointInRect } from '../utils/helpers';
+import {
+    GameObject,
+    EventBus,
+    distance,
+    pointInRect
+} from '../imports/managerImports';
 
 export class EntityManager {
     private static instance: EntityManager;

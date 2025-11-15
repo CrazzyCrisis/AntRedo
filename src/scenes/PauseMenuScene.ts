@@ -3,12 +3,15 @@
  * Allows saving and loading world presets
  */
 
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { WorldPresetManager } from '../world/WorldPresetManager';
-import { InputManager } from '../managers/InputManager';
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    RenderLayer,
+    WorldPresetManager,
+    InputManager
+} from '../imports/sceneImports';
 
 export class PauseMenuScene implements IScene {
     private renderer: Renderer;

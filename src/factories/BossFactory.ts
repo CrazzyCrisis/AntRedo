@@ -4,12 +4,15 @@
  * Hides rendering complexity from game code
  */
 
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    EntityManager,
+    setupEntitySpriteBinding,
+    TILE_SIZE
+} from '../imports/factoryImports';
 import { Boss } from '../classes/Boss';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
-import { EntityManager } from '../managers/EntityManager';
-import { setupEntitySpriteBinding } from '../utils/helpers';
 
 /**
  * BossFactory creates Boss entities with automatic rendering and entity management.
@@ -65,7 +68,8 @@ export class BossFactory {
         EntityManager.getInstance().addEntity(boss);
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord);
+        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
+        setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
 
         return boss;
     }

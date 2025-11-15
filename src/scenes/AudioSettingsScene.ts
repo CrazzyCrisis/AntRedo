@@ -1,13 +1,17 @@
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SliderWithArrowsComponent } from '../rendering/components/SliderWithArrowsComponent';
-import { ButtonComponent } from '../rendering/components/ButtonComponent';
-import { AudioManager } from '../managers/AudioManager';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { AUDIO_SETTINGS_LAYOUT, SETTINGS_SCALES } from '../config/menuLayout';
-import { TextRenderable } from '../rendering/components/TextRenderable';
-import { PanelRenderable } from '../rendering/components/PanelRenderable';
+import {
+    IScene,
+    Renderer,
+    RenderLayer,
+    SliderWithArrowsComponent,
+    ButtonComponent,
+    AudioManager,
+    EventBus,
+    GameEvents,
+    AUDIO_SETTINGS_LAYOUT,
+    SETTINGS_SCALES,
+    TextRenderable,
+    PanelRenderable
+} from '../imports/sceneImports';
 
 /**
  * Audio Settings Scene
@@ -203,12 +207,12 @@ export class AudioSettingsScene implements IScene {
             toPixelX(AUDIO_SETTINGS_LAYOUT.BGM_VOLUME_SLIDER.offsetX),
             toPixelY(AUDIO_SETTINGS_LAYOUT.BGM_VOLUME_SLIDER.offsetY),
             0, 1,
-            this.audioManager.getMusicVolume(),
+            this.audioManager.getBGMVolume(),
             'bgm_volume'
         );
         this.bgmVolumeSlider.setArrowStep(0.05);
         this.bgmVolumeSlider.onChange((value: number) => {
-            this.audioManager.setMusicVolume(value);
+            this.audioManager.setBGMVolume(value);
         });
         
         this.sfxVolumeSlider = new SliderWithArrowsComponent(
@@ -230,13 +234,13 @@ export class AudioSettingsScene implements IScene {
             toPixelX(AUDIO_SETTINGS_LAYOUT.VOICES_VOLUME_SLIDER.offsetX),
             toPixelY(AUDIO_SETTINGS_LAYOUT.VOICES_VOLUME_SLIDER.offsetY),
             0, 1,
-            this.audioManager.getSFXVolume(), // Currently same as SFX
+            this.audioManager.getVoiceVolume(), // Currently same as SFX
             'voices_volume'
         );
         this.voicesVolumeSlider.setArrowStep(0.05);
         this.voicesVolumeSlider.onChange((value: number) => {
             // Could extend AudioManager to have separate voices volume
-            this.audioManager.setSFXVolume(value);
+            this.audioManager.setVoiceVolume(value);
         });
         
         this.systemVolumeSlider = new SliderWithArrowsComponent(
@@ -244,13 +248,13 @@ export class AudioSettingsScene implements IScene {
             toPixelX(AUDIO_SETTINGS_LAYOUT.SYSTEM_VOLUME_SLIDER.offsetX),
             toPixelY(AUDIO_SETTINGS_LAYOUT.SYSTEM_VOLUME_SLIDER.offsetY),
             0, 1,
-            this.audioManager.getSFXVolume(), // Currently same as SFX
+            this.audioManager.getSystemVolume(), // Currently same as SFX
             'system_volume'
         );
         this.systemVolumeSlider.setArrowStep(0.05);
         this.systemVolumeSlider.onChange((value: number) => {
             // Could extend AudioManager to have separate system volume
-            this.audioManager.setSFXVolume(value);
+            this.audioManager.setSystemVolume(value);
         });
         
         // Create labels using config positions
@@ -363,9 +367,9 @@ export class AudioSettingsScene implements IScene {
      */
     private syncComponentsWithAudioManager(): void {
         this.masterVolumeSlider.setValue(this.audioManager.getMasterVolume());
-        this.bgmVolumeSlider.setValue(this.audioManager.getMusicVolume());
+        this.bgmVolumeSlider.setValue(this.audioManager.getBGMVolume());
         this.sfxVolumeSlider.setValue(this.audioManager.getSFXVolume());
-        this.voicesVolumeSlider.setValue(this.audioManager.getSFXVolume());
-        this.systemVolumeSlider.setValue(this.audioManager.getSFXVolume());
+        this.voicesVolumeSlider.setValue(this.audioManager.getVoiceVolume());
+        this.systemVolumeSlider.setValue(this.audioManager.getSystemVolume());
     }
 }

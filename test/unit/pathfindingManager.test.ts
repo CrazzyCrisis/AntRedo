@@ -127,9 +127,9 @@ describe('PathfindingManager', () => {
 
         it('should mark multiple tiles as blocked', () => {
             const tiles = [
-                { col: 5, row: 5 },
-                { col: 6, row: 5 },
-                { col: 5, row: 6 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 6, gridY: 5 },
+                { gridX: 5, gridY: 6 }
             ];
             
             manager.markBlocked(tiles);
@@ -146,16 +146,16 @@ describe('PathfindingManager', () => {
             });
             
             manager.markBlocked([
-                { col: 5, row: 5 },
-                { col: 6, row: 5 },
-                { col: 7, row: 5 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 6, gridY: 5 },
+                { gridX: 7, gridY: 5 }
             ]);
         });
 
         it('should mark multiple tiles as walkable', () => {
             const tiles = [
-                { col: 5, row: 5 },
-                { col: 6, row: 5 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 6, gridY: 5 }
             ];
             
             manager.markBlocked(tiles);
@@ -167,8 +167,8 @@ describe('PathfindingManager', () => {
 
         it('should emit PATHFINDING_TILES_UNBLOCKED event', (done) => {
             manager.markBlocked([
-                { col: 5, row: 5 },
-                { col: 6, row: 5 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 6, gridY: 5 }
             ]);
             
             EventBus.once('PATHFINDING_TILES_UNBLOCKED', (count) => {
@@ -177,8 +177,8 @@ describe('PathfindingManager', () => {
             });
             
             manager.markWalkable([
-                { col: 5, row: 5 },
-                { col: 6, row: 5 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 6, gridY: 5 }
             ]);
         });
 
@@ -208,9 +208,9 @@ describe('PathfindingManager', () => {
         it('should find path around obstacle', () => {
             // Create obstacle
             manager.markBlocked([
-                { col: 5, row: 5 },
-                { col: 5, row: 6 },
-                { col: 5, row: 7 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 5, gridY: 6 },
+                { gridX: 5, gridY: 7 }
             ]);
             
             const path = manager.findPath(0, 6, 10, 6);
@@ -224,7 +224,7 @@ describe('PathfindingManager', () => {
         it('should return null when no path exists', () => {
             // Block complete vertical line
             for (let row = 0; row < 20; row++) {
-                manager.markBlocked([{ col: 10, row }]);
+                manager.markBlocked([{ gridX: 10, gridY: row }]);
             }
             
             const path = manager.findPath(5, 10, 15, 10);
@@ -266,13 +266,13 @@ describe('PathfindingManager', () => {
 
         it('should block tiles on BUILDING_PATHFINDING_BLOCK event', () => {
             const tiles = [
-                { col: 10, row: 10 },
-                { col: 11, row: 10 },
-                { col: 10, row: 11 },
-                { col: 11, row: 11 }
+                { gridX: 10, gridY: 10 },
+                { gridX: 11, gridY: 10 },
+                { gridX: 10, gridY: 11 },
+                { gridX: 11, gridY: 11 }
             ];
             
-            EventBus.emit('BUILDING_PATHFINDING_BLOCK', tiles);
+            EventBus.emit('BUILDING_PATHFINDING_BLOCK', 'building_1', tiles);
             
             expect(manager.isWalkable(10, 10)).to.be.false;
             expect(manager.isWalkable(11, 10)).to.be.false;
@@ -282,32 +282,32 @@ describe('PathfindingManager', () => {
 
         it('should unblock tiles on BUILDING_PATHFINDING_UNBLOCK event', () => {
             const tiles = [
-                { col: 10, row: 10 },
-                { col: 11, row: 10 }
+                { gridX: 10, gridY: 10 },
+                { gridX: 11, gridY: 10 }
             ];
             
-            EventBus.emit('BUILDING_PATHFINDING_BLOCK', tiles);
+            EventBus.emit('BUILDING_PATHFINDING_BLOCK', 'building_1', tiles);
             expect(manager.isWalkable(10, 10)).to.be.false;
             
-            EventBus.emit('BUILDING_PATHFINDING_UNBLOCK', tiles);
+            EventBus.emit('BUILDING_PATHFINDING_UNBLOCK', 'building_1', tiles);
             expect(manager.isWalkable(10, 10)).to.be.true;
         });
 
         it('should handle variable building sizes', () => {
             // 3x2 building
             const tiles = [
-                { col: 5, row: 5 },
-                { col: 6, row: 5 },
-                { col: 7, row: 5 },
-                { col: 5, row: 6 },
-                { col: 6, row: 6 },
-                { col: 7, row: 6 }
+                { gridX: 5, gridY: 5 },
+                { gridX: 6, gridY: 5 },
+                { gridX: 7, gridY: 5 },
+                { gridX: 5, gridY: 6 },
+                { gridX: 6, gridY: 6 },
+                { gridX: 7, gridY: 6 }
             ];
             
             manager.markBlocked(tiles);
             
             tiles.forEach(tile => {
-                expect(manager.isWalkable(tile.col, tile.row)).to.be.false;
+                expect(manager.isWalkable(tile.gridX, tile.gridY)).to.be.false;
             });
         });
 
@@ -319,9 +319,9 @@ describe('PathfindingManager', () => {
             
             // Place building blocking the path
             const tiles = [
-                { col: 10, row: 9 },
-                { col: 10, row: 10 },
-                { col: 10, row: 11 }
+                { gridX: 10, gridY: 9 },
+                { gridX: 10, gridY: 10 },
+                { gridX: 10, gridY: 11 }
             ];
             manager.markBlocked(tiles);
             
@@ -333,7 +333,7 @@ describe('PathfindingManager', () => {
 
         it.skip('should update pathfinding after building destruction', () => {
             const tiles = [
-                { col: 10, row: 10 }
+                { gridX: 10, gridY: 10 }
             ];
             
             manager.markBlocked(tiles);
@@ -403,7 +403,7 @@ describe('PathfindingManager', () => {
         });
 
         it('should handle blocking then unblocking same tiles rapidly', () => {
-            const tiles = [{ col: 10, row: 10 }];
+            const tiles = [{ gridX: 10, gridY: 10 }];
             
             for (let i = 0; i < 10; i++) {
                 manager.markBlocked(tiles);
@@ -434,7 +434,7 @@ describe('PathfindingManager', () => {
             const tiles = [];
             for (let row = 0; row < 5; row++) {
                 for (let col = 0; col < 5; col++) {
-                    tiles.push({ col, row });
+                    tiles.push({ gridX: col, gridY: row });
                 }
             }
             

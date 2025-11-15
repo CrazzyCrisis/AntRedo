@@ -1,8 +1,11 @@
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    EventBus,
+    GameEvents
+} from '../imports/factoryImports';
 import { Player } from '../classes/Player';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
-import { EventBus, GameEvents } from '../utils/eventBus';
 
 /**
  * PlayerFactory creates Player entities with automatic rendering setup.

@@ -1,11 +1,14 @@
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
+import {
+    IScene,
+    Renderer,
+    RenderLayer,
+    ButtonComponent,
+    EventBus,
+    GameEvents
+} from '../imports/sceneImports';
 import { SliderComponent } from '../rendering/components/SliderComponent';
 import { ToggleComponent } from '../rendering/components/ToggleComponent';
-import { ButtonComponent } from '../rendering/components/ButtonComponent';
 import { SettingsManager } from '../managers/SettingsManager';
-import { EventBus, GameEvents } from '../utils/eventBus';
 import { VIDEO_SETTINGS_LAYOUT, SETTINGS_SCALES } from '../config/menuLayout';
 
 /**

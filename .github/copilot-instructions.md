@@ -97,6 +97,26 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - Factories register renderables with the Renderer, developers don't touch rendering code
 - Example: `PlayerFactory.create()` returns Player model and handles all rendering setup
 - See `docs/codeExamples/FACTORY_PATTERN.md` for implementation details
+- **All factories use `../imports/factoryImports`** - reduces 8-10 imports to 1 per factory
+
+**Factory Import Pattern:**
+```typescript
+import {
+    Renderer, RenderLayer, SpriteComponent,
+    EventBus, setupEntitySpriteBinding, TILE_SIZE,
+    EntityManager
+} from '../imports/factoryImports';
+import { MyEntity } from '../classes/MyEntity';
+
+export class MyEntityFactory {
+    static create(renderer: Renderer, sprite: any, x: number, y: number) {
+        const entity = new MyEntity(x, y);
+        const spriteComponent = new SpriteComponent(sprite, x, y);
+        setupEntitySpriteBinding(entity, spriteComponent, renderer, RenderLayer.ENTITIES, gridToWorld);
+        return entity;
+    }
+}
+```
 
 ### Rendering System
 - **Layer-based rendering** with p5.js framebuffers (`createGraphics`)
@@ -121,7 +141,7 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - Config files become documentation of game parameters
 
 **Examples:**
-- Tile size → `DEV_ROOM_CONFIG.TILES.SIZE`
+- Tile size → `TILE_CONFIG.SIZE` or `TILE_SIZE` (exported from TileSystem.ts)
 - UI positions → `MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX`
 - Animation speeds → `MENU_ANIMATIONS.TITLE_SPEED`
 - Game physics → `CONFIG.PLAYER.SPEED`
@@ -131,6 +151,10 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 ### Project Structure
 ```
 src/
+  imports/          # CENTRALIZED BARREL EXPORTS (eliminate repetitive imports)
+    sceneImports.ts    # Scene dependencies (IScene, Renderer, managers, configs, etc.)
+    factoryImports.ts  # Factory dependencies (Renderer, RenderLayer, SpriteComponent, etc.)
+    managerImports.ts  # Manager dependencies (EventBus, entities, helpers, etc.)
   config/           # CENTRALIZED CONFIG FILES (primary source of truth)
     config.ts       # Main CONFIG object for game constants
     devRoomConfig.ts # Dev room settings (world, tiles, camera, debug)
@@ -478,14 +502,70 @@ npm run test:watch # Watch mode
 ### Scene System (NEW - Scene-Based Architecture)
 **Pattern:** IScene interface + SceneManager singleton for game state management (menus, gameplay, pause, etc.)
 
+**Centralized Imports (CRITICAL - Use This Pattern):**
+All scenes MUST import from `../imports/sceneImports` barrel export to reduce boilerplate and maintain consistency.
+
+**Before (20+ imports per scene):**
+```typescript
+import { IScene } from './IScene';
+import { Renderer } from '../rendering/Renderer';
+import { EventBus, GameEvents } from '../utils/eventBus';
+import { GameStateManager } from '../managers/GameStateManager';
+import { AudioManager } from '../managers/AudioManager';
+import { ButtonComponent } from '../rendering/components/ButtonComponent';
+import { RenderLayer } from '../rendering/RenderLayer';
+import { CONFIG } from '../config';
+// ... 15 more imports
+```
+
+**After (1 import with destructuring):**
+```typescript
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    GameStateManager,
+    AudioManager,
+    ButtonComponent,
+    RenderLayer,
+    CONFIG
+} from '../imports/sceneImports';
+```
+
+**What's Available in sceneImports:**
+- Core: IScene, Renderer, Camera, RenderLayer
+- EventBus: EventBus, GameEvents
+- Managers: GameStateManager, AudioManager, InputManager, EntityManager, SpawnManager, LevelLoader, PathfindingManager, BuildingManager, CommandManager, FactionManager
+- Factories: AntFactory, QueenFactory, BossFactory, ResourceFactory, BuildingFactory, PlayerFactory, ProjectileFactory
+- UI Components: ButtonComponent, AnimatedSpriteComponent, SliderWithArrowsComponent, KeybindComponent, TextRenderable, PanelRenderable, WorldGenConfigMenu
+- World Systems: WorldGenerator, TileGrid, TileFrillSystem, updateMaterialPriorities, WorldPresetManager, WorldPreset, TILE_SIZE
+- Entities: Queen, Ant, Boss, Resource, Building, Player, Projectile, GameObject
+- Configs: CONFIG, DEV_ROOM_CONFIG, TILE_CONFIG, MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT, MENU_SCALES, MENU_ANIMATIONS, AUDIO_SETTINGS_LAYOUT, SETTINGS_SCALES, CONTROLS_LAYOUT, KeyBindings
+- Other Scenes: PauseMenuScene, MenuScene (for transitions)
+
+**When to keep separate imports:**
+- Scene-specific components not in barrel (ResourceManager, PowerManager, specialized UI components)
+- Avoiding circular dependencies (don't import the current scene's file)
+- One-off imports that are rarely used across scenes
+
 **Creating a Scene:**
 1. Implement `IScene` interface (`src/scenes/IScene.ts`)
-2. Implement lifecycle methods: `enter()`, `exit()`, `update()`, `handleMouseClick()`, `handleMouseMove()`
-3. Register UI components with Renderer in `enter()`, unregister in `exit()`
-4. Switch scenes using `SceneManager.getInstance().switchScene(scene, 'SceneName')`
+2. Import dependencies from `./sceneImports` (use destructuring for clarity)
+3. Implement lifecycle methods: `enter()`, `exit()`, `update()`, `handleMouseClick()`, `handleMouseMove()`
+4. Register UI components with Renderer in `enter()`, unregister in `exit()`
+5. Switch scenes using `SceneManager.getInstance().switchScene(scene, 'SceneName')`
 
 **Example MenuScene Pattern:**
 ```typescript
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    ButtonComponent
+} from '../imports/sceneImports';
+
 export class MenuScene implements IScene {
     private renderer: Renderer;
     private buttons: ButtonComponent[] = [];

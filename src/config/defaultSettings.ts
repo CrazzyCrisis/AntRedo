@@ -8,18 +8,18 @@
  */
 export interface AudioSettings {
     masterVolume: number;    // 0.0 to 1.0
-    musicVolume: number;     // 0.0 to 1.0
+    bgmVolume: number;     // 0.0 to 1.0
     sfxVolume: number;       // 0.0 to 1.0
-    musicEnabled: boolean;
-    sfxEnabled: boolean;
+    voiceVolume: number;    // 0.0 to 1.0
+    systemVolume: number;    // 0.0 to 1.0
 }
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
     masterVolume: 0.7,
-    musicVolume: 0.8,
+    bgmVolume: 0.8,
     sfxVolume: 0.8,
-    musicEnabled: true,
-    sfxEnabled: true
+    voiceVolume: 0.8,
+    systemVolume: 0.8
 };
 
 /**

@@ -4,14 +4,17 @@
  * Hides rendering complexity from game code
  */
 
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    EntityManager,
+    EventBus,
+    setupEntitySpriteBinding,
+    TILE_SIZE,
+    ResourceType
+} from '../imports/factoryImports';
 import { Resource } from '../classes/Resource';
-import { ResourceType } from '../config/entityConfig';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
-import { EntityManager } from '../managers/EntityManager';
-import { EventBus } from '../utils/eventBus';
-import { setupEntitySpriteBinding } from '../utils/helpers';
 
 /**
  * ResourceFactory creates Resource entities with automatic rendering and entity management.
@@ -67,7 +70,8 @@ export class ResourceFactory {
         EntityManager.getInstance().addEntity(resource);
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        setupEntitySpriteBinding(resource, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord);
+        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
+        setupEntitySpriteBinding(resource, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord * TILE_SIZE);
 
         // Additional cleanup: Listen to resource depletion (specific to resources)
         const originalCleanup = (resource as any)._cleanup;

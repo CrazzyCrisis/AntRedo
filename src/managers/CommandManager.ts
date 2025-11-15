@@ -4,11 +4,13 @@
  * Handles command routing, targeting, and autonomous mode overrides
  */
 
-import { Ant } from '../classes/Ant';
-import { Queen } from '../classes/Queen';
+import {
+    Ant,
+    Queen,
+    EventBus,
+    distance
+} from '../imports/managerImports';
 import { EntityManager } from './EntityManager';
-import { EventBus } from '../utils/eventBus';
-import { distance } from '../utils/helpers';
 
 /**
  * Command types queens can issue to ants

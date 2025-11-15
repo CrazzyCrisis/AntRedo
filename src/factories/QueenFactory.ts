@@ -1,9 +1,12 @@
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    EventBus,
+    setupEntitySpriteBinding,
+    TILE_SIZE
+} from '../imports/factoryImports';
 import { Queen } from '../classes/Queen';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
-import { EventBus } from '../utils/eventBus';
-import { setupEntitySpriteBinding } from '../utils/helpers';
 
 /**
  * QueenFactory - CONTROLLER
@@ -62,8 +65,9 @@ export class QueenFactory {
             gridY  // depth = Y position for sorting
         );
 
-        // 3. Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord);
+        // Setup automatic sprite binding with helper (handles registration, movement, destruction)
+        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
+        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
 
         // 4. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
         const originalCleanup = (queen as any)._cleanup;

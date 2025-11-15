@@ -70,8 +70,10 @@ export class SettingsManager {
 
         // Validate ranges
         validated.audio.masterVolume = clamp(validated.audio.masterVolume, 0, 1);
-        validated.audio.musicVolume = clamp(validated.audio.musicVolume, 0, 1);
+        validated.audio.bgmVolume = clamp(validated.audio.bgmVolume, 0, 1);
         validated.audio.sfxVolume = clamp(validated.audio.sfxVolume, 0, 1);
+        validated.audio.voiceVolume = clamp(validated.audio.voiceVolume, 0, 1);
+        validated.audio.systemVolume = clamp(validated.audio.systemVolume, 0, 1);
         validated.video.cameraSmoothing = clamp(validated.video.cameraSmoothing, 0, 1);
 
         return validated;
@@ -117,8 +119,10 @@ export class SettingsManager {
     public setAudioSettings(audio: AudioSettings): void {
         // Validate ranges
         audio.masterVolume = clamp(audio.masterVolume, 0, 1);
-        audio.musicVolume = clamp(audio.musicVolume, 0, 1);
+        audio.bgmVolume = clamp(audio.bgmVolume, 0, 1);
         audio.sfxVolume = clamp(audio.sfxVolume, 0, 1);
+        audio.voiceVolume = clamp(audio.voiceVolume, 0, 1);
+        audio.systemVolume = clamp(audio.systemVolume, 0, 1);
 
         this.settings.audio = audio;
         this.saveSettings();

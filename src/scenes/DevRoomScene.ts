@@ -3,25 +3,31 @@
  * Loads a procedurally generated world and displays it
  */
 
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { GameStateManager } from '../managers/GameStateManager';
-import { AudioManager } from '../managers/AudioManager';
-import { WorldGenerator } from '../world/WorldGenerator';
-import { SpawnManager } from '../managers/SpawnManager';
-import { LevelLoader } from '../managers/LevelLoader';
-import { TileGrid } from '../world/TileGrid';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { TILE_SIZE } from '../world/TileSystem';
-import { ButtonComponent } from '../rendering/components/ButtonComponent';
-import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
-import { TileFrillSystem, updateMaterialPriorities } from '../world/TileEdgeSystem';
-import { CONFIG } from '../config';
-import { WorldPresetManager, WorldPreset } from '../world/WorldPresetManager';
-import { PauseMenuScene } from './PauseMenuScene';
-import { InputManager } from '../managers/InputManager';
-import { WorldGenConfigMenu } from '../rendering/components/WorldGenConfigMenu';
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    GameStateManager,
+    AudioManager,
+    WorldGenerator,
+    SpawnManager,
+    LevelLoader,
+    TileGrid,
+    RenderLayer,
+    TILE_SIZE,
+    ButtonComponent,
+    DEV_ROOM_CONFIG,
+    TILE_CONFIG,
+    TileFrillSystem,
+    updateMaterialPriorities,
+    CONFIG,
+    WorldPresetManager,
+    WorldPreset,
+    PauseMenuScene,
+    InputManager,
+    WorldGenConfigMenu
+} from '../imports/sceneImports';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -76,12 +82,12 @@ export class DevRoomScene implements IScene {
         this.inputManager = InputManager.getInstance();
         
         // Initialize tile colors from config (used only if sprites disabled)
-        this.tileColors = DEV_ROOM_CONFIG.TILES.COLORS;
+        this.tileColors = TILE_CONFIG.COLORS;
     }
 
     enter(): void {
         // Start dev room music
-        AudioManager.getInstance().playMusic('DEV_ROOM_THEME', true);
+        AudioManager.getInstance().playBGM('DEV_ROOM_THEME', true);
         
         // Check if user provided a custom seed via URL parameter or config
         const urlParams = typeof window !== 'undefined' && window.location 
@@ -219,14 +225,14 @@ export class DevRoomScene implements IScene {
                         const x = col * TILE_SIZE;
                         const y = row * TILE_SIZE;
                         
-                        if (DEV_ROOM_CONFIG.TILES.USE_SPRITES) {
+                        if (TILE_CONFIG.USE_SPRITES) {
                             // Step 1: Draw base tile sprite
                             if (this.tileSprites[tile.type]) {
                                 graphics.image(this.tileSprites[tile.type], x, y, TILE_SIZE, TILE_SIZE);
                             }
                             
                             // Step 2: Overlay frill sprites on top (if enabled)
-                            if (DEV_ROOM_CONFIG.TILES.USE_EDGES) {
+                            if (TILE_CONFIG.USE_EDGES) {
                                 const frillData = TileFrillSystem.getFrillOverlays(tileGrid, col, row);
                                 
                                 if (frillData.hasFrill) {
@@ -260,7 +266,7 @@ export class DevRoomScene implements IScene {
         this.renderer.markLayerDirty(RenderLayer.GROUND);
         
         // Add grid overlay on top of tiles
-        if (DEV_ROOM_CONFIG.GRID_OVERLAY.ENABLED) {
+        if (TILE_CONFIG.GRID_OVERLAY.ENABLED) {
             this.createGridOverlay(tileGrid);
         }
     }
@@ -275,9 +281,9 @@ export class DevRoomScene implements IScene {
             layer: RenderLayer.GROUND_DECORATIONS,
             depth: 1000,  // Render on top of everything else in this layer
             render: (graphics: any) => {
-                graphics.stroke(DEV_ROOM_CONFIG.GRID_OVERLAY.COLOR);
-                graphics.strokeWeight(DEV_ROOM_CONFIG.GRID_OVERLAY.LINE_WEIGHT);
-                (graphics as any).drawingContext.globalAlpha = DEV_ROOM_CONFIG.GRID_OVERLAY.ALPHA / 255;
+                graphics.stroke(TILE_CONFIG.GRID_OVERLAY.COLOR);
+                graphics.strokeWeight(TILE_CONFIG.GRID_OVERLAY.LINE_WEIGHT);
+                (graphics as any).drawingContext.globalAlpha = TILE_CONFIG.GRID_OVERLAY.ALPHA / 255;
                 
                 // Draw vertical lines
                 for (let col = 0; col <= grid[0].length; col++) {
@@ -302,7 +308,7 @@ export class DevRoomScene implements IScene {
 
     exit(): void {
         // Stop dev room music
-        AudioManager.getInstance().stopMusic();
+        AudioManager.getInstance().stopBGM();
         
         // Cleanup spawning system
         if (this.spawnManager) {

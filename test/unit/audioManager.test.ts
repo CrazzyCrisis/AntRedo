@@ -65,8 +65,10 @@ describe('AudioManager', () => {
             const audioSettings = settingsManager.getAudioSettings();
             
             expect(audioManager.getMasterVolume()).to.equal(audioSettings.masterVolume);
-            expect(audioManager.getMusicVolume()).to.equal(audioSettings.musicVolume);
+            expect(audioManager.getBGMVolume()).to.equal(audioSettings.bgmVolume);
             expect(audioManager.getSFXVolume()).to.equal(audioSettings.sfxVolume);
+            expect(audioManager.getVoiceVolume()).to.equal(audioSettings.voiceVolume);
+            expect(audioManager.getSystemVolume()).to.equal(audioSettings.systemVolume);
         });
 
         it('should start with no loaded sounds', () => {
@@ -96,16 +98,16 @@ describe('AudioManager', () => {
             expect(audioManager.getMasterVolume()).to.equal(0.0);
         });
 
-        it('should get music volume', () => {
-            const volume = audioManager.getMusicVolume();
+        it('should get BGM volume', () => {
+            const volume = audioManager.getBGMVolume();
             expect(volume).to.be.a('number');
             expect(volume).to.be.at.least(0);
             expect(volume).to.be.at.most(1);
         });
 
-        it('should set music volume', () => {
-            audioManager.setMusicVolume(0.6);
-            expect(audioManager.getMusicVolume()).to.equal(0.6);
+        it('should set BGM volume', () => {
+            audioManager.setBGMVolume(0.6);
+            expect(audioManager.getBGMVolume()).to.equal(0.6);
         });
 
         it('should get SFX volume', () => {
@@ -128,75 +130,13 @@ describe('AudioManager', () => {
         });
     });
 
-    describe('Mute Control', () => {
-        it('should get music mute state', () => {
-            const isMuted = audioManager.isMusicMuted();
-            expect(isMuted).to.be.a('boolean');
-        });
-
-        it('should mute music', () => {
-            audioManager.muteMusic();
-            expect(audioManager.isMusicMuted()).to.be.true;
-        });
-
-        it('should unmute music', () => {
-            audioManager.muteMusic();
-            audioManager.unmuteMusic();
-            expect(audioManager.isMusicMuted()).to.be.false;
-        });
-
-        it('should toggle music mute', () => {
-            const initialState = audioManager.isMusicMuted();
-            audioManager.toggleMusicMute();
-            expect(audioManager.isMusicMuted()).to.equal(!initialState);
-        });
-
-        it('should get SFX mute state', () => {
-            const isMuted = audioManager.isSFXMuted();
-            expect(isMuted).to.be.a('boolean');
-        });
-
-        it('should mute SFX', () => {
-            audioManager.muteSFX();
-            expect(audioManager.isSFXMuted()).to.be.true;
-        });
-
-        it('should unmute SFX', () => {
-            audioManager.muteSFX();
-            audioManager.unmuteSFX();
-            expect(audioManager.isSFXMuted()).to.be.false;
-        });
-
-        it('should toggle SFX mute', () => {
-            const initialState = audioManager.isSFXMuted();
-            audioManager.toggleSFXMute();
-            expect(audioManager.isSFXMuted()).to.equal(!initialState);
-        });
-
-        it('should save mute state to SettingsManager', () => {
-            audioManager.muteMusic();
-            
-            const settings = settingsManager.getAudioSettings();
-            expect(settings.musicEnabled).to.be.false;
-        });
-    });
-
     describe('Effective Volume Calculation', () => {
-        it('should calculate effective music volume (master * music)', () => {
+        it('should calculate effective BGM volume (master * BGM)', () => {
             audioManager.setMasterVolume(0.5);
-            audioManager.setMusicVolume(0.8);
+            audioManager.setBGMVolume(0.8);
             
-            const effectiveVolume = audioManager.getEffectiveMusicVolume();
+            const effectiveVolume = audioManager.getEffectiveBGMVolume();
             expect(effectiveVolume).to.equal(0.4); // 0.5 * 0.8
-        });
-
-        it('should return 0 for effective music volume when muted', () => {
-            audioManager.setMasterVolume(0.5);
-            audioManager.setMusicVolume(0.8);
-            audioManager.muteMusic();
-            
-            const effectiveVolume = audioManager.getEffectiveMusicVolume();
-            expect(effectiveVolume).to.equal(0);
         });
 
         it('should calculate effective SFX volume (master * sfx)', () => {
@@ -206,15 +146,6 @@ describe('AudioManager', () => {
             const effectiveVolume = audioManager.getEffectiveSFXVolume();
             expect(effectiveVolume).to.be.closeTo(0.42, 0.01); // 0.6 * 0.7
         });
-
-        it('should return 0 for effective SFX volume when muted', () => {
-            audioManager.setMasterVolume(0.6);
-            audioManager.setSFXVolume(0.7);
-            audioManager.muteSFX();
-            
-            const effectiveVolume = audioManager.getEffectiveSFXVolume();
-            expect(effectiveVolume).to.equal(0);
-        });
     });
 
     describe('EventBus Integration', () => {
@@ -222,18 +153,16 @@ describe('AudioManager', () => {
             // Change settings via SettingsManager
             settingsManager.setAudioSettings({
                 masterVolume: 0.3,
-                musicVolume: 0.4,
+                bgmVolume: 0.4,
                 sfxVolume: 0.5,
-                musicEnabled: false,
-                sfxEnabled: false
+                voiceVolume: 0.6,
+                systemVolume: 0.7
             });
             
             // AudioManager should update automatically
             expect(audioManager.getMasterVolume()).to.equal(0.3);
-            expect(audioManager.getMusicVolume()).to.equal(0.4);
+            expect(audioManager.getBGMVolume()).to.equal(0.4);
             expect(audioManager.getSFXVolume()).to.equal(0.5);
-            expect(audioManager.isMusicMuted()).to.be.true;
-            expect(audioManager.isSFXMuted()).to.be.true;
         });
     });
 
@@ -264,19 +193,19 @@ describe('AudioManager', () => {
     });
 
     describe('Playback State', () => {
-        it('should track currently playing music', () => {
-            expect(audioManager.getCurrentMusic()).to.be.null;
+        it('should track currently playing BGM', () => {
+            expect(audioManager.getCurrentBGM()).to.be.null;
         });
 
-        it('should update current music when set', () => {
-            audioManager.setCurrentMusic('background-music');
-            expect(audioManager.getCurrentMusic()).to.equal('background-music');
+        it('should update current BGM when set', () => {
+            audioManager.setCurrentBGM('background-BGM');
+            expect(audioManager.getCurrentBGM()).to.equal('background-BGM');
         });
 
-        it('should clear current music', () => {
-            audioManager.setCurrentMusic('background-music');
-            audioManager.stopMusic();
-            expect(audioManager.getCurrentMusic()).to.be.null;
+        it('should clear current BGM', () => {
+            audioManager.setCurrentBGM('background-BGM');
+            audioManager.stopBGM();
+            expect(audioManager.getCurrentBGM()).to.be.null;
         });
     });
 
@@ -287,9 +216,9 @@ describe('AudioManager', () => {
             }).to.not.throw();
         });
 
-        it('should handle stopping non-playing music gracefully', () => {
+        it('should handle stopping non-playing BGM gracefully', () => {
             expect(() => {
-                audioManager.stopMusic();
+                audioManager.stopBGM();
             }).to.not.throw();
         });
     });

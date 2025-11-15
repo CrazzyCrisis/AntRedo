@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import { GameObject } from '../../src/classes/GameObject';
 import { EventBus } from '../../src/utils/eventBus';
 import { IComponent } from '../../src/classes/components/IComponent';
+import { TILE_SIZE } from '../../src/world/TileSystem';
 
 describe('GameObject (Base Entity Model)', () => {
     beforeEach(() => {
@@ -36,7 +37,6 @@ describe('GameObject (Base Entity Model)', () => {
         });
 
         it('should calculate worldX and worldY from grid position', () => {
-            const TILE_SIZE = 32; // From DEV_ROOM_CONFIG.TILES.SIZE
             const obj = new GameObject('test', 5, 10, TILE_SIZE);
 
             // worldX = gridX * TILE_SIZE, worldY = gridY * TILE_SIZE
@@ -54,7 +54,6 @@ describe('GameObject (Base Entity Model)', () => {
 
     describe('Movement', () => {
         it('should update grid and world positions when moving', () => {
-            const TILE_SIZE = 32; // From DEV_ROOM_CONFIG.TILES.SIZE
             const obj = new GameObject('test', 0, 0, TILE_SIZE);
 
             obj.moveTo(3, 4);

@@ -13,29 +13,33 @@
  * - Debug overlays enabled
  */
 
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { Camera } from '../rendering/Camera';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { Queen } from '../classes/Queen';
-import { Ant } from '../classes/Ant';
-import { Boss } from '../classes/Boss';
-import { Resource } from '../classes/Resource';
-import { Building } from '../classes/Building';
-import { AntFactory } from '../factories/AntFactory';
-import { QueenFactory } from '../factories/QueenFactory';
-import { BossFactory } from '../factories/BossFactory';
-import { ResourceFactory } from '../factories/ResourceFactory';
-import { BuildingFactory } from '../factories/BuildingFactory';
-import { EntityManager } from '../managers/EntityManager';
-import { FactionManager } from '../managers/FactionManager';
+import {
+    IScene,
+    Renderer,
+    RenderLayer,
+    Camera,
+    EventBus,
+    GameEvents,
+    Queen,
+    Ant,
+    Boss,
+    Resource,
+    Building,
+    AntFactory,
+    QueenFactory,
+    BossFactory,
+    ResourceFactory,
+    BuildingFactory,
+    EntityManager,
+    FactionManager,
+    PathfindingManager,
+    InputManager,
+    WorldGenerator,
+    TileGrid,
+    CONFIG
+} from '../imports/sceneImports';
 import { ResourceManager } from '../managers/ResourceManager';
-import { PathfindingManager } from '../managers/PathfindingManager';
-import { InputManager } from '../managers/InputManager';
 import { PowerManager } from '../managers/PowerManager';
-import { WorldGenerator } from '../world/WorldGenerator';
-import { TileGrid } from '../world/TileGrid';
 import { TileRendererComponent } from '../rendering/components/TileRendererComponent';
 import { ResourceDisplayComponent } from '../rendering/components/ResourceDisplayComponent';
 import { PopulationDisplayComponent } from '../rendering/components/PopulationDisplayComponent';
@@ -43,7 +47,6 @@ import { PowerBarComponent } from '../rendering/components/PowerBarComponent';
 import { QueenPortraitComponent } from '../rendering/components/QueenPortraitComponent';
 import { QueenCommandsComponent } from '../rendering/components/QueenCommandsComponent';
 import { MinimapComponent } from '../rendering/components/MinimapComponent';
-import { CONFIG } from '../config';
 import { ENTITY_CONFIG, ResourceType } from '../config/entityConfig';
 
 /**

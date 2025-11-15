@@ -1,11 +1,18 @@
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { AnimatedSpriteComponent } from '../rendering/components/AnimatedSpriteComponent';
-import { ButtonComponent } from '../rendering/components/ButtonComponent';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT, MENU_SCALES, MENU_ANIMATIONS } from '../config/menuLayout';
-import { AudioManager } from '../managers/AudioManager';
+import {
+    IScene,
+    Renderer,
+    AnimatedSpriteComponent,
+    ButtonComponent,
+    EventBus,
+    GameEvents,
+    RenderLayer,
+    MAIN_MENU_LAYOUT,
+    OPTIONS_MENU_LAYOUT,
+    LEVEL_SELECT_LAYOUT,
+    MENU_SCALES,
+    MENU_ANIMATIONS,
+    AudioManager
+} from '../imports/sceneImports';
 
 /**
  * MenuScene - Main menu implementation
@@ -97,7 +104,7 @@ export class MenuScene implements IScene {
         const halfHeight = this.canvasHeight / 2;
         
         // Start menu music
-        AudioManager.getInstance().playMusic('MENU_THEME', true);
+        AudioManager.getInstance().playBGM('MENU_THEME', true);
         
         // Create animated title (persists across menu states)
         // Convert normalized coordinates (-1 to 1) to pixel positions
@@ -339,7 +346,7 @@ export class MenuScene implements IScene {
      */
     exit(): void {
         // Stop menu music
-        AudioManager.getInstance().stopMusic();
+        AudioManager.getInstance().stopBGM();
         
         // Unregister buttons
         this.clearButtons();

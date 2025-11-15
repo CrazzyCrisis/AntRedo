@@ -1,9 +1,12 @@
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    setupEntitySpriteBinding,
+    TILE_SIZE
+} from '../imports/factoryImports';
 import { Ant } from '../classes/Ant';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
 import { AntJobComponent } from '../classes/components/AntJobComponent';
-import { setupEntitySpriteBinding } from '../utils/helpers';
 
 /**
  * AntFactory creates Ant entities with automatic rendering setup.
@@ -62,7 +65,8 @@ export class AntFactory {
         );
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        setupEntitySpriteBinding(ant, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord);
+        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
+        setupEntitySpriteBinding(ant, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE);
 
         return ant;
     }

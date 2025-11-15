@@ -7,7 +7,7 @@
 import { EventBus } from '../utils/eventBus';
 import { IComponent } from './components/IComponent';
 import { rectIntersect } from '../utils/helpers';
-import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
+import { TILE_SIZE } from '../world/TileSystem';
 
 export class GameObject {
     // Unique identifier
@@ -41,7 +41,7 @@ export class GameObject {
      * @param gridY - Grid row position
      * @param collisionSize - Size of collision box (default: TILE_SIZE from config)
      */
-    constructor(type: string, gridX: number, gridY: number, collisionSize: number = DEV_ROOM_CONFIG.TILES.SIZE) {
+    constructor(type: string, gridX: number, gridY: number, collisionSize: number = TILE_SIZE) {
         this.id = this.generateId(type);
         this.type = type;
         this.gridX = gridX;
@@ -67,8 +67,8 @@ export class GameObject {
      * Update world position based on grid position
      */
     private updateWorldPosition(): void {
-        this.worldX = this.gridX * DEV_ROOM_CONFIG.TILES.SIZE;
-        this.worldY = this.gridY * DEV_ROOM_CONFIG.TILES.SIZE;
+        this.worldX = this.gridX * TILE_SIZE;
+        this.worldY = this.gridY * TILE_SIZE;
     }
 
     /**

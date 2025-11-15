@@ -5,14 +5,17 @@
  * Manages pathfinding grid updates
  */
 
+import {
+    Renderer,
+    RenderLayer,
+    SpriteComponent,
+    EntityManager,
+    EventBus,
+    setupEntitySpriteBinding,
+    TILE_SIZE,
+    BuildingType
+} from '../imports/factoryImports';
 import { Building } from '../classes/Building';
-import { BuildingType } from '../config/entityConfig';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { SpriteComponent } from '../rendering/components/SpriteComponent';
-import { EntityManager } from '../managers/EntityManager';
-import { EventBus } from '../utils/eventBus';
-import { setupEntitySpriteBinding } from '../utils/helpers';
 
 /**
  * BuildingFactory creates Building entities with automatic rendering and entity management.
@@ -75,7 +78,8 @@ export class BuildingFactory {
         EventBus.emit('BUILDING_PATHFINDING_BLOCK', building.id, occupiedTiles);
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        setupEntitySpriteBinding(building, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord);
+        // Grid coordinates → world coordinates (multiply by TILE_SIZE)
+        setupEntitySpriteBinding(building, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord * TILE_SIZE);
 
         // Additional listeners specific to buildings
         const originalCleanup = (building as any)._cleanup;

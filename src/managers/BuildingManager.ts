@@ -4,13 +4,15 @@
  * Handles construction, leveling, worker assignment, and stat boosts
  */
 
-import { Building } from '../classes/Building';
-import { BuildingType } from '../config/entityConfig';
-import { EventBus } from '../utils/eventBus';
+import {
+    Building,
+    EventBus,
+    distance,
+    BuildingType,
+    ENTITY_CONFIG
+} from '../imports/managerImports';
 import { EntityManager } from './EntityManager';
 import { ResourceManager } from './ResourceManager';
-import { distance } from '../utils/helpers';
-import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * BuildingManager manages all buildings in the game

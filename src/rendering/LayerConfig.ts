@@ -1,4 +1,5 @@
 import { RenderLayer } from './RenderLayer';
+export { RenderLayer }; // Re-export for convenience
 
 /**
  * Configuration for each render layer defining behavior.
