@@ -4,6 +4,8 @@
  * Supports both procedural and handmade level designs
  */
 
+import { TileType } from '../world/TileSystem';
+
 /**
  * Queen spawn configuration
  */
@@ -92,7 +94,7 @@ export interface SafeZoneConfig {
  * Defines rules for where entities can spawn
  */
 export interface SpawnConstraints {
-    allowedTileTypes: string[];  // Tiles entity can spawn on
+    allowedTileTypes: TileType[];  // Tiles entity can spawn on
     minDistanceFromEntities?: number; // Minimum distance from other entities
     minDistanceFromType?: {      // Minimum distance from specific entity types
         [entityType: string]: number;
