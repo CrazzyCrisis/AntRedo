@@ -602,26 +602,30 @@
   - [x] Registered on `RenderLayer.UI` with depth 950
 - [ ] **TEST:** Count accuracy, expand/collapse animation, type breakdown, cap updates, click handling
 
-### Task 8.6: Queen Commands UI (VIEW - NEW)
-- [ ] Create `src/rendering/components/QueenCommandsComponent.ts`
-  - [ ] **4 command buttons:** Fight (⚔️), Build (🔨), Gather (🌾), Follow (👥)
-  - [ ] Button states: Normal, Selected (highlighted), Disabled (grayed out)
-  - [ ] Visual feedback: Hover effects, selection indicator
-  - [ ] Layout: Bottom mid-left, horizontal row with spacing
-  - [ ] Methods: `selectCommand(command)`, `deselectCommand()`, `setCommandEnabled(command, enabled)`
-  - [ ] EventBus integration: Emit `QUEEN_COMMAND_SELECTED`, `QUEEN_COMMAND_DESELECTED`, listen to range/availability changes
-  - [ ] Registered on `RenderLayer.UI`
-- [ ] **TEST:** Button clicks, selection state, command activation, hover effects
+### ✅ Task 8.6: Queen Commands UI (VIEW - NEW)
+- [x] Create `src/rendering/components/QueenCommandsComponent.ts`
+  - [x] **4 command buttons:** Fight (⚔️), Build (🔨), Gather (🌾), Follow (👥)
+  - [x] Button states: Normal (gray), Hover (lighter), Selected (green with border), Disabled (dark)
+  - [x] Visual feedback: Hover effects, 3px green border on selected, toggle on/off
+  - [x] Layout: Bottom mid-left, horizontal row with 70px spacing, 56px buttons
+  - [x] Methods: `selectCommand()`, `deselectCommand()`, `setCommandEnabled()`, `handleClick()`, `handleMouseMove()`
+  - [x] EventBus integration: Emit `QUEEN_COMMAND_SELECTED`, `QUEEN_COMMAND_DESELECTED`; Listen to `QUEEN_COMMAND_AVAILABLE`, `QUEEN_COMMAND_CANCELLED`
+  - [x] Events added: `QUEEN_COMMAND_SELECTED`, `DESELECTED`, `CANCELLED`, `AVAILABLE` (all added to GameEvents)
+  - [x] Registered on `RenderLayer.UI` with depth 850
+  - [x] **Refactored:** Uses `isPointInRect()`, `getButtonStateColor()` helpers - eliminated 12+ lines of boilerplate
+- [ ] **TEST:** Button clicks, selection state, command activation, hover effects, enable/disable
 
-### Task 8.7: Queen Portrait UI (VIEW - NEW)
-- [ ] Create `src/rendering/components/QueenPortraitComponent.ts`
-  - [ ] **Static queen sprite** display in decorative frame
-  - [ ] Layout: Bottom left corner, fixed size (128x128 or similar)
-  - [ ] Optional fun feature: Small animated ant running around the border
-  - [ ] Semi-transparent background panel
-  - [ ] Methods: `setQueenSprite(sprite)`, `setAnimatedBorder(enabled)`
-  - [ ] Registered on `RenderLayer.UI`
-- [ ] **TEST:** Display, border animation (if implemented), positioning
+### ✅ Task 8.7: Queen Portrait UI (VIEW - NEW)
+- [x] Create `src/rendering/components/QueenPortraitComponent.ts`
+  - [x] **Static queen sprite** display in decorative frame
+  - [x] Layout: Bottom left corner, fixed size 128x128 with 12px padding
+  - [x] Fun feature: Optional animated ant running around the border (circular path with rotation)
+  - [x] Semi-transparent background panel (#2C2416 @ 85% opacity)
+  - [x] Ornate frame: Brown outer border + golden inner accent line
+  - [x] Fallback: Crown emoji 👑 if no sprite provided
+  - [x] Methods: `setQueenSprite()`, `setFrameSprite()`, `setAnimatedBorder()`, `update()`
+  - [x] Registered on `RenderLayer.UI` with depth 900
+- [ ] **TEST:** Display, border animation, sprite swapping, positioning
 
 ### Task 8.8: Minimap UI (VIEW - NEW)
 - [ ] Create `src/rendering/components/MinimapComponent.ts`

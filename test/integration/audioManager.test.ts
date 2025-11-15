@@ -6,11 +6,9 @@
 import { expect } from 'chai';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { AudioManager } from '../../src/managers/AudioManager';
-import { SettingsManager } from '../../src/managers/SettingsManager';
 
 describe('AudioManager Integration Tests', () => {
     let audioManager: AudioManager;
-    let settingsManager: SettingsManager;
 
     beforeEach(() => {
         // Clear EventBus
@@ -18,7 +16,6 @@ describe('AudioManager Integration Tests', () => {
         
         // Get fresh instances
         audioManager = AudioManager.getInstance();
-        settingsManager = SettingsManager.getInstance();
         
         // Reset to default settings
         audioManager.setMasterVolume(0.7);
@@ -194,13 +191,12 @@ describe('AudioManager Integration Tests', () => {
             audioManager.setMusicMuted(true);
             audioManager.setSFXMuted(false);
             
-            const settings = audioManager.getSettings();
-            
-            expect(settings.masterVolume).to.equal(0.5);
-            expect(settings.musicVolume).to.equal(0.6);
-            expect(settings.sfxVolume).to.equal(0.7);
-            expect(settings.musicEnabled).to.be.false;
-            expect(settings.sfxEnabled).to.be.true;
+            // Verify settings through getters
+            expect(audioManager.getMasterVolume()).to.equal(0.5);
+            expect(audioManager.getMusicVolume()).to.equal(0.6);
+            expect(audioManager.getSFXVolume()).to.equal(0.7);
+            expect(audioManager.isMusicMuted()).to.be.true;
+            expect(audioManager.isSFXMuted()).to.be.false;
         });
     });
 

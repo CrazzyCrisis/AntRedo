@@ -1,6 +1,7 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
+import { drawUIPanel, smoothTransition, hexToRgb } from '../../utils/helpers';
 
 /**
  * Ant type information for breakdown display
@@ -177,14 +178,9 @@ export class PopulationDisplayComponent implements Renderable {
      * Update animation state
      */
     public update(): void {
-        // Smooth height animation
+        // Smooth height animation using helper
         const targetHeight = this.isExpanded ? this.expandedHeight : this.panelHeight;
-        this.currentHeight += (targetHeight - this.currentHeight) * this.animationSpeed;
-        
-        // Snap to target when close enough
-        if (Math.abs(this.currentHeight - targetHeight) < 1) {
-            this.currentHeight = targetHeight;
-        }
+        this.currentHeight = smoothTransition(this.currentHeight, targetHeight, this.animationSpeed, 1);
     }
     
     /**
@@ -195,9 +191,7 @@ export class PopulationDisplayComponent implements Renderable {
         
         // Draw background panel
         const alpha = this.isHovering ? this.hoverAlpha : this.backgroundAlpha;
-        graphics.fill(this.hexToRgb(this.backgroundColor, alpha));
-        graphics.noStroke();
-        graphics.rect(this.x, this.y, this.panelWidth, this.currentHeight, 8);
+        drawUIPanel(graphics, this.x, this.y, this.panelWidth, this.currentHeight, this.backgroundColor, alpha, 8);
         
         // Draw total ant count (always visible)
         let currentY = this.y + this.padding;
@@ -254,8 +248,12 @@ export class PopulationDisplayComponent implements Renderable {
                 
                 // Type name and count
                 graphics.textSize(this.fontSize - 2);
-                const typeColor = this.hexToRgb(antType.color);
-                graphics.fill(typeColor[0], typeColor[1], typeColor[2], textAlpha);
+                const typeColor = hexToRgb(antType.color);
+                if (typeColor) {
+                    graphics.fill(typeColor.r, typeColor.g, typeColor.b, textAlpha);
+                } else {
+                    graphics.fill(255, 255, 255, textAlpha);
+                }
                 const typeText = `${antType.type}: ${antType.count}`;
                 graphics.text(typeText, this.x + this.padding + 35, currentY + 2);
                 
@@ -264,22 +262,6 @@ export class PopulationDisplayComponent implements Renderable {
         }
         
         graphics.pop();
-    }
-    
-    /**
-     * Helper: Convert hex color to RGB array with alpha
-     */
-    private hexToRgb(hex: string, alpha: number = 255): number[] {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        if (result) {
-            return [
-                parseInt(result[1], 16),
-                parseInt(result[2], 16),
-                parseInt(result[3], 16),
-                alpha
-            ];
-        }
-        return [255, 255, 255, alpha];
     }
     
     /**

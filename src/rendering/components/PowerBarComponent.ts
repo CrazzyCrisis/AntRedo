@@ -1,7 +1,7 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
-import { drawRadialCooldown } from '../../utils/helpers';
+import { drawRadialCooldown, drawUIPanel } from '../../utils/helpers';
 
 /**
  * Power information for Queen abilities
@@ -163,9 +163,7 @@ export class PowerBarComponent implements Renderable {
         const panelX = this.x - totalWidth / 2;
         const panelY = this.y - barHeight / 2;
         
-        graphics.fill(this.hexToRgb(this.backgroundColor, this.backgroundAlpha));
-        graphics.noStroke();
-        graphics.rect(panelX, panelY, totalWidth, barHeight, 8); // Rounded corners
+        drawUIPanel(graphics, panelX, panelY, totalWidth, barHeight, this.backgroundColor, this.backgroundAlpha, 8);
         
         // Draw each power
         this.powers.forEach((power, index) => {
@@ -225,22 +223,6 @@ export class PowerBarComponent implements Renderable {
         });
         
         graphics.pop();
-    }
-    
-    /**
-     * Helper: Convert hex color to p5.js color with alpha
-     */
-    private hexToRgb(hex: string, alpha: number = 255): number[] {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        if (result) {
-            return [
-                parseInt(result[1], 16),
-                parseInt(result[2], 16),
-                parseInt(result[3], 16),
-                alpha
-            ];
-        }
-        return [255, 255, 255, alpha];
     }
     
     /**

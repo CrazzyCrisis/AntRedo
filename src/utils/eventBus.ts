@@ -257,6 +257,10 @@ export const GameEvents = {
     // Queen events
     QUEEN_SPAWNED: 'queen:spawned',
     QUEEN_COMMAND_ISSUED: 'queen:command:issued',
+    QUEEN_COMMAND_SELECTED: 'queen:command:selected',
+    QUEEN_COMMAND_DESELECTED: 'queen:command:deselected',
+    QUEEN_COMMAND_CANCELLED: 'queen:command:cancelled',
+    QUEEN_COMMAND_AVAILABLE: 'queen:command:available',
     QUEEN_DEATH: 'queen:death',
     QUEEN_DIED: 'queen:died',
     QUEEN_POWER_USED: 'queen:power:used',

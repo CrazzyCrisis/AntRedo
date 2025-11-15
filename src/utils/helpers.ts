@@ -753,3 +753,127 @@ export function smoothTransition(
     return newValue;
 }
 
+// ============================================================================
+// BUTTON/INTERACTION HELPERS
+// ============================================================================
+
+/**
+ * Check if point is inside a rectangle (button bounds checking)
+ * Common pattern for all clickable UI elements
+ * 
+ * @param pointX - Mouse/point X coordinate
+ * @param pointY - Mouse/point Y coordinate
+ * @param rectX - Rectangle center X (or top-left if centerOrigin=false)
+ * @param rectY - Rectangle center Y (or top-left if centerOrigin=false)
+ * @param width - Rectangle width
+ * @param height - Rectangle height
+ * @param centerOrigin - If true, rectX/rectY are center point (default true)
+ * @returns True if point is inside rectangle
+ * 
+ * @example
+ * // Center-origin button (most common for UI)
+ * if (isPointInRect(mouseX, mouseY, buttonX, buttonY, 64, 64)) {
+ *     // Button clicked
+ * }
+ * 
+ * // Top-left origin
+ * if (isPointInRect(mouseX, mouseY, panelX, panelY, 200, 100, false)) {
+ *     // Panel clicked
+ * }
+ */
+export function isPointInRect(
+    pointX: number,
+    pointY: number,
+    rectX: number,
+    rectY: number,
+    width: number,
+    height: number,
+    centerOrigin: boolean = true
+): boolean {
+    if (centerOrigin) {
+        return (
+            pointX >= rectX - width / 2 &&
+            pointX <= rectX + width / 2 &&
+            pointY >= rectY - height / 2 &&
+            pointY <= rectY + height / 2
+        );
+    } else {
+        return (
+            pointX >= rectX &&
+            pointX <= rectX + width &&
+            pointY >= rectY &&
+            pointY <= rectY + height
+        );
+    }
+}
+
+/**
+ * Calculate button positions for horizontal button bar layout
+ * Common pattern for power bar, command buttons, etc.
+ * Returns array of x positions centered around baseX
+ * 
+ * @param baseX - Center X position for the entire button bar
+ * @param buttonCount - Number of buttons
+ * @param buttonSize - Width of each button
+ * @param spacing - Distance between button centers
+ * @returns Array of x positions for each button
+ * 
+ * @example
+ * // 4 buttons centered at x=400
+ * const positions = calculateButtonBarPositions(400, 4, 56, 70);
+ * // Returns: [265, 335, 405, 475] (buttons centered around 400)
+ */
+export function calculateButtonBarPositions(
+    baseX: number,
+    buttonCount: number,
+    buttonSize: number,
+    spacing: number
+): number[] {
+    const positions: number[] = [];
+    const totalWidth = (buttonCount * spacing) - (spacing - buttonSize);
+    const startX = baseX - totalWidth / 2 + buttonSize / 2;
+    
+    for (let i = 0; i < buttonCount; i++) {
+        positions.push(startX + (i * spacing));
+    }
+    
+    return positions;
+}
+
+/**
+ * Get button color based on state (normal/hover/selected/disabled)
+ * Common pattern for all interactive buttons
+ * Returns hex color string
+ * 
+ * @param isEnabled - Whether button is enabled
+ * @param isSelected - Whether button is selected
+ * @param isHovered - Whether button is hovered
+ * @param colors - Color scheme object with normal/hover/selected/disabled colors
+ * @returns Hex color string
+ * 
+ * @example
+ * const colors = {
+ *     normal: '#444444',
+ *     hover: '#555555',
+ *     selected: '#4CAF50',
+ *     disabled: '#222222'
+ * };
+ * const color = getButtonStateColor(enabled, selected, hovered, colors);
+ */
+export function getButtonStateColor(
+    isEnabled: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
+    colors: {
+        normal: string,
+        hover: string,
+        selected: string,
+        disabled: string
+    }
+): string {
+    if (!isEnabled) return colors.disabled;
+    if (isSelected) return colors.selected;
+    if (isHovered) return colors.hover;
+    return colors.normal;
+}
+

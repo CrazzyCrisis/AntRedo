@@ -6,6 +6,7 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
+import { drawUIPanel, formatNumberWithCommas } from '../../utils/helpers';
 
 interface ResourceCounts {
     food: number;
@@ -78,22 +79,13 @@ export class ResourceDisplayComponent implements Renderable {
     }
 
     /**
-     * Format number with commas (e.g., 1000 -> "1,000")
-     */
-    private formatNumber(num: number): string {
-        return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-
-    /**
      * Render resource display
      */
     render(graphics: any): void {
         graphics.push();
         
         // Draw semi-transparent background panel
-        graphics.fill(0, 0, 0, 150);
-        graphics.noStroke();
-        graphics.rect(this.x - 10, this.y - 10, this.spacing * 4 + 20, this.iconSize + 30, 5);
+        drawUIPanel(graphics, this.x - 10, this.y - 10, this.spacing * 4 + 20, this.iconSize + 30, '#000000', 150, 5);
         
         // Text settings
         graphics.textAlign(graphics.LEFT || 'left', graphics.CENTER || 'center');
@@ -123,6 +115,6 @@ export class ResourceDisplayComponent implements Renderable {
         // Draw count with color
         graphics.textSize(this.fontSize);
         graphics.fill(...color);
-        graphics.text(this.formatNumber(count), xPos + this.iconSize + 8, yPos);
+        graphics.text(formatNumberWithCommas(count), xPos + this.iconSize + 8, yPos);
     }
 }

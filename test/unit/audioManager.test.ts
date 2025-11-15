@@ -283,7 +283,7 @@ describe('AudioManager', () => {
     describe('Error Handling', () => {
         it('should handle playing non-existent sound gracefully', () => {
             expect(() => {
-                audioManager.playSFX('non-existent-sound');
+                audioManager.play('ANT_HIT');  // Sound not loaded
             }).to.not.throw();
         });
 

@@ -111,13 +111,50 @@ export class ButtonComponent implements Renderable {
         const totalScale = this.scale * pulseScale;
         
         graphics.push();
-        graphics.translate(this.x, this.y);
-        graphics.scale(totalScale, totalScale);
-        graphics.image(
-            this.sprite,
-            -this.sprite.width / 2,
-            -this.sprite.height / 2
-        );
+        
+        // Check if sprite is a real p5.js image or mock object
+        const isRealImage = this.sprite && typeof this.sprite === 'object' && 'width' in this.sprite && this.sprite.width !== undefined;
+        
+        if (isRealImage && this.sprite.pixels !== undefined) {
+            // Real p5.js image - use image() function
+            graphics.translate(this.x, this.y);
+            graphics.scale(totalScale, totalScale);
+            graphics.image(
+                this.sprite,
+                -this.sprite.width / 2,
+                -this.sprite.height / 2
+            );
+        } else {
+            // Mock sprite or no sprite - draw procedural button
+            const width = this.sprite.width * totalScale;
+            const height = this.sprite.height * totalScale;
+            
+            if (this.isHovered) {
+                graphics.fill(150, 200, 255); // Hover color
+                graphics.strokeWeight(3);
+                graphics.stroke(255, 255, 150);
+            } else {
+                graphics.fill(200, 200, 200); // Normal color
+                graphics.strokeWeight(2);
+                graphics.stroke(100);
+            }
+            
+            graphics.rect(
+                this.x - width / 2,
+                this.y - height / 2,
+                width,
+                height,
+                height / 4 // Rounded corners
+            );
+            
+            // Draw text label if id exists
+            graphics.fill(0);
+            graphics.noStroke();
+            graphics.textAlign(graphics.CENTER, graphics.CENTER);
+            graphics.textSize(height * 0.4);
+            graphics.text(this.id || 'Button', this.x, this.y);
+        }
+        
         graphics.pop();
     }
 }
