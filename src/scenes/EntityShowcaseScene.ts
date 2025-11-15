@@ -128,7 +128,7 @@ export class EntityShowcaseScene implements IScene {
      * Initialize the showcase scene
      */
     enter(): void {
-        console.log('🎮 Entering Entity Showcase Scene!');
+
         
         // Initialize managers
         this.initializeManagers();
@@ -158,18 +158,17 @@ export class EntityShowcaseScene implements IScene {
         // Camera starts at queen position (immediate jump, no smoothing)
         if (this.queen) {
             this.camera.moveTo(this.queen.worldX, this.queen.worldY);
-            console.log(`📷 Camera positioned at queen: (${this.queen.worldX}, ${this.queen.worldY})`);
         }
         
         // Enable debug mode
         CONFIG.DEBUG_MODE = this.debugMode;
         
-        console.log('✅ Entity Showcase Scene ready!');
-        console.log('Controls:');
-        console.log('  WASD/Arrow Keys - Move Queen');
-        console.log('  1-5 - Use Powers');
-        console.log('  Click Minimap - Jump to location');
-        console.log('  D - Toggle debug overlays');
+
+
+
+
+
+
     }
 
     /**
@@ -227,8 +226,6 @@ export class EntityShowcaseScene implements IScene {
         
         // Emit world generated event for other systems (pass TileGrid)
         EventBus.emit(GameEvents.WORLD_GENERATED, tileGrid);
-        
-        console.log(`✅ World generated with seed ${seed} (${gridWidth}x${gridHeight} tiles)`);
     }
 
     /**
@@ -245,8 +242,6 @@ export class EntityShowcaseScene implements IScene {
         
         // Enemy faction (red ants - for future use)
         factionManager.createFaction('enemy', '#ff4444', false);
-        
-        console.log('✅ Factions created: player (blue), enemy (red)');
     }
 
     /**
@@ -261,7 +256,7 @@ export class EntityShowcaseScene implements IScene {
         
         pathfindingManager.initializeGrid(gridWidth, gridHeight);
         
-        console.log(`✅ Pathfinding grid initialized: ${gridWidth}x${gridHeight}`);
+
     }
 
     /**
@@ -288,7 +283,7 @@ export class EntityShowcaseScene implements IScene {
         this.queen.unlockPower('Tidalwave');
         this.queen.unlockPower('FinalFlash');
         
-        console.log(`✅ Queen spawned at (${gridX}, ${gridY}) with all powers unlocked`);
+
     }
 
     /**
@@ -326,7 +321,6 @@ export class EntityShowcaseScene implements IScene {
             }
         }
         
-        console.log(`✅ Spawned ${spawnedCount} ants (5 Gatherers, 3 Builders, 4 Warriors, 3 Scouts)`);
     }
 
     /**
@@ -354,7 +348,6 @@ export class EntityShowcaseScene implements IScene {
             'homing' // Homing projectiles
         );
         
-        console.log(`✅ Boss spawned at (${startX}, ${startY}) with patrol path`);
     }
 
     /**
@@ -389,7 +382,6 @@ export class EntityShowcaseScene implements IScene {
             }
         }
         
-        console.log(`✅ Spawned ${this.resources.length} resource nodes (4 clusters)`);
     }
 
     /**
@@ -427,7 +419,6 @@ export class EntityShowcaseScene implements IScene {
         
         this.buildings.push(barracks);
         
-        console.log(`✅ Spawned ${this.buildings.length} buildings (Warehouse, Barracks)`);
     }
 
     /**
@@ -558,26 +549,24 @@ export class EntityShowcaseScene implements IScene {
         // Use just-pressed for discrete tile-by-tile movement
         if (inputManager.isActionJustPressed('moveUp')) {
             targetY -= moveSpeed;
-            console.log('⬆️ Move UP pressed');
+
         }
         if (inputManager.isActionJustPressed('moveDown')) {
             targetY += moveSpeed;
-            console.log('⬇️ Move DOWN pressed');
+
         }
         if (inputManager.isActionJustPressed('moveLeft')) {
             targetX -= moveSpeed;
-            console.log('⬅️ Move LEFT pressed');
+
         }
         if (inputManager.isActionJustPressed('moveRight')) {
             targetX += moveSpeed;
-            console.log('➡️ Move RIGHT pressed');
+
         }
         
         // Move queen if position changed (direct tile movement)
         if (targetX !== this.queen.gridX || targetY !== this.queen.gridY) {
-            console.log(`👑 Moving queen from (${this.queen.gridX}, ${this.queen.gridY}) to (${targetX}, ${targetY})`);
             this.queen.moveTo(targetX, targetY);
-            console.log(`👑 Queen position after move: (${this.queen.gridX}, ${this.queen.gridY}), world: (${this.queen.worldX}, ${this.queen.worldY})`);
         }
     }
 
@@ -682,7 +671,7 @@ export class EntityShowcaseScene implements IScene {
      * Cleanup when leaving scene
      */
     exit(): void {
-        console.log('👋 Exiting Entity Showcase Scene');
+
         
         // Unregister UI components
         for (const unregister of this.uiUnregisterFunctions) {
@@ -724,6 +713,6 @@ export class EntityShowcaseScene implements IScene {
         this.resources = [];
         this.buildings = [];
         
-        console.log('✅ Entity Showcase Scene cleaned up');
+
     }
 }

@@ -482,12 +482,6 @@ export class DevRoomScene implements IScene {
         };
         
         WorldPresetManager.savePreset(preset);
-        
-        // Show URL with seed for easy sharing
-        const url = `${window.location.origin}${window.location.pathname}?seed=${this.currentWorldSeed}`;
-        console.log(`World preset "${presetName}" saved!`);
-        console.log(`Seed: ${this.currentWorldSeed}`);
-        console.log(`Share URL: ${url}`);
     }
     
     /**
@@ -534,7 +528,7 @@ export class DevRoomScene implements IScene {
             return;
         }
         
-        console.log('[DevRoomScene] Initializing spawning system...');
+
         
         // Get singletons
         this.spawnManager = SpawnManager.getInstance();
@@ -583,7 +577,7 @@ export class DevRoomScene implements IScene {
             wavesEnabled: true
         }, this.currentWorldSeed);
         
-        console.log(`[DevRoomScene] Generated level: ${levelData.metadata.name}`);
+
         
         // Spawn everything
         const spawnResult = this.spawnManager.spawnLevel(
@@ -600,12 +594,12 @@ export class DevRoomScene implements IScene {
         // Listen for spawn events
         const waveListener = EventBus.on(GameEvents.ENEMY_SPAWN, (data: any) => {
             if (data.type === 'wave') {
-                console.log(`⚔️ Wave ${data.waveNumber} spawned: ${data.antCount} enemies${data.hasBoss ? ' + BOSS' : ''}`);
+
             }
         });
         
         const safeZoneListener = EventBus.on(GameEvents.SAFE_ZONE_EXPIRED, () => {
-            console.log('⚠️ Safe zone expired - enemies can spawn closer!');
+
         });
         
         this.unregisterFunctions.push(waveListener, safeZoneListener);

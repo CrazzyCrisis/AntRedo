@@ -229,11 +229,10 @@ export class GameObject {
      */
     public destroy(): void {
         if (!this.isActive) {
-            console.log(`[${this.type} ${this.id}] destroy() called but already inactive - skipping`);
             return; // Already destroyed
         }
 
-        console.log(`[${this.type} ${this.id}] Destroying...`);
+
         this.isActive = false;
         
         // Unsubscribe from cleanup event (if not already fired)
@@ -250,6 +249,6 @@ export class GameObject {
 
         // Emit destruction event using proper constant
         EventBus.emit(GameEvents.ENTITY_DESTROYED, this.id, this.type);
-        console.log(`[${this.type} ${this.id}] Destroyed and emitted ENTITY_DESTROYED event`);
+
     }
 }

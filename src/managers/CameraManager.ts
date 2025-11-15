@@ -77,7 +77,6 @@ export class CameraManager {
         if (this.camera) {
             const entity = EntityManager.getInstance().getEntity(entityId);
             if (entity) {
-                console.log(`[CameraManager] Snapping camera to entity ${entityId} at world (${entity.worldX}, ${entity.worldY})`);
                 this.camera.moveTo(entity.worldX, entity.worldY);
             } else {
                 console.warn(`[CameraManager] Cannot snap camera - entity ${entityId} not found in EntityManager`);

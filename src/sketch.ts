@@ -145,8 +145,6 @@ function preload() {
             // Silently fail - audio is optional
         }
     });
-    
-    console.log('Assets preloaded: menu images, tile sprites, frill overlays, and audio (if available)');
 }
 
 function setup() {
@@ -185,7 +183,7 @@ function setup() {
     
     // Listen for dev room navigation
     EventBus.on(GameEvents.MENU_DEV_ROOM_CLICKED, () => {
-        console.log('Switching to DevRoom scene...');
+
         if (menuImages && tileSprites && tileEdgeSprites) {
             const devRoomScene = new DevRoomScene(
                 renderer, 
@@ -204,28 +202,28 @@ function setup() {
     EventBus.on(GameEvents.MENU_BACK_CLICKED, () => {
         const currentScene = SceneManager.getInstance().getCurrentScene();
         if ((currentScene instanceof DevRoomScene || currentScene instanceof AudioSettingsScene) && menuImages) {
-            console.log('Returning to menu...');
+
             
             // Comprehensive cleanup when leaving game scenes
             if (currentScene instanceof DevRoomScene) {
-                console.log('[Cleanup] Starting comprehensive cleanup...');
+
                 
                 // FIRST: Broadcast cleanup signal - all entities self-destruct
-                const listenerCount = EventBus.listenerCount(GameEvents.CLEANUP_ALL_ENTITIES);
-                console.log(`[Cleanup] Broadcasting entity cleanup signal to ${listenerCount} entities...`);
+                //const listenerCount = EventBus.listenerCount(GameEvents.CLEANUP_ALL_ENTITIES);
+
                 EventBus.emit(GameEvents.CLEANUP_ALL_ENTITIES);
-                console.log('[Cleanup] Cleanup signal broadcast complete');
+
                 
                 // THEN: Call scene exit() to unregister UI components
-                console.log('[Cleanup] Exiting scene and unregistering UI renderables...');
+
                 currentScene.exit();
                 
                 // THEN: Mark all renderer layers dirty to clear framebuffers
-                console.log('[Cleanup] Marking all layers dirty for redraw...');
+
                 renderer.markAllLayersDirty();
                 
                 // THEN: Cleanup all managers (clears EventBus subscriptions)
-                console.log('[Cleanup] Cleaning up manager event subscriptions...');
+
                 EntityManager.getInstance().cleanup();
                 SpawnManager.getInstance().cleanup();
                 ResourceManager.getInstance().cleanup();
@@ -235,15 +233,15 @@ function setup() {
                 GameStateManager.getInstance().cleanup();
                 
                 // THEN: Reset factory registries (allows new Queens to be created)
-                console.log('[Cleanup] Resetting factory registries...');
+
                 QueenFactory.clearAll();
                 
                 // Reset camera to center
-                console.log('[Cleanup] Resetting camera to origin...');
+
                 camera.x = 0;
                 camera.y = 0;
                 
-                console.log('[Cleanup] ✅ Cleanup complete!');
+
             }
             
             const menuScene = new MenuScene(
@@ -260,7 +258,7 @@ function setup() {
     
     // Listen for audio settings navigation
     EventBus.on(GameEvents.MENU_AUDIO_SETTINGS_CLICKED, () => {
-        console.log('Switching to Audio Settings scene...');
+
         if (menuImages) {
             const audioSettingsScene = new AudioSettingsScene(renderer, window.innerWidth, window.innerHeight, menuImages.backButton);
             SceneManager.getInstance().switchScene(audioSettingsScene, 'AudioSettings');
@@ -310,7 +308,6 @@ function drawFPSCounter() {
 
 function keyPressed() {
     // Feed input to InputManager for action binding
-    console.log(`⌨️ Key pressed: "${key}" (keyCode: ${keyCode})`);
     InputManager.getInstance().handleKeyPress(key);
     
     EventBus.emit(GameEvents.INPUT_KEY_PRESS, keyCode, key);
@@ -320,7 +317,7 @@ function keyPressed() {
     
     // Launch EntityShowcaseScene with 'T' key
     if (key === 't' || key === 'T') {
-        console.log('🎮 Launching Entity Showcase Scene!');
+
         
         // Ensure sprites are loaded
         if (!entitySprites) {

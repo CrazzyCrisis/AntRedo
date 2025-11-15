@@ -183,8 +183,6 @@ describe('Camera Update Logic Diagnostic Tests', () => {
             
             camera.moveTo(queenSpawnX, queenSpawnY);
             
-            console.log(`\n=== Scene Enter ===`);
-            console.log(`Camera after moveTo: (${camera.x}, ${camera.y})`);
             expect(camera.x).to.equal(queenSpawnX);
             expect(camera.y).to.equal(queenSpawnY);
             
@@ -192,21 +190,16 @@ describe('Camera Update Logic Diagnostic Tests', () => {
             const newQueenX = 101 * 32; // Moved 1 tile right
             const newQueenY = 75 * 32;
             
-            console.log(`\n=== Queen Moved (via input) ===`);
-            console.log(`Queen new position: (${newQueenX}, ${newQueenY})`);
             
             // Scene update() pattern (BEFORE fix):
             // 1. camera.update() - WRONG ORDER
             // 2. handleQueenMovement()
             // 3. camera.follow(queen.worldX, queen.worldY)
             
-            console.log(`\n=== WRONG ORDER (Bug) ===`);
             camera.moveTo(queenSpawnX, queenSpawnY); // Reset
             camera.update(); // Called FIRST - target not set yet!
             camera.follow(newQueenX, newQueenY); // Called SECOND
-            
-            console.log(`Camera after wrong order: (${camera.x}, ${camera.y})`);
-            console.log(`Camera target: (${(camera as any).targetX}, ${(camera as any).targetY})`);
+
             expect(camera.x).to.equal(queenSpawnX); // Didn't move!
             
             // Scene update() pattern (AFTER fix):
@@ -214,13 +207,10 @@ describe('Camera Update Logic Diagnostic Tests', () => {
             // 2. camera.follow(queen.worldX, queen.worldY)
             // 3. camera.update() - CORRECT ORDER
             
-            console.log(`\n=== CORRECT ORDER (Fixed) ===`);
             camera.moveTo(queenSpawnX, queenSpawnY); // Reset
             camera.follow(newQueenX, newQueenY); // Called FIRST
             camera.update(); // Called SECOND
             
-            console.log(`Camera after correct order: (${camera.x}, ${camera.y})`);
-            console.log(`Camera target: (${(camera as any).targetX}, ${(camera as any).targetY})`);
             expect(camera.x).to.be.greaterThan(queenSpawnX); // DID move!
         });
     });

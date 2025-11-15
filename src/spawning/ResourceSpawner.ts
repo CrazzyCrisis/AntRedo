@@ -89,7 +89,6 @@ export class ResourceSpawner {
         config: ResourceVeinConfig,
         noiseLayer: string
     ): ResourceSpawnResult {
-        console.log(`[ResourceSpawner] spawnResourceVein type: ${config.resourceType}, bounds: (${bounds.minX},${bounds.minY}) to (${bounds.maxX},${bounds.maxY}), layer: ${noiseLayer}`);
         if (!this.noiseManager) {
             console.error('❌ NoiseLayerManager not set, cannot spawn noise-based vein');
             return { resources: [], positions: [], totalAmount: 0 };

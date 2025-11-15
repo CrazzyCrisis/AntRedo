@@ -81,7 +81,6 @@ export class LevelLoader {
             // Store loaded level
             this.loadedLevel = levelData;
 
-            console.log(`[LevelLoader] Loaded level: ${levelData.metadata.name}`);
             EventBus.emit(GameEvents.LEVEL_LOAD, levelData.metadata);
 
             return levelData;
@@ -129,7 +128,6 @@ export class LevelLoader {
 
         this.loadedLevel = levelData;
 
-        console.log(`[LevelLoader] Generated procedural level (seed: ${seed})`);
         EventBus.emit(GameEvents.LEVEL_LOAD, metadata);
 
         return levelData;
@@ -143,7 +141,6 @@ export class LevelLoader {
     public saveLevel(levelData: LevelData): string {
         try {
             const json = JSON.stringify(levelData, null, 2);
-            console.log(`[LevelLoader] Saved level: ${levelData.metadata.name}`);
             return json;
         } catch (error) {
             console.error('[LevelLoader] Failed to save level:', error);
@@ -164,7 +161,6 @@ export class LevelLoader {
      */
     public clearLevel(): void {
         this.loadedLevel = null;
-        console.log('[LevelLoader] Cleared loaded level');
     }
 
     /**
@@ -196,7 +192,6 @@ export class LevelLoader {
             throw new Error('SpawnConfig incomplete');
         }
 
-        console.log('[LevelLoader] Level validation passed');
     }
 
     /**

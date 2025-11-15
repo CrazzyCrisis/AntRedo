@@ -589,7 +589,6 @@ export function setupEntitySpriteBinding(
     // and we need to check entity.id for every ENTITY_DESTROYED event
     const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
         if (entityId === entity.id) {
-            console.log(`[setupEntitySpriteBinding] Cleaning up sprite for ${entityId}`);
             unregister();
             EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
             EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);

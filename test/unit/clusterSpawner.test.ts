@@ -44,12 +44,6 @@ describe('ClusterSpawner Position Generation', () => {
                 null
             );
 
-            console.log(`[Test] Generated ${positions.length} positions around (${center.x}, ${center.y}) with radius ${radius}`);
-            positions.forEach((pos, i) => {
-                const distance = Math.sqrt(Math.pow(pos.x - center.x, 2) + Math.pow(pos.y - center.y, 2));
-                console.log(`  Position ${i}: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}) - distance: ${distance.toFixed(2)}`);
-            });
-
             expect(positions.length).to.be.greaterThan(0);
             expect(positions.length).to.be.lessThanOrEqual(count);
 
@@ -80,9 +74,7 @@ describe('ClusterSpawner Position Generation', () => {
                 null
             );
 
-            console.log(`[Test] Coordinate space check for center (${center.x}, ${center.y}):`);
             positions.forEach(pos => {
-                console.log(`  Generated: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`);
                 
                 // Positions should be in similar magnitude to center
                 expect(pos.x).to.be.greaterThan(85);
@@ -118,8 +110,6 @@ describe('ClusterSpawner Position Generation', () => {
             avgX /= positions.length;
             avgY /= positions.length;
 
-            console.log(`[Test] Average position: (${avgX.toFixed(2)}, ${avgY.toFixed(2)}) vs center (${center.x}, ${center.y})`);
-
             // Average should be close to center (within 2 units)
             expect(Math.abs(avgX - center.x)).to.be.lessThan(2);
             expect(Math.abs(avgY - center.y)).to.be.lessThan(2);
@@ -146,16 +136,10 @@ describe('ClusterSpawner Position Generation', () => {
                 mockTileGrid,
                 null
             );
-
-            console.log(`[Test] Poisson disk generated ${positions.length} positions`);
-            console.log(`  Bounds: (${bounds.x}, ${bounds.y}) to (${bounds.x + bounds.width}, ${bounds.y + bounds.height})`);
-            
             expect(positions.length).to.be.greaterThan(0);
 
             // Check all positions within bounds
-            positions.forEach((pos, i) => {
-                console.log(`  Position ${i}: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`);
-                
+            positions.forEach((pos) => {
                 expect(pos.x).to.be.at.least(bounds.x);
                 expect(pos.x).to.be.at.most(bounds.x + bounds.width);
                 expect(pos.y).to.be.at.least(bounds.y);
@@ -192,8 +176,6 @@ describe('ClusterSpawner Position Generation', () => {
                 mockTileGrid,
                 null
             );
-
-            console.log(`[Test] Small radius (${radius}) generated ${positions.length} positions`);
             expect(positions.length).to.be.greaterThan(0);
         });
 
@@ -213,8 +195,7 @@ describe('ClusterSpawner Position Generation', () => {
                 mockTileGrid,
                 null
             );
-
-            console.log(`[Test] Near boundary center (${center.x}, ${center.y}) generated ${positions.length} positions`);
+            
             expect(positions.length).to.be.greaterThan(0);
             
             positions.forEach(pos => {

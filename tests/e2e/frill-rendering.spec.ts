@@ -73,7 +73,6 @@ test.describe('Tile Frill Rendering System', () => {
             m.text.includes('Total edge sprites loaded')
         );
         
-        console.log('All console messages:', consoleMessages.map(m => m.text));
         
         // If we have the log, verify count
         if (spriteLoadLog) {
@@ -88,8 +87,6 @@ test.describe('Tile Frill Rendering System', () => {
             m.text.includes('hasFrill: true')
         );
         
-        console.log('Frill detection logs found:', frillLogs.length);
-        console.log('Sample logs:', frillLogs.slice(0, 3).map(m => m.text));
         
         // Should have at least some frill detections
         expect(frillLogs.length).toBeGreaterThan(0);
@@ -99,12 +96,6 @@ test.describe('Tile Frill Rendering System', () => {
         const tileTypeLog = consoleMessages.find(m => m.text.includes('Tile type:'));
         const neighborsLog = consoleMessages.find(m => m.text.includes('Neighbors:'));
         
-        if (tileTypeLog) {
-            console.log('Tile type log:', tileTypeLog.text);
-        }
-        if (neighborsLog) {
-            console.log('Neighbors log:', neighborsLog.text);
-        }
         
         // At least one should exist
         expect(tileTypeLog || neighborsLog).toBeTruthy();
@@ -119,12 +110,6 @@ test.describe('Tile Frill Rendering System', () => {
             m.text.includes('Sprite exists?')
         );
         
-        if (spritePathLog) {
-            console.log('Sprite path:', spritePathLog.text);
-        }
-        if (spriteExistsLog) {
-            console.log('Sprite loaded:', spriteExistsLog.text);
-        }
         
         // Should have sprite path lookups
         expect(spritePathLog).toBeDefined();
@@ -134,9 +119,6 @@ test.describe('Tile Frill Rendering System', () => {
         const renderingLog = consoleMessages.find(m => m.text.includes('Rendering frill sprite:'));
         const completionLog = consoleMessages.find(m => m.text.includes('Frill sprite image() call completed'));
         
-        if (renderingLog || completionLog) {
-            console.log('Rendering confirmed in console');
-        }
         
         // Should have rendering activity
         expect(renderingLog || completionLog).toBeTruthy();
@@ -145,21 +127,7 @@ test.describe('Tile Frill Rendering System', () => {
     test('should capture full debug output', async ({ page }) => {
         // Find the main frill detection log
         const mainFrillLog = consoleMessages.find(m => m.text.startsWith('Frill at'));
-        
-        if (mainFrillLog) {
-            console.log('\n=== FULL DEBUG OUTPUT ===');
-            
-            // Get index of main log
-            const mainIndex = consoleMessages.findIndex(m => m.text === mainFrillLog.text);
-            
-            // Print surrounding logs (next 10 after the frill detection)
-            console.log('Main frill detection:', mainFrillLog.text);
-            for (let i = mainIndex + 1; i < Math.min(mainIndex + 15, consoleMessages.length); i++) {
-                console.log(consoleMessages[i].text);
-            }
-            console.log('======================\n');
-        }
-        
+                
         expect(mainFrillLog).toBeDefined();
     });
 
@@ -181,8 +149,5 @@ test.describe('Tile Frill Rendering System', () => {
         });
         
         expect(hasCanvas).toBeTruthy();
-        console.log('\n✓ Screenshot saved to test-results/frill-rendering.png');
-        console.log('✓ Open the screenshot to visually inspect frill rendering');
-        console.log('✓ Check if frills appear on correct edges of tiles');
     });
 });

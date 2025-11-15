@@ -516,22 +516,14 @@ describe('Camera + Terrain + Queen Integration', () => {
             const mockSprite = { width: 32, height: 32 };
             const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
             
-            console.log(`Initial camera: (${camera.x}, ${camera.y})`);
-            console.log(`Initial Queen: grid(${queen.gridX}, ${queen.gridY}), world(${queen.worldX}, ${queen.worldY})`);
-            
             // Move Queen
             queen.moveTo(105, 105);
-            console.log(`After moveTo Queen: grid(${queen.gridX}, ${queen.gridY}), world(${queen.worldX}, ${queen.worldY})`);
             
             // Update camera several times
             for (let i = 0; i < 10; i++) {
                 cameraManager.update();
-                if (i % 3 === 0) {
-                    console.log(`  Frame ${i}: camera (${camera.x.toFixed(1)}, ${camera.y.toFixed(1)})`);
-                }
             }
             
-            console.log(`Final camera: (${camera.x.toFixed(1)}, ${camera.y.toFixed(1)})`);
             
             // Camera should have moved toward Queen's new position
             const expectedX = 105 * TILE_SIZE;

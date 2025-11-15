@@ -88,7 +88,6 @@ export class AntSpawner {
         config: AntClusterConfig,
         factionId: string
     ): AntSpawnResult {
-        console.log(`[AntSpawner] spawnStarterAnts at (${queenX}, ${queenY}), count: ${config.count}`);
         const ants: Ant[] = [];
         const positions: Array<{ x: number; y: number }> = [];
         const jobCounts = { gatherer: 0, builder: 0, warrior: 0, scout: 0 };
@@ -98,7 +97,7 @@ export class AntSpawner {
         const builderCount = Math.floor(totalAnts * (config.jobDistribution.builder || 0));
         const gathererCount = Math.floor(totalAnts * (config.jobDistribution.gatherer || 0));
         const scoutCount = Math.floor(totalAnts * (config.jobDistribution.scout || 0));
-        console.log(`[AntSpawner] Job distribution: ${builderCount} builders, ${gathererCount} gatherers, ${scoutCount} scouts`);
+
 
         // Generate positions using radial cluster
         const constraints = SpawnRuleValidator.getDefaultConstraints('ant');
@@ -110,7 +109,7 @@ export class AntSpawner {
             this.tileGrid,
             {getEntitiesInRadius: this.getEntitiesInRadius} as any
         );
-        console.log(`[AntSpawner] Generated ${spawnPositions.length} spawn positions out of ${totalAnts} requested`);
+
 
         let posIndex = 0;
 
@@ -285,7 +284,6 @@ export class AntSpawner {
             console.error(`❌ Ant sprite not registered for job type ${jobType}. Registered types: ${Array.from(this.antSprites.keys())}`);
             return null;
         }
-        console.log(`[AntSpawner] Creating ant at (${gridX}, ${gridY}), job: ${jobType}`);
 
         return AntFactory.create(
             this.renderer,

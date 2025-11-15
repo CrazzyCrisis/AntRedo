@@ -289,7 +289,7 @@ export class AudioManager extends BaseManager {
      */
     public initialize(): void {
         this.setupEventListeners();
-        console.log('AudioManager initialized with event-driven playback');
+
     }
 
     /**
@@ -377,7 +377,7 @@ export class AudioManager extends BaseManager {
         // If audio context hasn't started yet (no user interaction), queue the BGM
         if (!this.audioContextStarted) {
             this.pendingBGM = { key, loop };
-            console.log('⏸️ Audio queued - waiting for user interaction');
+
             return;
         }
 
@@ -513,7 +513,7 @@ export class AudioManager extends BaseManager {
             if (this.audioContextStarted) return;
             
             this.audioContextStarted = true;
-            console.log('🔊 Audio context started');
+
             
             // Play pending BGM if any
             if (this.pendingBGM) {

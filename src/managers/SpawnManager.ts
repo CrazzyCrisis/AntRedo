@@ -119,7 +119,7 @@ export class SpawnManager extends BaseManager {
         this.noiseManager = new NoiseLayerManager(Date.now());
         this.resourceSpawner.setNoiseManager(this.noiseManager);
         
-        console.log('âœ… SpawnManager initialized');
+
     }
     
     /**
@@ -155,7 +155,7 @@ export class SpawnManager extends BaseManager {
             this.queenSprite = sprites.queen;
         }
         
-        console.log('âœ… Sprites registered with SpawnManager');
+
     }
     
     /**
@@ -170,7 +170,7 @@ export class SpawnManager extends BaseManager {
             return { queen: null, ants: [], resources: [], enemies: { bosses: [], ants: [] } };
         }
         
-        console.log('ðŸŒ Starting level spawn sequence...');
+
         
         const result: SpawnResult = {
             queen: null,
@@ -274,12 +274,12 @@ export class SpawnManager extends BaseManager {
             this.isWaveSystemActive = true;
         }
         
-        console.log('âœ… Level spawn complete!');
-        console.log(`  Queen: ${result.queen ? 'âœ“' : 'âœ—'}`);
-        console.log(`  Ants: ${result.ants.length}`);
-        console.log(`  Resources: ${result.resources.length}`);
-        console.log(`  Enemy Bosses: ${result.enemies.bosses.length}`);
-        console.log(`  Enemy Ants: ${result.enemies.ants.length}`);
+
+
+
+
+
+
         
         this.emit(GameEvents.LEVEL_START);
         
@@ -334,7 +334,7 @@ export class SpawnManager extends BaseManager {
         
         const waveConfig = this.wavesConfig[this.currentWave];
         
-        console.log(`ðŸŒŠ Spawning wave ${waveConfig.waveNumber}...`);
+
         
         const waveResult = this.enemySpawner.spawnWave(waveConfig);
         
@@ -350,7 +350,7 @@ export class SpawnManager extends BaseManager {
             this.waveTimer = this.wavesConfig[this.currentWave].delay * 1000;
         } else {
             this.isWaveSystemActive = false;
-            console.log('ðŸ All waves spawned');
+
         }
     }
     
@@ -374,7 +374,7 @@ export class SpawnManager extends BaseManager {
         this.waveTimer = 0;
         this.isWaveSystemActive = false;
         
-        console.log('ðŸ§¹ All spawns cleared');
+
     }
     
     /**
