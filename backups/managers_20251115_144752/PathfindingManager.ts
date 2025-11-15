@@ -1,4 +1,3 @@
-﻿import { BaseManager } from './BaseManager';
 /**
  * PathfindingManager - Pathfinding System Manager (CONTROLLER)
  * Singleton manager wrapping the Pathfinder class
@@ -7,13 +6,13 @@
 
 import { Pathfinder, PathNode, PathResult } from '../world/Pathfinder';
 import { TileData } from '../world/TileSystem';
-
+import { EventBus } from '../utils/eventBus';
 
 /**
  * PathfindingManager manages pathfinding for all entities
  * Wraps the existing Pathfinder class with grid management
  */
-export class PathfindingManager extends BaseManager {
+export class PathfindingManager {
     private static instance: PathfindingManager;
     private pathfinder: Pathfinder;
     private grid: TileData[][] | null = null;
@@ -21,7 +20,6 @@ export class PathfindingManager extends BaseManager {
     private height: number = 0;
 
     private constructor() {
-        super(); // Initialize BaseManager
         this.pathfinder = new Pathfinder();
         this.pathfinder.setAllowDiagonal(true); // Allow diagonal movement by default
         this.setupEventListeners();
@@ -42,17 +40,17 @@ export class PathfindingManager extends BaseManager {
      */
     private setupEventListeners(): void {
         // Listen for building placement to block tiles
-        this.subscribe('BUILDING_PATHFINDING_BLOCK', (_buildingId: string, tiles: Array<{ gridX: number; gridY: number }>) => {
+        EventBus.on('BUILDING_PATHFINDING_BLOCK', (_buildingId: string, tiles: Array<{ gridX: number; gridY: number }>) => {
             this.markBlocked(tiles);
         });
 
         // Listen for building destruction to unblock tiles
-        this.subscribe('BUILDING_PATHFINDING_UNBLOCK', (_buildingId: string, tiles: Array<{ gridX: number; gridY: number }>) => {
+        EventBus.on('BUILDING_PATHFINDING_UNBLOCK', (_buildingId: string, tiles: Array<{ gridX: number; gridY: number }>) => {
             this.markWalkable(tiles);
         });
 
         // Listen for world generation to initialize grid
-        this.subscribe('WORLD_GENERATED', (tileGrid: TileData[][]) => {
+        EventBus.on('WORLD_GENERATED', (tileGrid: TileData[][]) => {
             this.initializeFromTileGrid(tileGrid);
         });
     }
@@ -82,7 +80,7 @@ export class PathfindingManager extends BaseManager {
             this.grid.push(rowData);
         }
 
-        this.emit('PATHFINDING_GRID_INITIALIZED', width, height);
+        EventBus.emit('PATHFINDING_GRID_INITIALIZED', width, height);
     }
 
     /**
@@ -94,7 +92,7 @@ export class PathfindingManager extends BaseManager {
         this.height = tileGrid.length;
         this.width = tileGrid.length > 0 ? tileGrid[0].length : 0;
 
-        this.emit('PATHFINDING_GRID_INITIALIZED', this.width, this.height);
+        EventBus.emit('PATHFINDING_GRID_INITIALIZED', this.width, this.height);
     }
 
     /**
@@ -118,7 +116,7 @@ export class PathfindingManager extends BaseManager {
         for (const tile of tiles) {
             this.updateGrid(tile.gridX, tile.gridY, false);
         }
-        this.emit('PATHFINDING_TILES_BLOCKED', tiles.length);
+        EventBus.emit('PATHFINDING_TILES_BLOCKED', tiles.length);
     }
 
     /**
@@ -129,7 +127,7 @@ export class PathfindingManager extends BaseManager {
         for (const tile of tiles) {
             this.updateGrid(tile.gridX, tile.gridY, true);
         }
-        this.emit('PATHFINDING_TILES_UNBLOCKED', tiles.length);
+        EventBus.emit('PATHFINDING_TILES_UNBLOCKED', tiles.length);
     }
 
     /**
@@ -220,14 +218,6 @@ export class PathfindingManager extends BaseManager {
         this.grid = null;
         this.width = 0;
         this.height = 0;
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.clear();
     }
 
     /**

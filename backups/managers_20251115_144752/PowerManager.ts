@@ -1,4 +1,3 @@
-﻿import { BaseManager } from './BaseManager';
 /**
  * PowerManager - Queen Power System Manager (CONTROLLER)
  * Singleton manager for queen power unlocks, upgrades, and usage
@@ -11,7 +10,7 @@ import { TidalwavePower } from '../classes/powers/TidalwavePower';
 import { FinalFlashPower } from '../classes/powers/FinalFlashPower';
 import { IPower } from '../classes/powers/IPower';
 import { ResourceManager } from './ResourceManager';
-
+import { EventBus } from '../utils/eventBus';
 
 /**
  * Power upgrade costs
@@ -26,9 +25,9 @@ interface PowerUpgradeCost {
 /**
  * PowerManager manages all queen powers
  */
-export class PowerManager extends BaseManager {
+export class PowerManager {
     private static instance: PowerManager;
-    private powers: Map<string, Map<string, IPower>>; // queenId â†’ (powerName â†’ IPower)
+    private powers: Map<string, Map<string, IPower>>; // queenId → (powerName → IPower)
 
     // Upgrade costs per level
     private upgradeCosts: Record<number, PowerUpgradeCost> = {
@@ -38,7 +37,6 @@ export class PowerManager extends BaseManager {
     };
 
     private constructor() {
-        super(); // Initialize BaseManager
         this.powers = new Map();
         this.setupEventListeners();
     }
@@ -58,12 +56,12 @@ export class PowerManager extends BaseManager {
      */
     private setupEventListeners(): void {
         // Listen for queen creation to initialize powers
-        this.subscribe('QUEEN_CREATED', (queenId: string, factionId: string) => {
+        EventBus.on('QUEEN_CREATED', (queenId: string, factionId: string) => {
             this.initializePowersForQueen(queenId, factionId);
         });
 
         // Listen for blackhole updates (needs to be called each frame)
-        this.subscribe('GAME_UPDATE', (deltaTime: number) => {
+        EventBus.on('GAME_UPDATE', (deltaTime: number) => {
             this.updateActivePowers(deltaTime);
         });
     }
@@ -98,7 +96,7 @@ export class PowerManager extends BaseManager {
 
         this.powers.set(queenId, powerMap);
 
-        this.emit('QUEEN_POWERS_INITIALIZED', queenId);
+        EventBus.emit('QUEEN_POWERS_INITIALIZED', queenId);
     }
 
     /**
@@ -159,7 +157,7 @@ export class PowerManager extends BaseManager {
 
         // Check if faction can afford
         if (!ResourceManager.getInstance().canAfford(factionId, cost)) {
-            this.emit('POWER_UPGRADE_FAILED', queenId, powerName, 'insufficient_resources');
+            EventBus.emit('POWER_UPGRADE_FAILED', queenId, powerName, 'insufficient_resources');
             return false;
         }
 
@@ -260,14 +258,6 @@ export class PowerManager extends BaseManager {
      */
     public clear(): void {
         this.powers.clear();
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.clear();
     }
 
     /**

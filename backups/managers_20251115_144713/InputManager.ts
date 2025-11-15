@@ -1,5 +1,4 @@
-﻿import { BaseManager } from './BaseManager';
-import { GameEvents } from '../utils/eventBus';
+import { EventBus, GameEvents } from '../utils/eventBus';
 import { SettingsManager } from './SettingsManager';
 import { KeyBindings } from '../config/defaultSettings';
 
@@ -26,7 +25,7 @@ interface KeyBindResult {
  * - Listens to SETTINGS_RESET and SETTING_KEYBIND_CHANGED events
  * - Saves changes back to SettingsManager
  */
-export class InputManager extends BaseManager {
+export class InputManager {
     private static instance: InputManager | null = null;
 
     private keyBindings: KeyBindings;
@@ -38,12 +37,11 @@ export class InputManager extends BaseManager {
     private justReleased: Set<string> = new Set();     // Keys released this frame
 
     private constructor() {
-        super(); // Initialize BaseManager
         this.settingsManager = SettingsManager.getInstance();
         this.keyBindings = this.settingsManager.getKeyBindings();
 
         // Listen for global settings reset only
-        this.subscribe(GameEvents.SETTINGS_RESET, () => {
+        EventBus.on(GameEvents.SETTINGS_RESET, () => {
             // Reload from SettingsManager after global reset
             this.keyBindings = this.settingsManager.getKeyBindings();
         });
@@ -169,7 +167,7 @@ export class InputManager extends BaseManager {
 
         // Emit events for all actions
         for (const action in this.keyBindings) {
-            this.emit(
+            EventBus.emit(
                 GameEvents.SETTING_KEYBIND_CHANGED,
                 action,
                 this.keyBindings[action as keyof KeyBindings]
@@ -206,7 +204,7 @@ export class InputManager extends BaseManager {
 
         // Emit events for all actions
         for (const action in this.keyBindings) {
-            this.emit(
+            EventBus.emit(
                 GameEvents.SETTING_KEYBIND_CHANGED,
                 action,
                 this.keyBindings[action as keyof KeyBindings]
@@ -282,20 +280,10 @@ export class InputManager extends BaseManager {
         this.settingsManager.setKeyBindings(this.keyBindings);
 
         // Emit event for this specific action
-        this.emit(
+        EventBus.emit(
             GameEvents.SETTING_KEYBIND_CHANGED,
             action,
             this.keyBindings[action]
         );
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.currentlyPressed.clear();
-        this.justPressed.clear();
-        this.justReleased.clear();
     }
 }

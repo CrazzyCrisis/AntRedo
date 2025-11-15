@@ -1,11 +1,10 @@
-﻿import { BaseManager } from './BaseManager';
 /**
  * ResourceManager - Resource Economy Manager (CONTROLLER)
  * Singleton manager for tracking and managing faction resources
  * Handles resource deposits, withdrawals, and warehouse integration
  */
 
-
+import { EventBus } from '../utils/eventBus';
 import { ResourceType } from '../config/entityConfig';
 
 /**
@@ -22,12 +21,11 @@ interface FactionResources {
  * ResourceManager manages all faction resources in the game
  * Tracks global resource pools and provides transaction methods
  */
-export class ResourceManager extends BaseManager {
+export class ResourceManager {
     private static instance: ResourceManager;
-    private resources: Map<string, FactionResources>; // factionId â†’ resources
+    private resources: Map<string, FactionResources>; // factionId → resources
 
     private constructor() {
-        super(); // Initialize BaseManager
         this.resources = new Map();
         this.setupEventListeners();
     }
@@ -47,17 +45,17 @@ export class ResourceManager extends BaseManager {
      */
     private setupEventListeners(): void {
         // Listen for resource deposits from ants
-        this.subscribe('RESOURCE_DEPOSITED', (factionId: string, resourceType: ResourceType, amount: number) => {
+        EventBus.on('RESOURCE_DEPOSITED', (factionId: string, resourceType: ResourceType, amount: number) => {
             this.addResource(factionId, resourceType, amount);
         });
 
         // Listen for resource generation from buildings
-        this.subscribe('BUILDING_RESOURCE_GENERATED', (factionId: string, resourceType: string, amount: number) => {
+        EventBus.on('BUILDING_RESOURCE_GENERATED', (factionId: string, resourceType: string, amount: number) => {
             this.addResource(factionId, resourceType as ResourceType, amount);
         });
 
         // Listen for faction creation to initialize resources
-        this.subscribe('FACTION_CREATED', (factionId: string) => {
+        EventBus.on('FACTION_CREATED', (factionId: string) => {
             this.initializeFactionResources(factionId);
         });
     }
@@ -99,7 +97,7 @@ export class ResourceManager extends BaseManager {
         factionResources[type] += amount;
 
         // Emit update event for UI
-        this.emit('RESOURCE_UPDATED', factionId, type, factionResources[type]);
+        EventBus.emit('RESOURCE_UPDATED', factionId, type, factionResources[type]);
     }
 
     /**
@@ -117,14 +115,14 @@ export class ResourceManager extends BaseManager {
 
         // Check if enough resources
         if (factionResources[type] < amount) {
-            this.emit('RESOURCE_INSUFFICIENT', factionId, type, factionResources[type], amount);
+            EventBus.emit('RESOURCE_INSUFFICIENT', factionId, type, factionResources[type], amount);
             return false;
         }
 
         factionResources[type] -= amount;
 
         // Emit update event for UI
-        this.emit('RESOURCE_UPDATED', factionId, type, factionResources[type]);
+        EventBus.emit('RESOURCE_UPDATED', factionId, type, factionResources[type]);
 
         return true;
     }
@@ -231,7 +229,7 @@ export class ResourceManager extends BaseManager {
         }
 
         factionResources[type] = amount;
-        this.emit('RESOURCE_UPDATED', factionId, type, amount);
+        EventBus.emit('RESOURCE_UPDATED', factionId, type, amount);
     }
 
     /**
@@ -239,14 +237,6 @@ export class ResourceManager extends BaseManager {
      */
     public clear(): void {
         this.resources.clear();
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.clear();
     }
 
     /**

@@ -1,4 +1,3 @@
-﻿import { BaseManager } from './BaseManager';
 /**
  * SpawnManager - Singleton manager coordinating all entity spawning
  * 
@@ -27,7 +26,7 @@ import { EnemySpawner } from '../spawning/EnemySpawner';
 import { NoiseLayerManager } from '../spawning/NoiseLayerManager';
 import { SafeZone } from '../spawning/SafeZone';
 import { QueenFactory } from '../factories/QueenFactory';
-import { GameEvents } from '../utils/eventBus';
+import { EventBus, GameEvents } from '../utils/eventBus';
 import { SpawnConfig, WaveConfig } from '../config/spawnConfig';
 
 /**
@@ -56,7 +55,7 @@ interface EntityTracking {
 /**
  * SpawnManager - Singleton coordinator for all spawning operations
  */
-export class SpawnManager extends BaseManager {
+export class SpawnManager {
     private static instance: SpawnManager | null = null;
     
     private renderer: Renderer | null = null;
@@ -82,10 +81,9 @@ export class SpawnManager extends BaseManager {
     private isWaveSystemActive: boolean = false;
     
     // Event unsubscribers
-    
+    private eventUnsubscribers: Array<() => void> = [];
     
     private constructor() {
-        super(); // Initialize BaseManager
         // Private constructor for singleton
         this.setupEventListeners();
     }
@@ -119,7 +117,7 @@ export class SpawnManager extends BaseManager {
         this.noiseManager = new NoiseLayerManager(Date.now());
         this.resourceSpawner.setNoiseManager(this.noiseManager);
         
-        console.log('âœ… SpawnManager initialized');
+        console.log('✅ SpawnManager initialized');
     }
     
     /**
@@ -155,7 +153,7 @@ export class SpawnManager extends BaseManager {
             this.queenSprite = sprites.queen;
         }
         
-        console.log('âœ… Sprites registered with SpawnManager');
+        console.log('✅ Sprites registered with SpawnManager');
     }
     
     /**
@@ -170,7 +168,7 @@ export class SpawnManager extends BaseManager {
             return { queen: null, ants: [], resources: [], enemies: { bosses: [], ants: [] } };
         }
         
-        console.log('ðŸŒ Starting level spawn sequence...');
+        console.log('🌍 Starting level spawn sequence...');
         
         const result: SpawnResult = {
             queen: null,
@@ -274,14 +272,14 @@ export class SpawnManager extends BaseManager {
             this.isWaveSystemActive = true;
         }
         
-        console.log('âœ… Level spawn complete!');
-        console.log(`  Queen: ${result.queen ? 'âœ“' : 'âœ—'}`);
+        console.log('✅ Level spawn complete!');
+        console.log(`  Queen: ${result.queen ? '✓' : '✗'}`);
         console.log(`  Ants: ${result.ants.length}`);
         console.log(`  Resources: ${result.resources.length}`);
         console.log(`  Enemy Bosses: ${result.enemies.bosses.length}`);
         console.log(`  Enemy Ants: ${result.enemies.ants.length}`);
         
-        this.emit(GameEvents.LEVEL_START);
+        EventBus.emit(GameEvents.LEVEL_START);
         
         return result;
     }
@@ -334,7 +332,7 @@ export class SpawnManager extends BaseManager {
         
         const waveConfig = this.wavesConfig[this.currentWave];
         
-        console.log(`ðŸŒŠ Spawning wave ${waveConfig.waveNumber}...`);
+        console.log(`🌊 Spawning wave ${waveConfig.waveNumber}...`);
         
         const waveResult = this.enemySpawner.spawnWave(waveConfig);
         
@@ -350,7 +348,7 @@ export class SpawnManager extends BaseManager {
             this.waveTimer = this.wavesConfig[this.currentWave].delay * 1000;
         } else {
             this.isWaveSystemActive = false;
-            console.log('ðŸ All waves spawned');
+            console.log('🏁 All waves spawned');
         }
     }
     
@@ -374,7 +372,7 @@ export class SpawnManager extends BaseManager {
         this.waveTimer = 0;
         this.isWaveSystemActive = false;
         
-        console.log('ðŸ§¹ All spawns cleared');
+        console.log('🧹 All spawns cleared');
     }
     
     /**
@@ -434,27 +432,28 @@ export class SpawnManager extends BaseManager {
      */
     private setupEventListeners(): void {
         // Listen for entity destruction to remove from tracking
-        this.subscribe(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
-            this.trackedEntities.ants.delete(entityId);
-            this.trackedEntities.resources.delete(entityId);
-            this.trackedEntities.bosses.delete(entityId);
-            this.trackedEntities.buildings.delete(entityId);
-        });
-    }
-    
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.clearAllSpawns();
+        this.eventUnsubscribers.push(
+            EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+                this.trackedEntities.ants.delete(entityId);
+                this.trackedEntities.resources.delete(entityId);
+                this.trackedEntities.bosses.delete(entityId);
+                this.trackedEntities.buildings.delete(entityId);
+            })
+        );
     }
     
     /**
      * Cleanup manager
      */
     public destroy(): void {
-        this.cleanup();
+        this.clearAllSpawns();
+        
+        // Unsubscribe from events
+        for (const unsubscribe of this.eventUnsubscribers) {
+            unsubscribe();
+        }
+        this.eventUnsubscribers = [];
+        
         SpawnManager.instance = null;
     }
 }

@@ -1,10 +1,9 @@
-﻿/**
+/**
  * BuildingManager - Building System Manager (CONTROLLER)
  * Singleton manager for tracking and managing all buildings
  * Handles construction, leveling, worker assignment, and stat boosts
  */
 
-import { BaseManager } from './BaseManager';
 import {
     Building,
     EventBus,
@@ -19,13 +18,12 @@ import { ResourceManager } from './ResourceManager';
  * BuildingManager manages all buildings in the game
  * Tracks buildings by faction, handles construction and leveling
  */
-export class BuildingManager extends BaseManager {
+export class BuildingManager {
     private static instance: BuildingManager;
-    private buildings: Map<string, Building>; // buildingId â†’ Building
-    private buildingsByFaction: Map<string, Set<string>>; // factionId â†’ building IDs
+    private buildings: Map<string, Building>; // buildingId → Building
+    private buildingsByFaction: Map<string, Set<string>>; // factionId → building IDs
 
     private constructor() {
-        super(); // Initialize BaseManager
         this.buildings = new Map();
         this.buildingsByFaction = new Map();
         this.setupEventListeners();
@@ -132,7 +130,7 @@ export class BuildingManager extends BaseManager {
             // FactionManager.getInstance().increaseAntCap(factionId, antCapIncrease);
         }
 
-        this.emit('BUILDING_LEVEL_UP_COMPLETE', buildingId, newLevel);
+        EventBus.emit('BUILDING_LEVEL_UP_COMPLETE', buildingId, newLevel);
     }
 
     /**
@@ -152,7 +150,7 @@ export class BuildingManager extends BaseManager {
         // Check if faction can afford
         const costs = ENTITY_CONFIG.BUILDINGS[buildingType].costs;
         if (!ResourceManager.getInstance().canAfford(factionId, costs)) {
-            this.emit('BUILDING_PLACEMENT_FAILED', factionId, buildingType, 'insufficient_resources');
+            EventBus.emit('BUILDING_PLACEMENT_FAILED', factionId, buildingType, 'insufficient_resources');
             return null;
         }
 
@@ -301,14 +299,6 @@ export class BuildingManager extends BaseManager {
     public clear(): void {
         this.buildings.clear();
         this.buildingsByFaction.clear();
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.clear();
     }
 
     /**

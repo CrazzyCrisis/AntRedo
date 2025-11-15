@@ -1,4 +1,3 @@
-﻿import { BaseManager } from './BaseManager';
 /**
  * GameStateManager - Central game state authority
  * Single source of truth for game state, emits EventBus notifications on changes
@@ -6,14 +5,14 @@
  * Pattern: Manager owns state, EventBus notifies observers
  */
 
-import { GameEvents } from '../utils/eventBus';
+import { EventBus, GameEvents } from '../utils/eventBus';
 import { TileGrid } from '../world/TileGrid';
 
 /**
  * GameStateManager manages core game state
  * Singleton pattern ensures single source of truth
  */
-export class GameStateManager extends BaseManager {
+export class GameStateManager {
     private static instance: GameStateManager | null = null;
 
     private playing: boolean = false;
@@ -22,7 +21,6 @@ export class GameStateManager extends BaseManager {
     private tileGrid: TileGrid | null = null;
 
     private constructor() {
-        super(); // Initialize BaseManager
         // Private constructor for singleton
     }
 
@@ -85,7 +83,7 @@ export class GameStateManager extends BaseManager {
     startGame(): void {
         this.playing = true;
         this.paused = false;
-        this.emit(GameEvents.GAME_START);
+        EventBus.emit(GameEvents.GAME_START);
     }
 
     /**
@@ -93,7 +91,7 @@ export class GameStateManager extends BaseManager {
      */
     pauseGame(): void {
         this.paused = true;
-        this.emit(GameEvents.GAME_PAUSE);
+        EventBus.emit(GameEvents.GAME_PAUSE);
     }
 
     /**
@@ -101,7 +99,7 @@ export class GameStateManager extends BaseManager {
      */
     resumeGame(): void {
         this.paused = false;
-        this.emit(GameEvents.GAME_RESUME);
+        EventBus.emit(GameEvents.GAME_RESUME);
     }
 
     /**
@@ -111,7 +109,7 @@ export class GameStateManager extends BaseManager {
     setLevel(level: number): void {
         if (this.currentLevel !== level) {
             this.currentLevel = level;
-            this.emit(GameEvents.LEVEL_CHANGED, level);
+            EventBus.emit(GameEvents.LEVEL_CHANGED, level);
         }
     }
 
@@ -121,7 +119,7 @@ export class GameStateManager extends BaseManager {
      */
     setTileGrid(grid: TileGrid): void {
         this.tileGrid = grid;
-        this.emit(GameEvents.WORLD_LOADED, grid);
+        EventBus.emit(GameEvents.WORLD_LOADED, grid);
     }
 
     /**
@@ -153,14 +151,6 @@ export class GameStateManager extends BaseManager {
         this.paused = false;
         this.currentLevel = 0;
         this.tileGrid = null;
-        this.emit(GameEvents.GAME_RESET);
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.reset();
+        EventBus.emit(GameEvents.GAME_RESET);
     }
 }

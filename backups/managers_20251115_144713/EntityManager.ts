@@ -1,10 +1,9 @@
-﻿/**
+/**
  * EntityManager - Central Entity Tracking (CONTROLLER)
  * Singleton manager for all game entities
  * Provides fast lookups by ID, type, and spatial queries
  */
 
-import { BaseManager } from './BaseManager';
 import {
     GameObject,
     EventBus,
@@ -12,7 +11,7 @@ import {
     pointInRect
 } from '../imports/managerImports';
 
-export class EntityManager extends BaseManager {
+export class EntityManager {
     private static instance: EntityManager;
     
     // Entity storage
@@ -20,7 +19,6 @@ export class EntityManager extends BaseManager {
     private entitiesByType: Map<string, Set<string>>;
 
     private constructor() {
-        super(); // Initialize BaseManager
         this.entities = new Map();
         this.entitiesByType = new Map();
         this.setupEventListeners();
@@ -61,7 +59,7 @@ export class EntityManager extends BaseManager {
         this.entitiesByType.get(entity.type)!.add(entity.id);
 
         // Emit event
-        this.emit('ENTITY_ADDED', entity.id, entity.type);
+        EventBus.emit('ENTITY_ADDED', entity.id, entity.type);
     }
 
     /**
@@ -84,7 +82,7 @@ export class EntityManager extends BaseManager {
         this.entities.delete(id);
 
         // Emit event
-        this.emit('ENTITY_REMOVED', id, entity.type);
+        EventBus.emit('ENTITY_REMOVED', id, entity.type);
     }
 
     /**
@@ -192,14 +190,6 @@ export class EntityManager extends BaseManager {
     public clear(): void {
         this.entities.clear();
         this.entitiesByType.clear();
-    }
-
-    /**
-     * Cleanup - unsubscribe from all events
-     */
-    public cleanup(): void {
-        this.cleanupSubscriptions();
-        this.clear();
     }
 
     /**
