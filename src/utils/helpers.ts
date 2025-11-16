@@ -576,6 +576,11 @@ export function setupEntitySpriteBinding(
     // Register sprite with renderer
     const unregister = renderer.register(sprite);
     
+    // Set entity ID on sprite for combat animation tracking
+    if (sprite.setEntityId && typeof sprite.setEntityId === 'function') {
+        sprite.setEntityId(entity.id);
+    }
+    
     // Check if this is an animated sprite (duck typing)
     const isAnimated = 'playAnimation' in sprite && typeof sprite.update === 'function';
     

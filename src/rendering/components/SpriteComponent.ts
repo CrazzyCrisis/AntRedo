@@ -1,5 +1,6 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
+import { EventBus, GameEvents } from '../../utils/eventBus';
 
 /**
  * SpriteComponent renders a single sprite at a position.
@@ -16,9 +17,13 @@ export class SpriteComponent implements Renderable {
     private height: number;
     private offsetX: number;
     private offsetY: number;
+    private combatOffsetX: number = 0; // Combat animation offset (in tiles)
+    private combatOffsetY: number = 0; // Combat animation offset (in tiles)
+    private entityId: string | null = null; // For combat animation tracking
     private tintColor: { r: number; g: number; b: number; a?: number } | null = null;
     public scale: number = 1;
     public rotation: number = 0; // Radians
+    private unsubscribeOffset: (() => void) | null = null; // Cleanup function
 
     constructor(
         sprite: any,
@@ -99,6 +104,33 @@ export class SpriteComponent implements Renderable {
     }
 
     /**
+     * Set entity ID for combat animation tracking
+     */
+    setEntityId(entityId: string): void {
+        this.entityId = entityId;
+        
+        // Subscribe to sprite offset changes for combat animations
+        this.unsubscribeOffset = EventBus.on(GameEvents.SPRITE_OFFSET_CHANGED, 
+            (id: string, offsetX: number, offsetY: number) => {
+                if (id === this.entityId) {
+                    this.combatOffsetX = offsetX;
+                    this.combatOffsetY = offsetY;
+                }
+            }
+        );
+    }
+
+    /**
+     * Cleanup event listeners
+     */
+    destroy(): void {
+        if (this.unsubscribeOffset) {
+            this.unsubscribeOffset();
+            this.unsubscribeOffset = null;
+        }
+    }
+
+    /**
      * Render sprite to graphics context
      */
     render(graphics: any): void {
@@ -162,6 +194,11 @@ export class SpriteComponent implements Renderable {
             }
         }
         
+        // Calculate final position with combat animation offset (tile-based offset * 16px)
+        const TILE_SIZE = 16;
+        const finalOffsetX = this.offsetX + (this.combatOffsetX * TILE_SIZE);
+        const finalOffsetY = this.offsetY + (this.combatOffsetY * TILE_SIZE);
+        
         // Draw sprite (centered if transformed, otherwise top-left)
         if (this.rotation !== 0 || this.scale !== 1) {
             graphics.image(
@@ -174,8 +211,8 @@ export class SpriteComponent implements Renderable {
         } else {
             graphics.image(
                 this.sprite,
-                this.x + this.offsetX,
-                this.y + this.offsetY,
+                this.x + finalOffsetX,
+                this.y + finalOffsetY,
                 this.width,
                 this.height
             );

@@ -31,6 +31,8 @@ import {
     BuildingFactory,
     AntFactory
 } from '../imports/sceneImports';
+import { CombatVisualHandler } from '../managers/CombatVisualHandler';
+import { ParticleSystem } from '../managers/ParticleSystem';
 import { TileRenderer, TileRenderConfig } from '../world/TileRenderer';
 
 export class DevRoomScene implements IScene {
@@ -114,8 +116,14 @@ export class DevRoomScene implements IScene {
         this.tileEdgeSprites = tileEdgeSprites;
         this.entitySprites = entitySprites;
         this.gameState = GameStateManager.getInstance();
-        this.worldGenerator = new WorldGenerator();
+        this.worldGenerator = new WorldGenerator(128, 128);
         this.inputManager = InputManager.getInstance();
+        
+        // Initialize combat visual handler for sprite animations, camera shake, sounds
+        CombatVisualHandler.getInstance();
+        
+        // Initialize particle system for combat impact effects
+        ParticleSystem.getInstance().initialize(renderer);
         
         // Initialize tile colors from config (used only if sprites disabled)
         this.tileColors = TILE_CONFIG.COLORS;
@@ -329,6 +337,12 @@ export class DevRoomScene implements IScene {
         if (this.spawnManager) {
             this.spawnManager.update(16.67); // ~60fps
         }
+        
+        // Update combat visual handler (cleanup expired sprite offsets)
+        CombatVisualHandler.getInstance().update();
+        
+        // Update particle system (animate particles)
+        ParticleSystem.getInstance().update(16.67);
         
         // Update camera (handles following and smooth movement)
         CameraManager.getInstance().update();

@@ -212,6 +212,10 @@ function setup() {
     CameraManager.getInstance().setCamera(camera);
     CameraManager.getInstance().setRenderer(renderer);
     
+    // Initialize environment effects with renderer (for particle spawning)
+    const { EnvironmentEffectsManager } = require('./managers/EnvironmentEffectsManager');
+    EnvironmentEffectsManager.getInstance().setRenderer(renderer);
+    
     // Initialize AudioManager with event-driven playback
     AudioManager.getInstance().initialize();
     

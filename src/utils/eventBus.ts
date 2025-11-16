@@ -240,6 +240,8 @@ export const GameEvents = {
     ENTITY_STATE_CHANGED: 'entity:state:changed', // (entityId, oldState, newState) - for animation system
     ENTITY_DAMAGE: 'entity:damage', // (entityId, amount, x, y, isCritical?) - for visual effects
     ENTITY_HEALED: 'entity:healed', // (entityId, amount, x, y) - for visual effects
+    ENTITY_ENTER_WATER: 'entity:enter:water', // (entityId, gridX, gridY) - for swimming effects
+    ENTITY_EXIT_WATER: 'entity:exit:water', // (entityId) - for swimming effects
     CLEANUP_ALL_ENTITIES: 'cleanup:all:entities', // Broadcast to destroy all entities
     
     // Ant events
@@ -337,6 +339,14 @@ export const GameEvents = {
     COMBAT_DAMAGE_DEALT: 'combat:damage:dealt',
     COMBAT_KNOCKBACK_APPLIED: 'combat:knockback:applied',
     COMBAT_KILL: 'combat:kill',
+    COMBAT_CHARGE_START: 'combat:charge:start',      // Visual: entity pulls back to charge
+    COMBAT_LUNGE_START: 'combat:lunge:start',        // Visual: entity lunges toward target
+    COMBAT_LUNGE_END: 'combat:lunge:end',            // Visual: entity returns to original tile
+    
+    // Combat visual effects
+    SPRITE_OFFSET_CHANGED: 'sprite:offset:changed',  // Sprite position offset for animations
+    PARTICLE_SPAWN: 'particle:spawn',                // Spawn particle effect
+    CAMERA_SHAKE: 'camera:shake',                    // Camera shake effect
     
     // Inventory events
     ITEM_ADDED: 'item:added',

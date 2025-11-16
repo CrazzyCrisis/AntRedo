@@ -8,13 +8,18 @@ import { EventBus, GameEvents } from '../utils/eventBus';
 import { IComponent } from './components/IComponent';
 import { rectIntersect } from '../utils/helpers';
 import { TILE_CONFIG } from '../config/tileConfig';
+import { getTileSpeedModifier } from '../config/tileMovementConfig';
 
 export class GameObject {
     // Unique identifier
     public readonly id: string;
     
-    // Entity type (e.g., 'ant', 'queen', 'resource')
+    // Entity type (e.g., 'ant', 'queen', 'resource', 'boss')
     public readonly type: string;
+    
+    // Entity class (for tile speed modifiers: 'ant', 'queen', 'boss', etc.)
+    // Different from type - type is unique ID, entityClass is category
+    public entityClass: string;
     
     // Grid position
     public gridX: number;
@@ -65,6 +70,7 @@ export class GameObject {
     constructor(type: string, gridX: number, gridY: number, collisionSize: number = TILE_CONFIG.SIZE) {
         this.id = this.generateId(type);
         this.type = type;
+        this.entityClass = type; // Default to type, subclasses can override
         this.gridX = gridX;
         this.gridY = gridY;
         this.isActive = true;
@@ -218,8 +224,34 @@ export class GameObject {
         // Convert deltaTime from ms to seconds
         const deltaSeconds = deltaTime / 1000;
         
+        // Apply tile-based speed modifier
+        let effectiveSpeed = this.moveSpeed;
+        
+        // Get current tile from TileGrid (requires GameStateManager)
+        try {
+            const { GameStateManager } = require('../managers/GameStateManager');
+            const tileGrid = GameStateManager.getInstance().getTileGrid();
+            
+            if (tileGrid) {
+                // Get tile at current grid position
+                const currentTile = tileGrid.getTileDataAt(this.gridX, this.gridY);
+                
+                if (currentTile) {
+                    // Get speed modifier for this entity type on this tile
+                    const speedModifier = getTileSpeedModifier(currentTile.type, this.entityClass);
+                    effectiveSpeed *= speedModifier;
+                    
+                    // Debug logging (can be removed later)
+                    // console.log(`${this.entityClass} on ${currentTile.type}: ${speedModifier}x speed`);
+                }
+            }
+        } catch (error) {
+            // Fail silently if GameStateManager not available (e.g., during tests)
+            // Fall back to base moveSpeed
+        }
+        
         // Calculate instant movement per frame (pixels per frame)
-        const moveDistance = deltaSeconds * this.moveSpeed * TILE_CONFIG.SIZE;
+        const moveDistance = deltaSeconds * effectiveSpeed * TILE_CONFIG.SIZE;
         
         // Move smoothWorldX/Y directly (instant response)
         this.smoothWorldX += this.targetMoveX * moveDistance;
@@ -284,6 +316,10 @@ export class GameObject {
      * Use requestMove() for smooth time-based movement instead
      */
     public moveTo(gridX: number, gridY: number): void {
+        // Floor coordinates to ensure they're integers (prevent floating point errors)
+        gridX = Math.floor(gridX);
+        gridY = Math.floor(gridY);
+        
         // Check if position actually changed
         if (this.gridX === gridX && this.gridY === gridY) {
             return;

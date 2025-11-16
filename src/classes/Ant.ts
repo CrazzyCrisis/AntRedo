@@ -33,6 +33,7 @@ export class Ant extends GameObject {
         super('ant', gridX, gridY);
 
         this.factionId = factionId;
+        this.entityClass = 'ant'; // Set entity class for tile speed modifiers
         
         // Disable snapping for AI-controlled ants (they use pathfinding)
         this.enableSnapping = false;

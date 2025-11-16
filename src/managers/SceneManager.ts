@@ -1,17 +1,31 @@
 import { IScene } from '../scenes/IScene';
 import { EventBus, GameEvents } from '../utils/eventBus';
+import { EnvironmentEffectsManager } from './EnvironmentEffectsManager';
+import { EntityManager } from './EntityManager';
+import { GameStateManager } from './GameStateManager';
 
 /**
  * SceneManager - Singleton for managing game scenes
  * Handles scene lifecycle (enter/exit) and forwards input events
+ * Also manages cross-scene systems like environment effects
  */
 export class SceneManager {
     private static instance: SceneManager;
     private currentScene: IScene | null = null;
     private currentSceneName: string = '';
+    private environmentEffects: EnvironmentEffectsManager;
 
     private constructor() {
         // Private constructor for singleton
+        this.environmentEffects = EnvironmentEffectsManager.getInstance();
+        
+        // Listen for scene changes to update environment effects TileGrid
+        EventBus.on(GameEvents.SCENE_CHANGE, () => {
+            const tileGrid = GameStateManager.getInstance().getTileGrid();
+            if (tileGrid) {
+                this.environmentEffects.setTileGrid(tileGrid);
+            }
+        });
     }
 
     /**
@@ -44,16 +58,29 @@ export class SceneManager {
         // Call enter on new scene
         this.currentScene.enter();
 
+        // Update environment effects with current TileGrid
+        const tileGrid = GameStateManager.getInstance().getTileGrid();
+        if (tileGrid) {
+            this.environmentEffects.setTileGrid(tileGrid);
+        }
+
         // Emit scene change event
         EventBus.emit(GameEvents.SCENE_CHANGE, sceneName, previousSceneName);
     }
 
     /**
      * Update current scene (call every frame)
+     * Also updates cross-scene systems like environment effects
      */
     public update(): void {
         if (this.currentScene) {
             this.currentScene.update();
+        }
+        
+        // Update environment effects (water damage, swimming particles, etc.)
+        const entities = EntityManager.getInstance().getAllEntities();
+        if (entities.length > 0) {
+            this.environmentEffects.update(entities);
         }
     }
 

@@ -1,3 +1,5 @@
+import { EventBus, GameEvents } from '../utils/eventBus';
+
 /**
  * Camera handles viewport positioning, smooth following, and coordinate conversions
  * between world space and screen space.
@@ -22,12 +24,30 @@ export class Camera {
     private shakeTimer: number = 0;
     private shakeOffsetX: number = 0;
     private shakeOffsetY: number = 0;
+    private unsubscribeShake: (() => void) | null = null;
 
     constructor(x: number, y: number, canvasWidth: number = 800, canvasHeight: number = 600) {
         this.x = x;
         this.y = y;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        
+        // Listen for camera shake events from combat system
+        this.unsubscribeShake = EventBus.on(GameEvents.CAMERA_SHAKE, 
+            (intensity: number, durationMs: number) => {
+                this.shake(intensity, durationMs / 1000); // Convert ms to seconds
+            }
+        );
+    }
+
+    /**
+     * Cleanup event listeners
+     */
+    destroy(): void {
+        if (this.unsubscribeShake) {
+            this.unsubscribeShake();
+            this.unsubscribeShake = null;
+        }
     }
 
     /**

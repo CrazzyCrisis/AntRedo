@@ -124,8 +124,8 @@ describe('TileGrid', () => {
             expect(grassCost).to.equal(1.0);
         });
 
-        it('should return Infinity for movement cost on non-walkable tiles', () => {
-            expect(grid.getMovementCost(0, 0)).to.equal(Infinity); // Water
+        it('should return very high cost for non-walkable water tiles', () => {
+            expect(grid.getMovementCost(0, 0)).to.equal(100); // Water has high pathfinding cost (not Infinity for future swimming)
         });
 
         it('should return Infinity for out of bounds movement cost', () => {

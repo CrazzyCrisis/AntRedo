@@ -42,6 +42,7 @@ export class Queen extends GameObject {
     constructor(gridX: number, gridY: number, factionId: string) {
         super('queen', gridX, gridY);
         this.factionId = factionId;
+        this.entityClass = 'queen'; // Set entity class for tile speed modifiers
         
         // Set movement speed (tiles per second)
         this.moveSpeed = ENTITY_CONFIG.QUEEN.speed; // Queen moves at 4 tiles/second

@@ -34,6 +34,8 @@ export class Boss extends GameObject {
     constructor(gridX: number, gridY: number, patrolPath: Array<{gridX: number; gridY: number}>, projectileType: 'homing' | 'straight' = 'homing') {
         super('boss', gridX, gridY);
         
+        this.entityClass = 'boss'; // Set entity class for tile speed modifiers (faster on stone!)
+        
         // Disable snapping for AI-controlled boss (uses pathfinding)
         this.enableSnapping = false;
         
