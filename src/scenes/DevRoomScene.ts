@@ -31,12 +31,18 @@ import {
     BuildingFactory,
     AntFactory
 } from '../imports/sceneImports';
+import { ResourceManager } from '../managers/ResourceManager';
 import { Camera } from '../rendering/Camera';
 import { CombatVisualHandler } from '../managers/CombatVisualHandler';
 import { CombatManager } from '../managers/CombatManager';
 import { ParticleSystem } from '../managers/ParticleSystem';
 import { TileRenderer, TileRenderConfig } from '../world/TileRenderer';
 import { GameUIOverlay } from '../rendering/overlays/GameUIOverlay';
+import { PathVisualizerComponent } from '../rendering/components/PathVisualizerComponent';
+import { PathfindingComponent } from '../classes/components/PathfindingComponent';
+import { TileHighlightComponent } from '../rendering/components/TileHighlightComponent';
+import { DEV_ROOM_SPAWN_CONFIG } from '../config/devRoomSpawnConfig';
+import { TILE_SIZE } from '../world/TileSystem';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -59,6 +65,7 @@ export class DevRoomScene implements IScene {
     private uiOverlay: GameUIOverlay | null = null;
     private playerQueen: any | null = null; // Reference to player's queen for click commands
     private camera: Camera | null = null; // Camera reference for coordinate conversion
+    private tileHighlight: TileHighlightComponent | null = null; // Visual tile highlight for debugging
     
     // Spawning system
     private spawnManager: SpawnManager | null = null;
@@ -156,6 +163,17 @@ export class DevRoomScene implements IScene {
     enter(): void {
         // Start dev room music
         AudioManager.getInstance().playBGM('DEV_ROOM_THEME', true);
+        
+        // Initialize player faction resources with starting values from config
+        const resourceManager = ResourceManager.getInstance();
+        resourceManager.initializeFaction('player');
+        if (DEV_ROOM_CONFIG.STARTING_RESOURCES) {
+            resourceManager.setResource('player', 'food', DEV_ROOM_CONFIG.STARTING_RESOURCES.FOOD);
+            resourceManager.setResource('player', 'wood', DEV_ROOM_CONFIG.STARTING_RESOURCES.WOOD);
+            resourceManager.setResource('player', 'stone', DEV_ROOM_CONFIG.STARTING_RESOURCES.STONE);
+            resourceManager.setResource('player', 'magicCrystal', DEV_ROOM_CONFIG.STARTING_RESOURCES.MAGIC_CRYSTAL);
+            console.log(`[DevRoom] Initialized colony with ${DEV_ROOM_CONFIG.STARTING_RESOURCES.FOOD} food for healing system testing`);
+        }
         
         // Check if user provided a custom seed via URL parameter or config
         const urlParams = typeof window !== 'undefined' && window.location 
@@ -274,6 +292,19 @@ export class DevRoomScene implements IScene {
         
         // Store queen reference for click commands
         this.playerQueen = queen;
+        
+        // Setup path visualization for debugging
+        const pathfindingComponent = queen.getComponent('Pathfinding') as PathfindingComponent;
+        if (pathfindingComponent) {
+            const pathVisualizer = new PathVisualizerComponent(queen, pathfindingComponent, this.renderer);
+            this.unregisterFunctions.push(this.renderer.register(pathVisualizer));
+            console.log('[DevRoomScene] ✅ Path visualizer registered');
+        }
+        
+        // Setup tile highlight for debugging
+        this.tileHighlight = new TileHighlightComponent(camera, this.renderer);
+        this.unregisterFunctions.push(this.renderer.register(this.tileHighlight));
+        console.log('[DevRoomScene] ✅ Tile highlighter registered');
         
         // Create UI overlay config
         const tileGrid = GameStateManager.getInstance().getTileGrid();
@@ -486,6 +517,11 @@ export class DevRoomScene implements IScene {
     }
 
     handleMouseMove(x: number, y: number): void {
+        // Update tile highlight
+        if (this.tileHighlight) {
+            this.tileHighlight.updateMousePosition(x, y);
+        }
+        
         // Forward to pause menu if paused
         if (this.isPaused && this.pauseMenu) {
             this.pauseMenu.handleMouseMove(x, y);
@@ -524,20 +560,31 @@ export class DevRoomScene implements IScene {
      * - Click on ground → pathfind to location
      */
     private handleWorldClick(screenX: number, screenY: number): void {
-        if (!this.playerQueen || !this.camera) return;
+        console.log(`[DevRoomScene] handleWorldClick called with screen coords (${screenX}, ${screenY})`);
+        
+        if (!this.playerQueen || !this.camera) {
+            console.log('[DevRoomScene] handleWorldClick: Missing queen or camera');
+            console.log(`  playerQueen: ${this.playerQueen ? 'exists' : 'NULL'}`);
+            console.log(`  camera: ${this.camera ? 'exists' : 'NULL'}`);
+            return;
+        }
 
         // Convert screen coordinates to world coordinates
         const { x: worldX, y: worldY } = this.camera.screenToWorld(screenX, screenY);
         
-        // Convert world coordinates to grid coordinates
-        const TILE_SIZE = 64; // From TileSystem
+        console.log(`[DevRoomScene] Click: screen(${screenX}, ${screenY}) → world(${worldX.toFixed(1)}, ${worldY.toFixed(1)})`);
+        
+        // Convert world coordinates to grid coordinates (using correct TILE_SIZE from config)
         const gridX = Math.floor(worldX / TILE_SIZE);
         const gridY = Math.floor(worldY / TILE_SIZE);
+        
+        console.log(`[DevRoomScene] Grid position: (${gridX}, ${gridY}) using TILE_SIZE=${TILE_SIZE}`);
 
         // Check if clicked on an entity
         const clickedEntity = this.findEntityAtPosition(gridX, gridY);
         
         if (clickedEntity) {
+            console.log(`[DevRoomScene] Clicked on entity: ${clickedEntity.type} at (${clickedEntity.gridX}, ${clickedEntity.gridY})`);
             // Clicked on an entity - determine action based on type
             if (clickedEntity.type === 'resource') {
                 // Resource: Start gathering
@@ -550,6 +597,7 @@ export class DevRoomScene implements IScene {
                 this.commandQueenToMove(gridX, gridY);
             }
         } else {
+            console.log('[DevRoomScene] Clicked on empty ground');
             // Clicked on empty ground: Move there
             this.commandQueenToMove(gridX, gridY);
         }
@@ -602,6 +650,44 @@ export class DevRoomScene implements IScene {
         
         if (pathfinding && tileGrid) {
             const grid = tileGrid.getGrid();
+            
+            // EXTENSIVE DEBUG: Check tile properties
+            console.log(`[DevRoomScene] ===== PATHFINDING DEBUG =====`);
+            console.log(`[DevRoomScene] Queen at grid (${this.playerQueen.gridX}, ${this.playerQueen.gridY})`);
+            console.log(`[DevRoomScene] Target at grid (${gridX}, ${gridY})`);
+            console.log(`[DevRoomScene] Grid dimensions: ${grid[0]?.length}x${grid.length}`);
+            console.log(`[DevRoomScene] Target in bounds: col=${gridX >= 0 && gridX < grid[0]?.length}, row=${gridY >= 0 && gridY < grid.length}`);
+            
+            // Check using TileGrid method
+            const isWalkable = tileGrid.isWalkable(gridX, gridY);
+            console.log(`[DevRoomScene] tileGrid.isWalkable(${gridX}, ${gridY}): ${isWalkable}`);
+            
+            // Check direct grid access
+            const tileData = grid[gridY]?.[gridX];
+            if (tileData) {
+                console.log(`[DevRoomScene] Direct grid access grid[${gridY}][${gridX}]:`);
+                console.log(`  - type: ${tileData.type}`);
+                console.log(`  - walkable: ${tileData.walkable}`);
+                console.log(`  - movementCost: ${tileData.movementCost}`);
+                console.log(`  - spriteIndex: ${tileData.spriteIndex}`);
+            } else {
+                console.log(`[DevRoomScene] ERROR: grid[${gridY}][${gridX}] is ${tileData}`);
+            }
+            
+            // Check surrounding tiles
+            console.log(`[DevRoomScene] Surrounding tiles:`);
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const checkX = gridX + dx;
+                    const checkY = gridY + dy;
+                    const tile = grid[checkY]?.[checkX];
+                    if (tile) {
+                        console.log(`  (${checkX}, ${checkY}): walkable=${tile.walkable}, type=${tile.type}`);
+                    }
+                }
+            }
+            console.log(`[DevRoomScene] ================================`);
+            
             pathfinding.findPath(gridX, gridY, grid);
             console.log(`[DevRoomScene] Queen commanded to move to (${gridX}, ${gridY})`);
         }
@@ -858,20 +944,22 @@ export class DevRoomScene implements IScene {
             queen: this.entitySprites.queen
         });
         
-        // Spawn enemy buildings around the map
-        this.spawnEnemyBuildings(tileGrid);
+        // Spawn enemy buildings around the map (controlled by config)
+        if (DEV_ROOM_SPAWN_CONFIG.SPAWNING.ENEMY_BUILDINGS) {
+            this.spawnEnemyBuildings(tileGrid);
+        }
         
-        // Generate a procedural level (tutorial difficulty)
+        // Generate a procedural level using spawn config
         const levelData = this.levelLoader.loadProceduralLevel({
-            difficulty: 'easy',
+            difficulty: DEV_ROOM_SPAWN_CONFIG.LEVEL.DIFFICULTY,
             worldSize: { 
                 width: DEV_ROOM_CONFIG.WORLD.WIDTH, 
                 height: DEV_ROOM_CONFIG.WORLD.HEIGHT 
             },
-            resourceAbundance: 'normal',
-            enemyDensity: 'low',
-            safeZoneDuration: 120, // 2 minutes
-            wavesEnabled: true
+            resourceAbundance: DEV_ROOM_SPAWN_CONFIG.LEVEL.RESOURCE_ABUNDANCE,
+            enemyDensity: DEV_ROOM_SPAWN_CONFIG.LEVEL.ENEMY_DENSITY,
+            safeZoneDuration: DEV_ROOM_SPAWN_CONFIG.LEVEL.SAFE_ZONE_DURATION,
+            wavesEnabled: DEV_ROOM_SPAWN_CONFIG.SPAWNING.WAVES
         }, this.currentWorldSeed);
         
 

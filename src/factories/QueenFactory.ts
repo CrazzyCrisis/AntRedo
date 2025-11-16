@@ -58,6 +58,10 @@ export class QueenFactory {
         // 1. Create Model (Queen with 6 components: Pathfinding, Health, Combat, Vision, Inventory, ResourceGathering)
         const entityManager = EntityManager.getInstance();
         const queen = new Queen(gridX, gridY, factionId, entityManager);
+        
+        // CRITICAL: Disable snapping for pathfinding-controlled entities
+        // Snapping interferes with PathfindingComponent's precise tile-to-tile movement
+        queen.enableSnapping = false;
 
         // 2. Register Queen as active for this faction
         QueenFactory.activeQueens.set(factionId, queen);
@@ -80,7 +84,7 @@ export class QueenFactory {
         setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES);
 
         // Setup health bar (automatically tracks position and cleans up)
-        setupHealthBarBinding(queen, renderer, RenderLayer.ABOVE_ENTITIES);
+        setupHealthBarBinding(queen, renderer, RenderLayer.VISUAL_EFFECTS);
 
         // 4. Register with EntityManager for update() lifecycle (MUST happen before ResourceGatheringComponent can function)
         EntityManager.getInstance().addEntity(queen);

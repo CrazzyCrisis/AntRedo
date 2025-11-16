@@ -18,11 +18,10 @@
 
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
-import { EventBus } from '../../utils/eventBus';
 import { lerp } from '../../utils/helpers';
 
 export class HealthBarComponent implements Renderable {
-    public layer: RenderLayer = RenderLayer.ABOVE_ENTITIES;
+    public layer: RenderLayer = RenderLayer.VISUAL_EFFECTS;
     public depth: number;
     
     private entityId: string;
@@ -31,11 +30,12 @@ export class HealthBarComponent implements Renderable {
     private currentHealth: number;
     private displayHealth: number; // For smooth lerp animation
     private maxHealth: number;
+    private spriteScale: number = 1.0; // Sprite scale for sizing
     
-    // Display settings
-    private barWidth: number = 32;
-    private barHeight: number = 4;
-    private offsetY: number = -20; // Pixels above entity
+    // Display settings (base values, scaled by sprite)
+    private baseBarWidth: number = 32;
+    private baseBarHeight: number = 4;
+    private baseOffsetY: number = -20; // Pixels above entity
     private borderThickness: number = 1;
     
     // Timing and visibility
@@ -68,19 +68,42 @@ export class HealthBarComponent implements Renderable {
      * Subscribe to health-related events for this entity
      */
     private setupEventListeners(): void {
+        const { EventBus, GameEvents } = require('../../utils/eventBus');
+        const { EntityManager } = require('../../managers/EntityManager');
+        
         // Listen for damage events
-        EventBus.on('ENTITY_DAMAGED', (entityId: string, _damage: number, newHealth: number) => {
+        EventBus.on(GameEvents.ENTITY_DAMAGE, (entityId: string, _damage: number, _x: number, _y: number) => {
             if (entityId === this.entityId) {
-                this.updateHealth(newHealth, this.maxHealth);
-                this.lastChangeTime = Date.now(); // Reset timer on damage
+                console.log(`[HealthBar] Received ENTITY_DAMAGE event for ${entityId}`);
+                // Get updated health from entity
+                const entity = EntityManager.getInstance().getEntity(entityId);
+                if (entity) {
+                    const healthComp = entity.getComponent('Health');
+                    if (healthComp) {
+                        const newHealth = healthComp.getCurrentHealth();
+                        const maxHealth = healthComp.getMaxHealth();
+                        console.log(`[HealthBar] Updating health from HealthComponent: ${newHealth}/${maxHealth}`);
+                        this.updateHealth(newHealth, maxHealth);
+                    }
+                }
             }
         });
         
         // Listen for heal events
-        EventBus.on('ENTITY_HEALED', (entityId: string, _healAmount: number, newHealth: number) => {
+        EventBus.on(GameEvents.ENTITY_HEALED, (entityId: string, _healAmount: number, _x: number, _y: number) => {
             if (entityId === this.entityId) {
-                this.updateHealth(newHealth, this.maxHealth);
-                this.lastChangeTime = Date.now(); // Reset timer on heal
+                console.log(`[HealthBar] Received ENTITY_HEALED event for ${entityId}`);
+                // Get updated health from entity
+                const entity = EntityManager.getInstance().getEntity(entityId);
+                if (entity) {
+                    const healthComp = entity.getComponent('Health');
+                    if (healthComp) {
+                        const newHealth = healthComp.getCurrentHealth();
+                        const maxHealth = healthComp.getMaxHealth();
+                        console.log(`[HealthBar] Updating health from HealthComponent: ${newHealth}/${maxHealth}`);
+                        this.updateHealth(newHealth, maxHealth);
+                    }
+                }
             }
         });
     }
@@ -91,6 +114,7 @@ export class HealthBarComponent implements Renderable {
      * @param maxHealth - New max health (for when entity gets buffed/debuffed)
      */
     public updateHealth(currentHealth: number, maxHealth?: number): void {
+        console.log(`[HealthBar] updateHealth() called for ${this.entityId}: ${currentHealth}/${maxHealth || this.maxHealth}`);
         this.currentHealth = currentHealth;
         if (maxHealth !== undefined) {
             this.maxHealth = maxHealth;
@@ -109,6 +133,14 @@ export class HealthBarComponent implements Renderable {
         this.x = x;
         this.y = y;
         this.depth = y; // Update depth for sorting
+    }
+    
+    /**
+     * Set sprite scale for proper sizing
+     * @param scale - Sprite scale multiplier
+     */
+    public setSpriteScale(scale: number): void {
+        this.spriteScale = scale;
     }
     
     /**
@@ -168,6 +200,8 @@ export class HealthBarComponent implements Renderable {
      * Render health bar above entity
      */
     render(graphics: any): void {
+        console.log(`[HealthBar] render() called for ${this.entityId} at (${this.x}, ${this.y}) - HP: ${this.currentHealth}/${this.maxHealth}, shouldDisplay: ${this.shouldDisplay()}`);
+        
         // Check if should display
         if (!this.shouldDisplay()) {
             return;
@@ -181,32 +215,40 @@ export class HealthBarComponent implements Renderable {
         
         graphics.push();
         
+        // Calculate scaled dimensions
+        const barWidth = this.baseBarWidth * this.spriteScale;
+        const barHeight = this.baseBarHeight * this.spriteScale;
+        const offsetY = this.baseOffsetY * this.spriteScale;
+        const border = this.borderThickness * this.spriteScale;
+        
         // Position above entity
-        const barX = this.x - this.barWidth / 2;
-        const barY = this.y + this.offsetY;
+        const barX = this.x - barWidth / 2;
+        const barY = this.y + offsetY;
+        const cornerRadius = 2 * this.spriteScale; // Rounded corners scaled with sprite
         
         // Draw background (dark gray border)
         graphics.fill(40, 40, 40, this.alpha);
         graphics.noStroke();
         graphics.rect(
-            barX - this.borderThickness,
-            barY - this.borderThickness,
-            this.barWidth + (this.borderThickness * 2),
-            this.barHeight + (this.borderThickness * 2)
+            barX - border,
+            barY - border,
+            barWidth + (border * 2),
+            barHeight + (border * 2),
+            cornerRadius
         );
         
         // Draw background (black interior)
         graphics.fill(0, 0, 0, this.alpha);
-        graphics.rect(barX, barY, this.barWidth, this.barHeight);
+        graphics.rect(barX, barY, barWidth, barHeight, cornerRadius);
         
         // Calculate fill width
         const healthPercent = Math.max(0, Math.min(1, this.displayHealth / this.maxHealth));
-        const fillWidth = this.barWidth * healthPercent;
+        const fillWidth = barWidth * healthPercent;
         
         // Draw health fill (color-coded)
         const color = this.getHealthColor();
         graphics.fill(color.r, color.g, color.b, this.alpha);
-        graphics.rect(barX, barY, fillWidth, this.barHeight);
+        graphics.rect(barX, barY, fillWidth, barHeight, cornerRadius);
         
         graphics.pop();
     }

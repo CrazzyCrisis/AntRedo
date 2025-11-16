@@ -17,6 +17,7 @@ import { BuildingManager } from './managers/BuildingManager';
 import { GameStateManager } from './managers/GameStateManager';
 import { QueenFactory } from './factories/QueenFactory';
 import { Renderer } from './rendering/Renderer';
+import { RenderLayer } from './rendering/RenderLayer';
 import { Camera } from './rendering/Camera';
 import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
@@ -334,6 +335,9 @@ function draw() {
     
     // Update input manager LAST (clears just-pressed/released flags for next frame)
     InputManager.getInstance().update();
+    
+    // Mark DEBUG layer dirty every frame for real-time updates
+    renderer.markLayerDirty(RenderLayer.DEBUG);
     
     // Render all layers
     renderer.render();

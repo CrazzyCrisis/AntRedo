@@ -34,7 +34,6 @@ export class GameObject {
     
     // Movement system
     public moveSpeed: number = 3.0; // Tiles per second
-    private moveAccumulator: number = 0; // Accumulated movement time
     private targetMoveX: number = 0; // Pending movement direction
     private targetMoveY: number = 0;
     
@@ -205,8 +204,7 @@ export class GameObject {
             // Emit smooth position update
             EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
             
-            // Reset movement accumulator while snapping
-            this.moveAccumulator = 0;
+            // Reset movement targets while snapping
             this.targetMoveX = 0;
             this.targetMoveY = 0;
             return;
@@ -214,7 +212,6 @@ export class GameObject {
         
         if (!this.isMoving) {
             // Not moving and not snapping - idle
-            this.moveAccumulator = 0;
             this.targetMoveX = 0;
             this.targetMoveY = 0;
             return;
@@ -257,34 +254,39 @@ export class GameObject {
         this.smoothWorldX += this.targetMoveX * moveDistance;
         this.smoothWorldY += this.targetMoveY * moveDistance;
         
-        // Emit smooth position update for rendering
-        EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
+        // Sync grid position to match smooth position (sprite is source of truth)
+        // This ensures logical position always matches visual position
+        const centerOffset = TILE_CONFIG.SIZE / 2;
+        const spriteWorldX = this.smoothWorldX + centerOffset;
+        const spriteWorldY = this.smoothWorldY + centerOffset;
+        const spriteGridX = Math.floor(spriteWorldX / TILE_CONFIG.SIZE);
+        const spriteGridY = Math.floor(spriteWorldY / TILE_CONFIG.SIZE);
         
-        // Accumulate movement time for grid position updates
-        this.moveAccumulator += deltaSeconds * this.moveSpeed;
-
-        // Update grid position when accumulator reaches 1.0
-        if (this.moveAccumulator >= 1.0) {
-            const newGridX = this.gridX + this.targetMoveX;
-            const newGridY = this.gridY + this.targetMoveY;
-            
+        // If sprite crossed into a new tile, update grid position
+        if (spriteGridX !== this.gridX || spriteGridY !== this.gridY) {
             // Check for collision with other ants (only ants bounce into each other)
             let canMove = true;
             if (this.type === 'ant') {
                 // Lazy-import EntityManager to avoid circular dependency
                 const { EntityManager } = require('../managers/EntityManager');
-                const occupant = EntityManager.getInstance().getTileOccupant(newGridX, newGridY);
+                const occupant = EntityManager.getInstance().getTileOccupant(spriteGridX, spriteGridY);
                 if (occupant && occupant.type === 'ant' && occupant.id !== this.id) {
                     canMove = false; // Tile occupied by another ant - collision!
+                    // Stop smooth movement at tile boundary
+                    const blockedWorldX = this.gridX * TILE_CONFIG.SIZE;
+                    const blockedWorldY = this.gridY * TILE_CONFIG.SIZE;
+                    this.smoothWorldX = blockedWorldX;
+                    this.smoothWorldY = blockedWorldY;
                 }
             }
             
             if (canMove) {
-                this.moveTo(newGridX, newGridY);
+                this.moveTo(spriteGridX, spriteGridY);
             }
-            
-            this.moveAccumulator -= 1.0; // Keep remainder for smooth movement
         }
+        
+        // Emit smooth position update for rendering
+        EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
 
         // Reset target for next frame (must be set again each frame)
         this.targetMoveX = 0;

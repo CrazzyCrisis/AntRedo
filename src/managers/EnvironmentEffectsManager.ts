@@ -11,7 +11,6 @@ import { TileGrid } from '../world/TileGrid';
 import { TileType } from '../world/TileSystem';
 import { HAZARDOUS_TILES, WATER_EFFECT_CONFIG, TILE_PARTICLE_COLORS } from '../config/environmentEffectsConfig';
 import { WATER_PARTICLE_CONFIG } from '../config/visualEffects/waterParticleConfig';
-import { gridToWorldCenter } from '../utils/helpers';
 import { TILE_SIZE } from '../world/TileSystem';
 import { Renderer } from '../rendering/Renderer';
 import { RenderLayer } from '../rendering/RenderLayer';
@@ -62,11 +61,6 @@ export class EnvironmentEffectsManager extends BaseManager {
      * Setup event listeners
      */
     private setupEventListeners(): void {
-        // Listen for entity movement to check tile type
-        this.subscribe(GameEvents.ENTITY_MOVED, (entityId: string, gridX: number, gridY: number) => {
-            this.checkEntityTile(entityId, gridX, gridY);
-        });
-
         // Listen for entity destruction to cleanup
         this.subscribe(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
             this.entityStates.delete(entityId);
@@ -74,57 +68,76 @@ export class EnvironmentEffectsManager extends BaseManager {
     }
 
     /**
-     * Check if entity is on a hazardous tile
+     * Check if entity is on a hazardous tile based on smooth (rendered) position
      */
-    private checkEntityTile(entityId: string, gridX: number, gridY: number): void {
+    private checkEntityTile(entity: GameObject): { isInHazard: boolean; tileType: TileType | null } {
         if (!this.tileGrid) {
-            return;
+            return { isInHazard: false, tileType: null };
         }
 
+        // Use smooth position to determine tile (where sprite actually renders)
+        const smoothPos = entity.getSmoothPosition();
+        const centerOffset = TILE_SIZE / 2;
+        const worldX = smoothPos.x + centerOffset;
+        const worldY = smoothPos.y + centerOffset;
+        
+        // Convert world position to grid position
+        const gridX = Math.floor(worldX / TILE_SIZE);
+        const gridY = Math.floor(worldY / TILE_SIZE);
+        
         const tileType = this.tileGrid.getTileType(gridX, gridY);
-        if (tileType === null) return;
+        if (tileType === null) {
+            return { isInHazard: false, tileType: null };
+        }
 
         const hazardConfig = HAZARDOUS_TILES[tileType as keyof typeof HAZARDOUS_TILES];
-        const wasInHazard = this.entityStates.get(entityId)?.inHazard || false;
         const isInHazard = hazardConfig !== undefined;
-
-        if (isInHazard) {
-            // Entity entered or is still in hazard
-            if (!this.entityStates.has(entityId)) {
-                // First time entering hazard
-                this.entityStates.set(entityId, {
-                    entityId,
-                    tileType,
-                    lastDamageTime: Date.now(),
-                    lastParticleTime: Date.now(),
-                    inHazard: true
-                });
-
-                // Emit splash event (for sound)
-                this.emit(GameEvents.ENTITY_ENTER_WATER, entityId, gridX, gridY);
-            } else {
-                // Update tile type in case they moved to different hazard
-                const state = this.entityStates.get(entityId)!;
-                state.tileType = tileType;
-                state.inHazard = true;
-            }
-        } else if (wasInHazard) {
-            // Entity left hazard
-            this.entityStates.delete(entityId);
-            this.emit(GameEvents.ENTITY_EXIT_WATER, entityId);
-        }
+        
+        return { isInHazard, tileType };
     }
 
     /**
      * Update all environmental effects
      * Call this from game loop
+     * Checks hazards based on entity's smooth (rendered) position
      */
     public update(entities: GameObject[]): void {
-        if (this.entityStates.size === 0) return; // Skip if no entities in hazards
+        if (!this.tileGrid) return;
         
         const now = Date.now();
 
-        // Update each entity in hazardous tiles
+        // Check all entities for hazard status based on their smooth position
+        for (const entity of entities) {
+            const { isInHazard, tileType } = this.checkEntityTile(entity);
+            const wasInHazard = this.entityStates.has(entity.id);
+            
+            if (isInHazard && tileType !== null) {
+                // Entity is in hazard
+                if (!wasInHazard) {
+                    // First time entering hazard
+                    this.entityStates.set(entity.id, {
+                        entityId: entity.id,
+                        tileType,
+                        lastDamageTime: now,
+                        lastParticleTime: now,
+                        inHazard: true
+                    });
+
+                    // Emit splash event (for sound)
+                    this.emit(GameEvents.ENTITY_ENTER_WATER, entity.id, entity.gridX, entity.gridY);
+                } else {
+                    // Still in hazard - update tile type if changed
+                    const state = this.entityStates.get(entity.id)!;
+                    state.tileType = tileType;
+                }
+            } else if (wasInHazard) {
+                // Entity left hazard
+                this.entityStates.delete(entity.id);
+                this.emit(GameEvents.ENTITY_EXIT_WATER, entity.id);
+            }
+        }
+
+        // Apply damage and spawn particles for entities in hazards
         this.entityStates.forEach((state, entityId) => {
             const entity = entities.find(e => e.id === entityId);
             if (!entity) {
@@ -159,21 +172,25 @@ export class EnvironmentEffectsManager extends BaseManager {
     /**
      * Spawn swimming particles around entity
      * Particles scale with entity sprite size
+     * Uses entity's smooth (rendered) position for accurate placement
      */
     private spawnSwimmingParticles(entity: GameObject, tileType: TileType): void {
         if (!this.renderer) {
             return;
         }
 
-        const worldPos = gridToWorldCenter(entity.gridX, entity.gridY, TILE_SIZE);
+        // Use smooth position (where sprite is actually rendered) instead of grid position
+        const smoothPos = entity.getSmoothPosition();
+        const centerOffset = TILE_SIZE / 2; // Sprites render from center
+        const worldX = smoothPos.x + centerOffset;
+        const worldY = smoothPos.y + centerOffset;
+        
         const color = TILE_PARTICLE_COLORS[tileType] || WATER_PARTICLE_CONFIG.color;
 
         // Detect sprite size for scaling particles
-        // Try to get sprite component from entity's internal _cleanup or attached renderables
         let spriteScale = 1.0;
         const entityAny = entity as any;
         
-        // Check if entity has a sprite reference (set by setupEntitySpriteBinding)
         if (entityAny._spriteComponent) {
             spriteScale = entityAny._spriteComponent.scale || 1.0;
         }
@@ -192,8 +209,8 @@ export class EnvironmentEffectsManager extends BaseManager {
             const offsetX = Math.cos(angle) * distance;
             const offsetY = Math.sin(angle) * distance;
             
-            const particleX = worldPos.x + offsetX;
-            const particleY = worldPos.y + offsetY + WATER_EFFECT_CONFIG.sinkDepth;
+            const particleX = worldX + offsetX;
+            const particleY = worldY + offsetY + WATER_EFFECT_CONFIG.sinkDepth;
             
             // Create particle with scaled size
             const particleSize = particleSizeMin + Math.random() * (particleSizeMax - particleSizeMin);

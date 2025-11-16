@@ -268,7 +268,7 @@ export const DEFAULT_SPAWN_CONFIG: SpawnConfig = {
     },
     
     waves: {
-        enabled: true,
+        enabled: false,
         baseDelay: 120,           // 2 minutes
         baseAntCount: 3,
         antCountMultiplier: 1.5,

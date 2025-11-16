@@ -15,6 +15,14 @@ export const DEV_ROOM_CONFIG = {
         NOISE_SCALE: 0.05      // Perlin noise scale (0.05-0.3 typical range)
     },
 
+    // Starting resources for testing
+    STARTING_RESOURCES: {
+        FOOD: 50,               // Starting food for healing system testing
+        WOOD: 0,
+        STONE: 0,
+        MAGIC_CRYSTAL: 0
+    },
+
     // Camera settings
     CAMERA: {
         INITIAL_X: 3840,          // Starting camera X (centered on 30-tile width at 256px each)

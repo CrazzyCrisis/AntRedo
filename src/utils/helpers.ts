@@ -670,16 +670,12 @@ export function setupHealthBarBinding(
         return null;
     }
     
-    // Get initial world position (assume entity has worldX/worldY or use grid conversion)
-    let worldX = entity.worldX || 0;
-    let worldY = entity.worldY || 0;
-    
-    // If entity only has grid coordinates, convert them
-    if (worldX === 0 && worldY === 0 && entity.gridX !== undefined) {
-        const worldPos = gridToWorldCenter(entity.gridX, entity.gridY, require('../world/TileSystem').TILE_SIZE);
-        worldX = worldPos.x;
-        worldY = worldPos.y;
-    }
+    // Get initial smooth position (where sprite actually renders)
+    const smoothPos = entity.getSmoothPosition();
+    const TILE_SIZE_CONST = require('../world/TileSystem').TILE_SIZE;
+    const centerOffsetValue = TILE_SIZE_CONST / 2;
+    const worldX = smoothPos.x + centerOffsetValue;
+    const worldY = smoothPos.y + centerOffsetValue;
     
     // Create health bar component
     const healthBar = new HealthBarComponent(
@@ -690,13 +686,26 @@ export function setupHealthBarBinding(
         healthComp.getMaxHealth()
     );
     
+    console.log(`[HealthBar] Created for entity ${entity.id} at (${worldX}, ${worldY}) - HP: ${healthComp.getCurrentHealth()}/${healthComp.getMaxHealth()}`);
+    
+    // Set sprite scale if available
+    if (entity._spriteComponent && entity._spriteComponent.scale) {
+        healthBar.setSpriteScale(entity._spriteComponent.scale);
+        console.log(`[HealthBar] Set sprite scale to ${entity._spriteComponent.scale} for entity ${entity.id}`);
+    }
+    
     // Register health bar with renderer
     const unregister = renderer.register(healthBar);
+    console.log(`[HealthBar] Registered with renderer on layer ${healthBar.layer} for entity ${entity.id}`);
     
     // Listen for smooth position updates - update health bar position
     const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
         if (entityId === entity.id) {
-            healthBar.setPosition(smoothX, smoothY);
+            // Add center offset to match sprite position
+            const newX = smoothX + centerOffsetValue;
+            const newY = smoothY + centerOffsetValue;
+            healthBar.setPosition(newX, newY);
+            console.log(`[HealthBar] Position updated for ${entityId}: (${newX}, ${newY})`);
             renderer.markLayerDirty(layer); // Mark layer dirty for redraw
         }
     });

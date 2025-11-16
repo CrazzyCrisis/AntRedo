@@ -55,12 +55,17 @@ export class PathfindingComponent extends BaseComponent {
      * @param grid - World grid for pathfinding
      */
     public findPath(targetCol: number, targetRow: number, grid: TileData[][]): void {
+        console.log(`[PathfindingComponent] findPath() called with target (${targetCol}, ${targetRow})`);
+        
         if (!this.owner) {
             return;
         }
 
+        console.log(`[PathfindingComponent] Owner at (${this.owner.gridX}, ${this.owner.gridY})`);
+
         // Check if already at target
         if (this.owner.gridX === targetCol && this.owner.gridY === targetRow) {
+            console.log('[PathfindingComponent] Already at target, clearing path');
             this.clearPath();
             return;
         }
@@ -98,6 +103,10 @@ export class PathfindingComponent extends BaseComponent {
             EventBus.emit('PATH_FAILED', this.owner.id, 'No path found');
             return;
         }
+
+        console.log(`[PathfindingComponent] Path found with ${path.length} nodes:`);
+        console.log(`  First node: (${path[0].col}, ${path[0].row})`);
+        console.log(`  Last node: (${path[path.length - 1].col}, ${path[path.length - 1].row})`);
 
         // Store path and start following
         this.currentPath = path;

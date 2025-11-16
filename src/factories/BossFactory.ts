@@ -80,7 +80,7 @@ export class BossFactory {
         setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES);
 
         // Setup health bar (automatically tracks position and cleans up)
-        setupHealthBarBinding(boss, renderer, RenderLayer.ABOVE_ENTITIES);
+        setupHealthBarBinding(boss, renderer, RenderLayer.VISUAL_EFFECTS);
 
         return boss;
     }

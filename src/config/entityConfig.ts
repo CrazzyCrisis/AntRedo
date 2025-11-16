@@ -36,6 +36,11 @@ interface AntConfig {
         DEATH_THRESHOLD: number;
         CRITICAL_THRESHOLD: number;
     };
+    HEALING: {
+        RATE_PER_FOOD: number;       // HP healed per food consumed per second
+        FOOD_COST_PER_SECOND: number; // Food consumed from colony storage per second while healing
+        MIN_HEALTH_PERCENT: number;   // Only heal below this % of max health
+    };
     SMELL_RANGE: number;             // How far ants can smell resources
 }
 
@@ -84,6 +89,12 @@ const ANT: AntConfig = {
         CRITICAL_THRESHOLD: 20        // Show warning/urgent gathering below 20%
     },
 
+    HEALING: {
+        RATE_PER_FOOD: 2.0,           // Heal 2 HP per food per second
+        FOOD_COST_PER_SECOND: 0.5,    // Consume 0.5 food from colony per second while healing
+        MIN_HEALTH_PERCENT: 0.8       // Only heal when below 80% health
+    },
+
     SMELL_RANGE: 10                   // Grid tiles - ants can smell resources this far
 };
 
@@ -114,6 +125,11 @@ interface QueenConfig {
     attackDamage: number;
     attackRange: number;
     attackGCD: number;       // Global cooldown for attacks (ms)
+    HEALING: {
+        RATE_PER_FOOD: number;       // HP healed per food consumed per second
+        FOOD_COST_PER_SECOND: number; // Food consumed from colony storage per second while healing
+        MIN_HEALTH_PERCENT: number;   // Only heal below this % of max health
+    };
     POWERS: Record<QueenPowerType, QueenPowerConfig>;
     KEYBINDS: Record<QueenPowerType, string>;
 }
@@ -125,6 +141,12 @@ const QUEEN: QueenConfig = {
     attackDamage: 15,
     attackRange: 3,         // Melee range
     attackGCD: 800,      // 0.8 second global cooldown for attacks
+
+    HEALING: {
+        RATE_PER_FOOD: 5.0,           // Queen heals faster: 5 HP per food per second
+        FOOD_COST_PER_SECOND: 1.0,    // Consumes 1 food from colony per second while healing
+        MIN_HEALTH_PERCENT: 0.9       // Queen heals when below 90% health
+    },
 
     POWERS: {
         lightning: {
@@ -188,6 +210,11 @@ interface BossConfig {
     patrolSpeed: number;
     attackDamage: number;
     attackRange: number;
+    HEALING: {
+        RATE_PER_FOOD: number;       // HP healed per food consumed per second
+        FOOD_COST_PER_SECOND: number; // Food consumed from colony storage per second while healing
+        MIN_HEALTH_PERCENT: number;   // Only heal below this % of max health
+    };
     VISION: {
         coneAngle: number;        // Degrees
         coneDistance: number;     // Grid tiles
@@ -209,6 +236,12 @@ const BOSS: BossConfig = {
     patrolSpeed: 1.0,
     attackDamage: 25,
     attackRange: 2,           // Melee range in grid tiles
+
+    HEALING: {
+        RATE_PER_FOOD: 3.0,           // Boss heals 3 HP per food per second (slower than queen)
+        FOOD_COST_PER_SECOND: 0.0,    // Bosses don't consume colony food (enemy faction)
+        MIN_HEALTH_PERCENT: 0.7       // Boss heals when below 70% health
+    },
 
     VISION: {
         coneAngle: 90,        // 90-degree cone
@@ -334,10 +367,10 @@ interface SpriteScales {
 }
 
 const SPRITE_SCALES: SpriteScales = {
-    ant: 2.0,           // Ants at normal 32x32 sprite size
-    queen: 10.0,         // Queen 150% larger (80x80)
-    boss: 10.0,          // Bosses big (320x320)
-    resource: 3.0,      // We are ants, resources appear larger (160x160)
+    ant: 1.0,           // Ants at normal 32x32 sprite size
+    queen: 2.5,         // Queen 150% larger (80x80)
+    boss: 4.0,          // Bosses big (320x320)
+    resource: 1.0,      // We are ants, resources appear larger (160x160)
     projectile: 1.0,    // Projectiles at normal size
     building: 4.0,      // Buildings at normal size
     decoration: 1.0     // Decorations at normal size

@@ -55,7 +55,7 @@ export class Ant extends GameObject {
         this.addComponent('Pathfinding', pathfinding);
 
         // Health system
-        const health = new HealthComponent(100); // Max health 100
+        const health = new HealthComponent(100, 0, 'ant', this.factionId); // Max health 100, food-based healing
         this.addComponent('Health', health);
 
         // Combat system

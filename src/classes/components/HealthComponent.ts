@@ -8,10 +8,12 @@ import { BaseComponent } from './BaseComponent';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 import { gridToWorldCenter } from '../../utils/helpers';
 import { TILE_SIZE } from '../../world/TileSystem';
+import { ENTITY_CONFIG } from '../../config/entityConfig';
 
 /**
  * HealthComponent
  * Manages entity health, damage, healing, and death
+ * Now includes colony food-based healing system
  */
 export class HealthComponent extends BaseComponent {
 
@@ -20,6 +22,8 @@ export class HealthComponent extends BaseComponent {
     private regenRate: number;          // Health per second regeneration
     private alive: boolean = true;
     private timeSinceLastDamage: number = Infinity; // Track game time for regen delay (start at Infinity = always regenerating initially)
+    private entityType: 'ant' | 'queen' | 'boss'; // Entity type for healing config
+    private factionId: string;          // Faction ID for resource access
     
     private readonly REGEN_DELAY = 3000; // 3 seconds before regen starts after damage
 
@@ -27,16 +31,20 @@ export class HealthComponent extends BaseComponent {
      * Create a new HealthComponent
      * @param maxHealth - Maximum health
      * @param regenRate - Health regeneration per second (0 = no regen)
+     * @param entityType - Type of entity (for healing config)
+     * @param factionId - Faction ID (for resource access)
      */
-    constructor(maxHealth: number, regenRate: number = 0) {
+    constructor(maxHealth: number, regenRate: number = 0, entityType: 'ant' | 'queen' | 'boss' = 'ant', factionId: string = 'player') {
         super();
         this.maxHealth = maxHealth;
         this.currentHealth = maxHealth;
         this.regenRate = regenRate;
+        this.entityType = entityType;
+        this.factionId = factionId;
     }
 
     /**
-     * Lifecycle: Update health regeneration
+     * Lifecycle: Update health regeneration and colony food-based healing
      */
     update(deltaTime: number): void {
         if (!this.alive || this.currentHealth >= this.maxHealth) {
@@ -61,10 +69,63 @@ export class HealthComponent extends BaseComponent {
             regenTime = this.timeSinceLastDamage - this.REGEN_DELAY;
         }
 
-        // Regenerate health
+        // Standard regeneration (natural regen rate)
         if (this.regenRate > 0 && regenTime > 0) {
             const regenAmount = (regenTime / 1000) * this.regenRate;
             this.heal(regenAmount);
+        }
+
+        // Colony food-based healing (separate from natural regen)
+        this.tryColonyHealing(deltaTime);
+    }
+
+    /**
+     * Try to heal using colony food resources
+     * @param deltaTime - Time since last update (milliseconds)
+     */
+    private tryColonyHealing(deltaTime: number): void {
+        // Get healing config for this entity type
+        const healConfig = this.getHealingConfig();
+        if (!healConfig) {
+            return; // No healing config for this entity type
+        }
+
+        // Check if health is below threshold for food-based healing
+        const healthPercent = this.currentHealth / this.maxHealth;
+        if (healthPercent >= healConfig.MIN_HEALTH_PERCENT) {
+            return; // Health is above healing threshold
+        }
+
+        // Calculate food to consume this frame
+        const foodToConsume = healConfig.FOOD_COST_PER_SECOND * (deltaTime / 1000);
+        
+        // Try to consume food from colony (dynamic require to avoid circular dependency)
+        const { ResourceManager } = require('../../managers/ResourceManager');
+        const resourceManager = ResourceManager.getInstance();
+        
+        if (resourceManager.consumeFoodForHealing(this.factionId, foodToConsume)) {
+            // Successfully consumed food - apply healing
+            const healAmount = healConfig.RATE_PER_FOOD * foodToConsume;
+            console.log(`[ColonyHealing] ${this.owner?.id} (${this.entityType}) consumed ${foodToConsume.toFixed(2)} food, healing ${healAmount.toFixed(2)} HP (${this.currentHealth.toFixed(1)}/${this.maxHealth})`);
+            this.heal(healAmount);
+        }
+        // If no food available, simply don't heal (entity won't die from lack of food healing)
+    }
+
+    /**
+     * Get healing config for this entity type
+     * @returns Healing config or null if not applicable
+     */
+    private getHealingConfig() {
+        switch (this.entityType) {
+            case 'ant':
+                return ENTITY_CONFIG.ANT.HEALING;
+            case 'queen':
+                return ENTITY_CONFIG.QUEEN.HEALING;
+            case 'boss':
+                return ENTITY_CONFIG.BOSS.HEALING;
+            default:
+                return null;
         }
     }
 

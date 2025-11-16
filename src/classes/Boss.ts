@@ -63,6 +63,7 @@ export class Boss extends GameObject {
         // Attach components to GameObject
         this.addComponent('stateMachine', this.stateMachine);
         this.addComponent('pathfinding', this.pathfinding);
+        this.health = new HealthComponent(ENTITY_CONFIG.BOSS.health, 0, 'boss', 'enemy'); // Boss faction, no food cost
         this.addComponent('health', this.health);
         this.addComponent('combat', this.combat);
         this.addComponent('vision', this.vision);

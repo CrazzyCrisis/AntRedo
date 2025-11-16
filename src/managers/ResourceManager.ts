@@ -235,6 +235,16 @@ export class ResourceManager extends BaseManager {
     }
 
     /**
+     * Try to consume food for healing
+     * @param factionId - Faction ID
+     * @param foodAmount - Amount of food to consume
+     * @returns True if food was consumed, false if insufficient food
+     */
+    public consumeFoodForHealing(factionId: string, foodAmount: number): boolean {
+        return this.removeResource(factionId, 'food', foodAmount);
+    }
+
+    /**
      * Clear all resources (for testing)
      */
     public clear(): void {

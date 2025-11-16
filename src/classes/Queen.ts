@@ -55,7 +55,7 @@ export class Queen extends GameObject {
 
         // Initialize components
         this.addComponent('Pathfinding', new PathfindingComponent(1.5)); // Slower than ants
-        this.addComponent('Health', new HealthComponent(ENTITY_CONFIG.QUEEN.health)); // Higher health than ants
+        this.addComponent('Health', new HealthComponent(ENTITY_CONFIG.QUEEN.health, 0, 'queen', factionId)); // Higher health than ants, food-based healing
         this.addComponent('Combat', new CombatComponent(
             ENTITY_CONFIG.QUEEN.attackDamage,
             ENTITY_CONFIG.QUEEN.attackRange, 
@@ -309,6 +309,12 @@ export class Queen extends GameObject {
 
         // Request movement (processed by GameObject with speed/deltaTime)
         if (moveX !== 0 || moveY !== 0) {
+            // Cancel pathfinding when user takes manual control
+            const pathfindingComponent = this.getComponent('Pathfinding') as PathfindingComponent;
+            if (pathfindingComponent && pathfindingComponent.hasPath()) {
+                pathfindingComponent.clearPath();
+            }
+            
             this.requestMove(moveX, moveY);
         }
 

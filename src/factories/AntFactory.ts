@@ -126,7 +126,7 @@ export class AntFactory {
         setupEntitySpriteBinding(ant, animatedSprite, renderer, RenderLayer.ENTITIES);
 
         // Setup health bar (automatically tracks position and cleans up)
-        setupHealthBarBinding(ant, renderer, RenderLayer.ABOVE_ENTITIES);
+        setupHealthBarBinding(ant, renderer, RenderLayer.VISUAL_EFFECTS);
 
         // Create progress bar for resource gathering (initially hidden)
         const progressBar = new ProgressBarComponent(worldX, worldY);
