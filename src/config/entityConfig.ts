@@ -170,11 +170,11 @@ const QUEEN: QueenConfig = {
     },
 
     KEYBINDS: {
-        lightning: 'Q',
-        fireball: 'W',
-        blackhole: 'E',
-        tidalwave: 'R',
-        finalFlash: 'T'
+        lightning: '1',
+        fireball: '2',
+        blackhole: '3',
+        tidalwave: '4',
+        finalFlash: '5'
     }
 };
 
@@ -316,6 +316,34 @@ const BUILDINGS: Record<BuildingType, BuildingConfig> = {
 };
 
 // ============================================================================
+// SPRITE SCALE CONFIGURATION
+// ============================================================================
+
+/**
+ * Sprite scale multipliers for entity rendering
+ * 1.0 = native sprite size, 2.0 = double size, 0.5 = half size
+ */
+interface SpriteScales {
+    ant: number;
+    queen: number;
+    boss: number;
+    resource: number;
+    projectile: number;
+    building: number;
+    decoration: number;
+}
+
+const SPRITE_SCALES: SpriteScales = {
+    ant: 2.0,           // Ants at normal 32x32 sprite size
+    queen: 2.5,         // Queen 150% larger (80x80)
+    boss: 10.0,          // Bosses big (320x320)
+    resource: 3.0,      // We are ants, resources appear larger (160x160)
+    projectile: 1.0,    // Projectiles at normal size
+    building: 1.0,      // Buildings at normal size
+    decoration: 1.0     // Decorations at normal size
+};
+
+// ============================================================================
 // EXPORTED CONFIGURATION
 // ============================================================================
 
@@ -324,5 +352,6 @@ export const ENTITY_CONFIG = {
     QUEEN,
     BOSS,
     RESOURCES,
-    BUILDINGS
+    BUILDINGS,
+    SPRITE_SCALES
 } as const;

@@ -17,6 +17,7 @@ import {
     TilePosition
 } from '../imports/factoryImports';
 import { Resource } from '../classes/Resource';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * ResourceFactory creates Resource entities with automatic rendering and entity management.
@@ -77,6 +78,9 @@ export class ResourceFactory {
             -16, // offsetX to center sprite
             -16  // offsetY to center sprite
         );
+
+        // Apply configured sprite scale
+        spriteComponent.scale = ENTITY_CONFIG.SPRITE_SCALES.resource;
 
         // Register with EntityManager for spatial queries (ants need to find resources)
         EntityManager.getInstance().addEntity(resource);

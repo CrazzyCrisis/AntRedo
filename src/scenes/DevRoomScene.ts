@@ -116,7 +116,7 @@ export class DevRoomScene implements IScene {
         this.tileEdgeSprites = tileEdgeSprites;
         this.entitySprites = entitySprites;
         this.gameState = GameStateManager.getInstance();
-        this.worldGenerator = new WorldGenerator(128, 128);
+        this.worldGenerator = new WorldGenerator();
         this.inputManager = InputManager.getInstance();
         
         // Initialize combat visual handler for sprite animations, camera shake, sounds

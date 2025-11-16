@@ -6,7 +6,7 @@
 
 export const TILE_CONFIG = {
     // Core tile settings
-    SIZE: 32,                // Tile size in pixels (world coordinate scale)
+    SIZE: 128,                // Tile size in pixels (world coordinate scale)
     
     // Tile rendering settings
     USE_SPRITES: true,       // Set to true to use PNG sprites, false for placeholder colors

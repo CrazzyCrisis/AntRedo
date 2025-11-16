@@ -15,6 +15,7 @@ import {
     gridToWorldCenter
 } from '../imports/factoryImports';
 import { Boss } from '../classes/Boss';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * BossFactory creates Boss entities with automatic rendering and entity management.
@@ -62,11 +63,14 @@ export class BossFactory {
             worldY,
             RenderLayer.ENTITIES,
             gridY, // Y-coordinate determines depth
-            64, // width (bosses are larger)
-            64, // height
-            -32, // offsetX to center sprite
-            -32  // offsetY to center sprite
+            32, // width (use base size, scale will multiply)
+            32, // height
+            -16, // offsetX to center sprite
+            -16  // offsetY to center sprite
         );
+
+        // Apply configured sprite scale (boss is 2x larger)
+        spriteComponent.scale = ENTITY_CONFIG.SPRITE_SCALES.boss;
 
         // Register with EntityManager for spatial queries
         EntityManager.getInstance().addEntity(boss);

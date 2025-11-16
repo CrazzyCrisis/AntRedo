@@ -28,7 +28,7 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     private spritesheet: any; // p5.Image
     private x: number;
     private y: number;
-    private scale: number = 1;
+    public scale: number = 1;  // Public for factory configuration
     private rotation: number = 0;
 
     // Animation data

@@ -41,8 +41,8 @@ export interface TileMovementConfig {
 export const TILE_MOVEMENT_CONFIG: Record<TileType, TileMovementConfig> = {
     // === NORMAL TERRAIN ===
     [TileType.GRASS]: {
-        pathfindingCost: 1.0,
-        speedModifier: { default: 1.0 },
+        pathfindingCost: 0.7,
+        speedModifier: { default: 1.2 },
         walkable: true
     },
     
@@ -78,7 +78,7 @@ export const TILE_MOVEMENT_CONFIG: Record<TileType, TileMovementConfig> = {
     [TileType.WATER]: {
         pathfindingCost: 100.0,        // Extremely high - almost never path through
         speedModifier: {
-            default: 0.4,              // 60% slower (future: will also damage)
+            default: 0.1,              // 90% slower (future: will also damage)
             // Future: fish/aquatic entities would have higher speed here
         },
         walkable: false                 // Not walkable (future: swimming mechanic could change this)

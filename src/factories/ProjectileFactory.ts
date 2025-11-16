@@ -14,6 +14,7 @@ import {
     TILE_SIZE
 } from '../imports/factoryImports';
 import { Projectile } from '../classes/Projectile';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * ProjectileFactory creates Projectile entities with automatic rendering and entity management.
@@ -83,6 +84,9 @@ export class ProjectileFactory {
             -8, // offsetX to center sprite
             -8  // offsetY to center sprite
         );
+
+        // Apply configured sprite scale
+        spriteComponent.scale = ENTITY_CONFIG.SPRITE_SCALES.projectile;
 
         // Register with EntityManager for collision detection
         EntityManager.getInstance().addEntity(projectile);

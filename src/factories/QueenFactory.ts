@@ -11,6 +11,7 @@ import {
     gridToWorldCenter
 } from '../imports/factoryImports';
 import { Queen } from '../classes/Queen';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * QueenFactory - CONTROLLER
@@ -69,6 +70,9 @@ export class QueenFactory {
             RenderLayer.ENTITIES,
             gridY  // depth = Y position for sorting
         );
+
+        // Apply configured sprite scale
+        spriteComponent.scale = ENTITY_CONFIG.SPRITE_SCALES.queen;
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)

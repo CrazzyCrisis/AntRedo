@@ -12,6 +12,7 @@
 
 import { Renderer, RenderLayer, SpriteComponent, setupEntitySpriteBinding } from '../imports/factoryImports';
 import { Decoration } from '../classes/Decoration';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 export class DecorationFactory {
     /**
@@ -45,6 +46,9 @@ export class DecorationFactory {
             -8, // offsetX to center sprite
             -8  // offsetY to center sprite
         );
+
+        // Apply configured sprite scale
+        spriteComponent.scale = ENTITY_CONFIG.SPRITE_SCALES.decoration;
         
         // 3. Bind model to view with automatic cleanup (helper eliminates 15 lines of boilerplate)
         setupEntitySpriteBinding(

@@ -12,13 +12,13 @@ export const DEV_ROOM_CONFIG = {
         WIDTH: 200,              // Width in tiles
         HEIGHT: 200,             // Height in tiles
         SEED: 12345,            // Fixed seed for consistency (use undefined for random)
-        NOISE_SCALE: 0.15      // Perlin noise scale (0.05-0.3 typical range)
+        NOISE_SCALE: 0.05      // Perlin noise scale (0.05-0.3 typical range)
     },
 
     // Camera settings
     CAMERA: {
-        INITIAL_X: 240,          // Starting camera X (centered on 30-tile width at 16px each)
-        INITIAL_Y: 160,          // Starting camera Y (centered on 20-tile height at 16px each)
+        INITIAL_X: 3840,          // Starting camera X (centered on 30-tile width at 256px each)
+        INITIAL_Y: 5120,          // Starting camera Y (centered on 20-tile height at 256px each)
         FOLLOW_PLAYER: true,    // Enable camera following when player is added
         SMOOTHING: 0.1           // Camera smoothing factor
     },

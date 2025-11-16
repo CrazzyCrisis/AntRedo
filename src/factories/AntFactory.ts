@@ -14,6 +14,7 @@ import { Ant } from '../classes/Ant';
 import { AntJobComponent } from '../classes/components/AntJobComponent';
 import { EntityState } from '../classes/components/StateMachineComponent';
 import { getEntitySpritesheet } from '../sketch';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * AntFactory creates Ant entities with automatic rendering setup.
@@ -79,6 +80,9 @@ export class AntFactory {
         
         // Center the sprite (32x32 frames, so offset by -16, -16)
         animatedSprite.setOffset(-16, -16);
+        
+        // Apply configured sprite scale
+        animatedSprite.scale = ENTITY_CONFIG.SPRITE_SCALES.ant;
         
         // Set depth for proper sorting (Y-coordinate determines depth - ants behind trees)
         animatedSprite.setDepth(gridY);
