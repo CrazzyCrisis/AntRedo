@@ -5,9 +5,11 @@ import { CombatComponent } from './components/CombatComponent';
 import { VisionComponent } from './components/VisionComponent';
 import { InventoryComponent } from './components/InventoryComponent';
 import { ResourceGatheringComponent } from './components/ResourceGatheringComponent';
+import { StateMachineComponent, EntityState } from './components/StateMachineComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { InputManager } from '../managers/InputManager';
 import { ENTITY_CONFIG } from '../config/entityConfig';
+import { distance } from '../utils/helpers';
 
 /**
  * QueenPower interface for power system
@@ -43,6 +45,11 @@ export class Queen extends GameObject {
     private keybindMap: Map<string, string> = new Map();
     // @ts-expect-error - Used in constructor to pass to ResourceGatheringComponent
     private entityManager: any;
+    
+    // Hazard avoidance state
+    private fleeingHazard: boolean = false;
+    private fleeStartTime: number = 0;
+    private fleeSafePosition: { x: number, y: number } | null = null;
 
     constructor(gridX: number, gridY: number, factionId: string, entityManager?: any) {
         super('queen', gridX, gridY);
@@ -54,6 +61,7 @@ export class Queen extends GameObject {
         this.moveSpeed = ENTITY_CONFIG.QUEEN.speed; // Queen moves at 4 tiles/second
 
         // Initialize components
+        this.addComponent('StateMachine', new StateMachineComponent(EntityState.IDLE));
         this.addComponent('Pathfinding', new PathfindingComponent(1.5)); // Slower than ants
         this.addComponent('Health', new HealthComponent(ENTITY_CONFIG.QUEEN.health, 0, 'queen', factionId)); // Higher health than ants, food-based healing
         this.addComponent('Combat', new CombatComponent(
@@ -286,7 +294,23 @@ export class Queen extends GameObject {
      * @param deltaTime Time since last update in ms
      */
     update(deltaTime: number): void {
-        if (!this.isActive || !this.playerControlled) return;
+        if (!this.isActive) return;
+
+        // Check for hazard avoidance (overrides player control when health is low)
+        this.checkHazardAvoidance();
+
+        // If fleeing hazard, use pathfinding instead of manual control
+        if (this.fleeingHazard) {
+            this.updateFleeingState();
+            super.update(deltaTime);
+            return;
+        }
+
+        // Normal player-controlled movement
+        if (!this.playerControlled) {
+            super.update(deltaTime);
+            return;
+        }
 
         // Handle continuous movement based on held keys
         const inputManager = InputManager.getInstance();
@@ -319,6 +343,164 @@ export class Queen extends GameObject {
         }
 
         super.update(deltaTime);
+    }
+
+    /**
+     * Check if queen should flee from recent hazard damage
+     */
+    private checkHazardAvoidance(): void {
+        // Get hazard avoidance config for queens
+        const config = ENTITY_CONFIG.HAZARD_AVOIDANCE.queen;
+        
+        // Check if hazard avoidance is enabled
+        if (!config.ENABLED) {
+            return;
+        }
+
+        // Don't start new flee if already fleeing
+        if (this.fleeingHazard) {
+            return;
+        }
+
+        // Get components
+        const health = this.getComponent('Health') as HealthComponent;
+        const stateMachine = this.getComponent('StateMachine') as StateMachineComponent;
+        
+        if (!health || !stateMachine) {
+            return;
+        }
+
+        // Check if we took hazard damage recently
+        const lastHazardDamage = health.lastHazardDamage;
+        if (!lastHazardDamage) {
+            return;
+        }
+
+        // Check if damage is recent
+        const now = Date.now();
+        const timeSinceDamage = now - lastHazardDamage.timestamp;
+        if (timeSinceDamage > config.RECENT_DAMAGE_THRESHOLD_MS) {
+            return;
+        }
+
+        // Check current state - don't flee if in combat
+        const currentState = stateMachine.getCurrentState();
+        if (currentState === EntityState.ATTACKING || currentState === EntityState.COMBAT) {
+            return;
+        }
+
+        // Check health threshold (queens only flee below 70% health)
+        const healthRatio = health.getCurrentHealth() / health.getMaxHealth();
+        if (healthRatio >= config.MIN_HEALTH_TO_FLEE) {
+            return; // Above threshold, don't flee
+        }
+
+        // Start fleeing
+        this.startFleeingHazard(lastHazardDamage.tileX!, lastHazardDamage.tileY!);
+    }
+
+    /**
+     * Start fleeing from hazard tile
+     */
+    private startFleeingHazard(hazardTileX: number, hazardTileY: number): void {
+        const config = ENTITY_CONFIG.HAZARD_AVOIDANCE.queen;
+        
+        // Calculate direction away from hazard
+        const directionX = this.gridX - hazardTileX;
+        const directionY = this.gridY - hazardTileY;
+        
+        // Normalize direction
+        const magnitude = Math.sqrt(directionX * directionX + directionY * directionY);
+        if (magnitude === 0) {
+            // Already at hazard position? Just pick a random direction
+            const angle = Math.random() * Math.PI * 2;
+            const normX = Math.cos(angle);
+            const normY = Math.sin(angle);
+            
+            // Calculate safe position
+            this.fleeSafePosition = {
+                x: Math.round(this.gridX + normX * config.FLEE_DISTANCE),
+                y: Math.round(this.gridY + normY * config.FLEE_DISTANCE)
+            };
+        } else {
+            const normX = directionX / magnitude;
+            const normY = directionY / magnitude;
+            
+            // Calculate safe position FLEE_DISTANCE away
+            this.fleeSafePosition = {
+                x: Math.round(this.gridX + normX * config.FLEE_DISTANCE),
+                y: Math.round(this.gridY + normY * config.FLEE_DISTANCE)
+            };
+        }
+
+        // Set state
+        this.fleeingHazard = true;
+        this.fleeStartTime = Date.now();
+
+        // Update state machine
+        const stateMachine = this.getComponent('StateMachine') as StateMachineComponent;
+        if (stateMachine) {
+            stateMachine.setState(EntityState.FLEEING_HAZARD);
+        }
+    }
+
+    /**
+     * Update fleeing state - check if reached safety or timed out
+     */
+    private updateFleeingState(): void {
+        if (!this.fleeingHazard || !this.fleeSafePosition) {
+            return;
+        }
+
+        const config = ENTITY_CONFIG.HAZARD_AVOIDANCE.queen;
+        const now = Date.now();
+        
+        // Check timeout
+        if (now - this.fleeStartTime > config.FLEE_TIMEOUT_MS) {
+            this.stopFleeingHazard();
+            return;
+        }
+
+        // Check if reached safe position (within 1.5 tiles)
+        const distToSafe = distance(
+            this.gridX, this.gridY,
+            this.fleeSafePosition.x, this.fleeSafePosition.y
+        );
+        
+        if (distToSafe < 1.5) {
+            this.stopFleeingHazard();
+            return;
+        }
+
+        // Calculate direction to safe position and move
+        const dirX = this.fleeSafePosition.x - this.gridX;
+        const dirY = this.fleeSafePosition.y - this.gridY;
+        
+        // Normalize and move (use queen's speed)
+        const dist = Math.sqrt(dirX * dirX + dirY * dirY);
+        if (dist > 0) {
+            this.requestMove(Math.sign(dirX) * this.getSpeed(), Math.sign(dirY) * this.getSpeed());
+        }
+    }
+
+    /**
+     * Stop fleeing and return to normal behavior
+     */
+    private stopFleeingHazard(): void {
+        this.fleeingHazard = false;
+        this.fleeSafePosition = null;
+
+        // Return to idle state
+        const stateMachine = this.getComponent('StateMachine') as StateMachineComponent;
+        if (stateMachine) {
+            stateMachine.setState(EntityState.IDLE);
+        }
+
+        // Clear last hazard damage so we don't immediately flee again
+        const health = this.getComponent('Health') as HealthComponent;
+        if (health) {
+            health.lastHazardDamage = null;
+        }
     }
 
     /**

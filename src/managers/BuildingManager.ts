@@ -8,6 +8,7 @@ import { BaseManager } from './BaseManager';
 import {
     Building,
     EventBus,
+    GameEvents,
     distance,
     BuildingType,
     ENTITY_CONFIG
@@ -21,8 +22,11 @@ import { ResourceManager } from './ResourceManager';
  */
 export class BuildingManager extends BaseManager {
     private static instance: BuildingManager;
-    private buildings: Map<string, Building>; // buildingId â†’ Building
-    private buildingsByFaction: Map<string, Set<string>>; // factionId â†’ building IDs
+    private buildings: Map<string, Building>; // buildingId → Building
+    private buildingsByFaction: Map<string, Set<string>>; // factionId → building IDs
+    private renderer: any = null;
+    private constructionSprites: Map<BuildingType, any> = new Map();
+    private completedSprites: Map<BuildingType, any> = new Map();
 
     private constructor() {
         super(); // Initialize BaseManager
@@ -42,9 +46,25 @@ export class BuildingManager extends BaseManager {
     }
 
     /**
+     * Initialize manager with dependencies
+     * @param renderer - Renderer instance
+     * @param sprites - Object with construction and completed sprites for each building type
+     */
+    public initialize(renderer: any, sprites: { construction: Map<BuildingType, any>, completed: Map<BuildingType, any> }): void {
+        this.renderer = renderer;
+        this.constructionSprites = sprites.construction;
+        this.completedSprites = sprites.completed;
+    }
+
+    /**
      * Setup EventBus listeners
      */
     private setupEventListeners(): void {
+        // Listen for construction started (from BuildingPlacementManager)
+        this.subscribe(GameEvents.BUILDING_CONSTRUCTION_STARTED, (data: { buildingType: BuildingType, gridX: number, gridY: number, factionId: string }) => {
+            this.createBuilding(data.buildingType, data.gridX, data.gridY, data.factionId);
+        });
+
         // Listen for building placement to track
         EventBus.on('BUILDING_PLACED', (buildingId: string, _gridX: number, _gridY: number, _buildingType: BuildingType) => {
             const building = EntityManager.getInstance().getEntity(buildingId) as Building;
@@ -70,14 +90,51 @@ export class BuildingManager extends BaseManager {
     }
 
     /**
+     * Create a new building using the factory
+     * @param buildingType - Type of building to create
+     * @param gridX - Grid X position
+     * @param gridY - Grid Y position
+     * @param factionId - Faction ID
+     */
+    private createBuilding(buildingType: BuildingType, gridX: number, gridY: number, factionId: string): void {
+        if (!this.renderer) {
+            console.error('BuildingManager not initialized with renderer');
+            return;
+        }
+
+        const constructionSprite = this.constructionSprites.get(buildingType);
+        const completedSprite = this.completedSprites.get(buildingType);
+
+        if (!constructionSprite || !completedSprite) {
+            console.error(`Missing sprites for building type: ${buildingType}`);
+            return;
+        }
+
+        // Use BuildingFactory to create building
+        const { BuildingFactory } = require('../factories/BuildingFactory');
+        BuildingFactory.create(
+            this.renderer,
+            constructionSprite,
+            completedSprite,
+            gridX,
+            gridY,
+            buildingType,
+            factionId
+        );
+    }
+
+    /**
      * Track a new building
      * @param building - Building to track
      */
     private trackBuilding(building: Building): void {
         this.buildings.set(building.id, building);
 
-        // Track by faction (buildings don't have factionId yet - would need to add)
-        // For now, skip faction tracking
+        // Track by faction
+        if (!this.buildingsByFaction.has(building.factionId)) {
+            this.buildingsByFaction.set(building.factionId, new Set());
+        }
+        this.buildingsByFaction.get(building.factionId)!.add(building.id);
     }
 
     /**
@@ -160,7 +217,7 @@ export class BuildingManager extends BaseManager {
         ResourceManager.getInstance().spendResources(factionId, costs);
 
         // Create building (factory would normally handle this)
-        const building = new Building(gridX, gridY, buildingType);
+        const building = new Building(gridX, gridY, buildingType, factionId);
 
         // Start construction
         building.startConstruction();
@@ -268,6 +325,20 @@ export class BuildingManager extends BaseManager {
      */
     public getAllBuildings(): Building[] {
         return Array.from(this.buildings.values());
+    }
+
+    /**
+     * Get all buildings for a faction
+     * @param factionId - Faction ID
+     * @returns Array of buildings for the faction
+     */
+    public getFactionBuildings(factionId: string): Building[] {
+        const buildingIds = this.buildingsByFaction.get(factionId);
+        if (!buildingIds) return [];
+        
+        return Array.from(buildingIds)
+            .map(id => this.buildings.get(id))
+            .filter((b): b is Building => b !== undefined);
     }
 
     /**

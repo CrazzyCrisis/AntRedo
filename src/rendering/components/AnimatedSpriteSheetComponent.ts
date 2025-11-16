@@ -1,6 +1,6 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
-import { EventBus } from '../../utils/eventBus';
+import { EventBus, GameEvents } from '../../utils/eventBus';
 import { EntityState } from '../../classes/components/StateMachineComponent';
 
 /**
@@ -42,6 +42,7 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     private stateToAnimationMap: Map<EntityState, string> | null = null;
     private unsubscribeStateChange: (() => void) | null = null;
     private unsubscribeMovement: (() => void) | null = null;
+    private unsubscribeSmoothMovement: (() => void) | null = null;
 
     // Movement tracking
     private isMoving: boolean = false;
@@ -59,6 +60,9 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     private outlineColor: { r: number; g: number; b: number } | null = null;
     private outlineThickness: number = 2;
     private unsubscribeHover: (() => void) | null = null;
+
+    // Tint color for visual effects (flash, etc.)
+    private tintColor: { r: number; g: number; b: number; a?: number } | null = null;
 
     constructor(spritesheet: any, x: number, y: number, debugJobType?: string) {
         this.spritesheet = spritesheet;
@@ -100,6 +104,28 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     }
 
     /**
+     * Get raw spritesheet (for VFX manager)
+     */
+    getSprite(): any {
+        return this.spritesheet;
+    }
+
+    /**
+     * Get current animation name
+     */
+    getCurrentAnimation(): string | null {
+        return this.currentAnimationName;
+    }
+
+    /**
+     * Set tint color for visual effects (flash, faction recoloring, etc.)
+     * @param color RGB color object {r, g, b, a?} (0-255) or null to disable tint
+     */
+    setTint(color: { r: number; g: number; b: number; a?: number } | null): void {
+        this.tintColor = color;
+    }
+
+    /**
      * Setup EventBus integration for state-driven animations
      * @param entityId Owner entity ID
      * @param stateMap Mapping of EntityState to animation name
@@ -110,7 +136,7 @@ export class AnimatedSpriteSheetComponent implements Renderable {
 
         // Subscribe to state changes
         this.unsubscribeStateChange = EventBus.on(
-            'ENTITY_STATE_CHANGED',
+            GameEvents.ENTITY_STATE_CHANGED,
             (id: string, _oldState: EntityState, newState: EntityState) => {
                 // Only respond to this entity's state changes
                 if (id !== this.ownerEntityId) return;
@@ -143,8 +169,9 @@ export class AnimatedSpriteSheetComponent implements Renderable {
         };
 
         // Subscribe to movement events for automatic idle/walk switching
+        // Listen to both ENTITY_MOVED (grid position changes) and ENTITY_SMOOTH_POSITION_UPDATE (every frame during movement)
         this.unsubscribeMovement = EventBus.on(
-            'ENTITY_MOVED',
+            GameEvents.ENTITY_MOVED,
             (id: string, _gridX: number, _gridY: number) => {
                 // Only respond to this entity's movement
                 if (id !== this.ownerEntityId) return;
@@ -156,7 +183,28 @@ export class AnimatedSpriteSheetComponent implements Renderable {
                     if (this.currentAnimationName === 'idle') {
                         this.playAnimation('walk');
                         if (this.debugJobType === 'builder') {
-                            console.log('[BUILDER] Movement detected → switching to walk');
+                            console.log('[BUILDER] Movement detected (ENTITY_MOVED) → switching to walk');
+                        }
+                    }
+                }
+            }
+        );
+
+        // Also listen to smooth position updates for continuous movement detection
+        this.unsubscribeSmoothMovement = EventBus.on(
+            GameEvents.ENTITY_SMOOTH_POSITION_UPDATE,
+            (id: string, _smoothX: number, _smoothY: number) => {
+                // Only respond to this entity's movement
+                if (id !== this.ownerEntityId) return;
+
+                // Update last move time - entity is actively moving
+                this.lastMoveTime = Date.now();
+                if (!this.isMoving) {
+                    this.isMoving = true;
+                    if (this.currentAnimationName === 'idle') {
+                        this.playAnimation('walk');
+                        if (this.debugJobType === 'builder') {
+                            console.log('[BUILDER] Smooth movement detected → switching to walk');
                         }
                     }
                 }
@@ -318,6 +366,15 @@ export class AnimatedSpriteSheetComponent implements Renderable {
             this.drawOutline(graphics, config, srcX, srcY, currentCol);
         }
 
+        // Apply tint if set
+        if (this.tintColor) {
+            if (this.tintColor.a !== undefined) {
+                graphics.tint(this.tintColor.r, this.tintColor.g, this.tintColor.b, this.tintColor.a);
+            } else {
+                graphics.tint(this.tintColor.r, this.tintColor.g, this.tintColor.b);
+            }
+        }
+
         // Apply transforms if needed
         const needsTransform = this.rotation !== 0 || this.scale !== 1;
         if (needsTransform) {
@@ -330,31 +387,45 @@ export class AnimatedSpriteSheetComponent implements Renderable {
             if (this.scale !== 1) graphics.scale(this.scale);
         }
 
-        // Extract and draw frame from spritesheet using graphics.copy()
+        // Extract frame from spritesheet
+        // Use createImage + image() instead of copy() so tint works properly
+        const p5 = window as any;
+        const frameImg = p5.createImage(config.frameWidth, config.frameHeight);
+        frameImg.copy(
+            this.spritesheet,
+            srcX,
+            srcY,
+            config.frameWidth,
+            config.frameHeight,
+            0,
+            0,
+            config.frameWidth,
+            config.frameHeight
+        );
+
+        // Draw the extracted frame (this respects tint)
+        graphics.imageMode(p5.CORNER);
         if (needsTransform) {
-            graphics.copy(
-                this.spritesheet,
-                srcX,
-                srcY,
-                config.frameWidth,
-                config.frameHeight,
+            graphics.image(
+                frameImg,
                 -(config.frameWidth * this.scale) / 2,
                 -(config.frameHeight * this.scale) / 2,
                 config.frameWidth * this.scale,
                 config.frameHeight * this.scale
             );
         } else {
-            graphics.copy(
-                this.spritesheet,
-                srcX,
-                srcY,
-                config.frameWidth,
-                config.frameHeight,
+            graphics.image(
+                frameImg,
                 this.x + this.offsetX,
                 this.y + this.offsetY,
                 config.frameWidth,
                 config.frameHeight
             );
+        }
+
+        // Reset tint after drawing
+        if (this.tintColor) {
+            graphics.noTint();
         }
 
         // Restore transform
@@ -410,6 +481,10 @@ export class AnimatedSpriteSheetComponent implements Renderable {
         if (this.unsubscribeMovement) {
             this.unsubscribeMovement();
             this.unsubscribeMovement = null;
+        }
+        if (this.unsubscribeSmoothMovement) {
+            this.unsubscribeSmoothMovement();
+            this.unsubscribeSmoothMovement = null;
         }
         if (this.unsubscribeHover) {
             this.unsubscribeHover();

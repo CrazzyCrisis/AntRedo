@@ -266,10 +266,10 @@ export const ANT_ANIMATIONS = {
         walk: {
             row: 1,
             startCol: 0,
-            endCol: 2,
+            endCol: 1,
             frameWidth: 16,
             frameHeight: 16,
-            speed: 4,
+            speed: 10,
             loop: true
         } as AnimationConfig,
         attack: {

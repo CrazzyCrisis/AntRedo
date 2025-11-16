@@ -20,7 +20,8 @@ export enum EntityState {
     ATTACKING = 'ATTACKING',
     SCOUTING = 'SCOUTING',
     HEALING = 'HEALING',
-    RETURNING = 'RETURNING'  // Returning to base/warehouse
+    RETURNING = 'RETURNING',  // Returning to base/warehouse
+    FLEEING_HAZARD = 'FLEEING_HAZARD'  // Fleeing from environmental hazard
 }
 
 /**

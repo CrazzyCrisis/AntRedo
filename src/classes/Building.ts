@@ -10,6 +10,7 @@ import { ENTITY_CONFIG, BuildingType } from '../config/entityConfig';
 
 export class Building extends GameObject {
     public readonly buildingType: BuildingType;
+    public readonly factionId: string;
     public readonly size: { width: number; height: number };
     public level: number;
     public readonly maxLevel: number = 3;
@@ -22,11 +23,12 @@ export class Building extends GameObject {
     public resourceProduction?: { type: string; rate: number };
     private lastProductionTime: number = 0;
 
-    constructor(gridX: number, gridY: number, buildingType: BuildingType) {
+    constructor(gridX: number, gridY: number, buildingType: BuildingType, factionId: string) {
         const config = ENTITY_CONFIG.BUILDINGS[buildingType];
         super('building', gridX, gridY);
         
         this.buildingType = buildingType;
+        this.factionId = factionId;
         this.size = config.size;
         this.level = 1;
         this.isConstructed = false;

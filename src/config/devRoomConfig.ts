@@ -17,10 +17,10 @@ export const DEV_ROOM_CONFIG = {
 
     // Starting resources for testing
     STARTING_RESOURCES: {
-        FOOD: 50,               // Starting food for healing system testing
-        WOOD: 0,
-        STONE: 0,
-        MAGIC_CRYSTAL: 0
+        FOOD: 100,              // Starting food for healing system testing
+        WOOD: 100,              // Enough to build multiple buildings (warehouse=20, barracks=15, tower=10)
+        STONE: 100,             // Enough to build multiple buildings (warehouse=10, barracks=15, tower=20)
+        MAGIC_CRYSTAL: 50       // For future features
     },
 
     // Camera settings

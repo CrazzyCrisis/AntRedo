@@ -44,6 +44,10 @@ import { PathfindingComponent } from '../classes/components/PathfindingComponent
 import { TileHighlightComponent } from '../rendering/components/TileHighlightComponent';
 import { DEV_ROOM_SPAWN_CONFIG } from '../config/devRoomSpawnConfig';
 import { TILE_SIZE } from '../world/TileSystem';
+import { BuildingPlacementManager } from '../managers/BuildingPlacementManager';
+import { ConstructionManager } from '../managers/ConstructionManager';
+import { QuestManager } from '../managers/QuestManager';
+import { BuildingManager } from '../managers/BuildingManager';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -71,6 +75,11 @@ export class DevRoomScene implements IScene {
     
     // Spawning system
     private spawnManager: SpawnManager | null = null;
+    
+    // Building system
+    private buildingPlacementManager: BuildingPlacementManager | null = null;
+    private constructionManager: ConstructionManager | null = null;
+    private isBuildingPlacementActive: boolean = false;
     private levelLoader: LevelLoader | null = null;
     private entitySprites: {
         ant: any;
@@ -149,6 +158,12 @@ export class DevRoomScene implements IScene {
         this.worldGenerator = new WorldGenerator();
         this.inputManager = InputManager.getInstance();
         
+        // Initialize building system managers (singletons - no need to store references)
+        QuestManager.getInstance();
+        this.buildingPlacementManager = BuildingPlacementManager.getInstance();
+        this.constructionManager = ConstructionManager.getInstance();
+        BuildingManager.getInstance();
+        
         // Initialize combat system for automatic melee attacks
         CombatManager.getInstance();
         
@@ -176,6 +191,58 @@ export class DevRoomScene implements IScene {
             resourceManager.setResource('player', 'magicCrystal', DEV_ROOM_CONFIG.STARTING_RESOURCES.MAGIC_CRYSTAL);
             console.log(`[DevRoom] Initialized colony with ${DEV_ROOM_CONFIG.STARTING_RESOURCES.FOOD} food for healing system testing`);
         }
+        
+        // Subscribe to building system events
+        this.unregisterFunctions.push(
+            EventBus.on(GameEvents.BUILDING_MENU_TOGGLED, () => {
+                // Building menu visibility toggled - no action needed here
+                // GameUIOverlay handles the menu component
+            })
+        );
+        
+        this.unregisterFunctions.push(
+            EventBus.on(GameEvents.BUILDING_SELECTED, (buildingType: string) => {
+                console.log(`[DevRoom] Building selected: ${buildingType}`);
+                this.isBuildingPlacementActive = true;
+                
+                // Activate placement mode with ghost sprite
+                if (this.buildingPlacementManager) {
+                    this.buildingPlacementManager.activatePlacement(buildingType as any);
+                }
+            })
+        );
+        
+        this.unregisterFunctions.push(
+            EventBus.on(GameEvents.BUILDING_PLACEMENT_CANCELLED, () => {
+                console.log('[DevRoom] Building placement cancelled');
+                this.isBuildingPlacementActive = false;
+            })
+        );
+        
+        // Subscribe to mouse movement for ghost sprite updates
+        this.unregisterFunctions.push(
+            EventBus.on(GameEvents.INPUT_MOUSE_MOVE, (x: number, y: number) => {
+                if (this.isBuildingPlacementActive && this.buildingPlacementManager) {
+                    this.buildingPlacementManager.updateGhostPosition(x, y);
+                }
+            })
+        );
+        
+        // Subscribe to mouse clicks for placement confirmation
+        this.unregisterFunctions.push(
+            EventBus.on(GameEvents.INPUT_MOUSE_CLICK, (_x: number, _y: number, button: number) => {
+                if (this.isBuildingPlacementActive && button === 0 && this.buildingPlacementManager) {
+                    this.buildingPlacementManager.attemptPlacement();
+                }
+            })
+        );
+        
+        this.unregisterFunctions.push(
+            EventBus.on(GameEvents.BUILDING_CONSTRUCTION_STARTED, () => {
+                console.log('[DevRoom] Building construction started');
+                this.isBuildingPlacementActive = false;
+            })
+        );
         
         // Check if user provided a custom seed via URL parameter or config
         const urlParams = typeof window !== 'undefined' && window.location 
@@ -207,6 +274,25 @@ export class DevRoomScene implements IScene {
         
         // Store in game state
         this.gameState.setTileGrid(tileGrid);
+        
+        // Initialize BuildingPlacementManager with dependencies
+        if (this.buildingPlacementManager && this.camera) {
+            this.buildingPlacementManager.initialize(
+                this.renderer,
+                this.camera,
+                tileGrid,
+                'player'
+            );
+            
+            // Register building sprites for ghost preview
+            if (this.entitySprites.hill1 && this.entitySprites.hive1 && this.entitySprites.cone1) {
+                this.buildingPlacementManager.registerBuildingSprites({
+                    warehouse: this.entitySprites.hill1,
+                    barracks: this.entitySprites.hive1,
+                    tower: this.entitySprites.cone1
+                });
+            }
+        }
         
         // Listen for save preset event
         const savePresetListener = EventBus.on(GameEvents.SAVE_WORLD_PRESET, (presetName: string) => {
@@ -467,6 +553,11 @@ export class DevRoomScene implements IScene {
             this.spawnManager.update(16.67); // ~60fps
         }
         
+        // Update building system managers
+        if (this.constructionManager) {
+            this.constructionManager.update(16.67);
+        }
+        
         // Update combat visual handler (cleanup expired sprite offsets)
         CombatVisualHandler.getInstance().update();
         
@@ -515,6 +606,13 @@ export class DevRoomScene implements IScene {
             // For now, any click goes through to world
         }
         
+        // If building placement is active, forward to BuildingPlacementManager
+        if (this.isBuildingPlacementActive && this.buildingPlacementManager) {
+            // BuildingPlacementManager listens to INPUT_MOUSE_CLICK event
+            // Event already emitted by sketch.ts, no need to forward manually
+            return; // Don't process world clicks during placement
+        }
+        
         // World click: Handle queen commands (move/gather/attack)
         this.handleWorldClick(x, y);
     }
@@ -537,6 +635,12 @@ export class DevRoomScene implements IScene {
         // Forward to world gen config menu if visible
         if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
             this.worldGenConfigMenu.handleMouseMove(x, y);
+        }
+        
+        // If building placement is active, forward to BuildingPlacementManager
+        if (this.isBuildingPlacementActive && this.buildingPlacementManager) {
+            // BuildingPlacementManager listens to INPUT_MOUSE_MOVE event
+            // Event already emitted by sketch.ts, no need to forward manually
         }
         
         // Handle button hover
@@ -1110,7 +1214,8 @@ export class DevRoomScene implements IScene {
                     sprite, // Completed sprite (same for now)
                     gridX,
                     gridY,
-                    'tower' // Use tower type for enemy buildings
+                    'tower', // Use tower type for enemy buildings
+                    'enemy' // Faction ID
                 );
                 
                 // Track building for enemy spawning

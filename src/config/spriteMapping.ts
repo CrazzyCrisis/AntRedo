@@ -100,6 +100,9 @@ export const ENTITY_SPRITES = {
     
     // Buildings
     building: '16x16 Tiles/anthill.png',
+    warehouse: 'Buildings/Hill/Hill1.png',      // Reuse Hill sprite for warehouse
+    barracks: 'Buildings/Hive/Hive1.png',       // Reuse Hive sprite for barracks
+    tower: 'Buildings/Cone/Cone1.png',          // Reuse Cone sprite for tower
     hill1: 'Buildings/Hill/Hill1.png',
     hill2: 'Buildings/Hill/Hill2.png',
     hive1: 'Buildings/Hive/Hive1.png',

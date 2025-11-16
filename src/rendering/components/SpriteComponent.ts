@@ -67,6 +67,13 @@ export class SpriteComponent implements Renderable {
     }
 
     /**
+     * Get raw sprite image (for VFX manager)
+     */
+    getSprite(): any {
+        return this.sprite;
+    }
+
+    /**
      * Update sprite image
      */
     setSprite(sprite: any): void {

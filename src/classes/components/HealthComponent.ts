@@ -11,9 +11,19 @@ import { TILE_SIZE } from '../../world/TileSystem';
 import { ENTITY_CONFIG } from '../../config/entityConfig';
 
 /**
+ * Damage source for tracking hazards
+ */
+export interface DamageSource {
+    type: 'hazard' | 'combat';
+    tileX?: number;  // Grid X position of hazard
+    tileY?: number;  // Grid Y position of hazard
+    timestamp: number;  // When damage occurred
+}
+
+/**
  * HealthComponent
  * Manages entity health, damage, healing, and death
- * Now includes colony food-based healing system
+ * Now includes colony food-based healing system and hazard damage tracking
  */
 export class HealthComponent extends BaseComponent {
 
@@ -25,6 +35,9 @@ export class HealthComponent extends BaseComponent {
     private timeSinceLastHeal: number = 0; // Track time since last colony healing tick
     private entityType: 'ant' | 'queen' | 'boss'; // Entity type for healing config
     private factionId: string;          // Faction ID for resource access
+    
+    // Hazard damage tracking
+    public lastHazardDamage: DamageSource | null = null;
     
     private readonly REGEN_DELAY = 3000; // 3 seconds before regen starts after damage
     private readonly HEALING_DELAY = 5000; // 5 seconds after last damage before colony healing starts
@@ -161,8 +174,9 @@ export class HealthComponent extends BaseComponent {
      * @param amount - Damage amount
      * @param attackerId - ID of attacking entity (for kill tracking)
      * @param isCritical - Whether this is a critical hit (for visual effects)
+     * @param damageSource - Optional source of damage (for hazard tracking)
      */
-    public takeDamage(amount: number, attackerId: string, isCritical: boolean = false): void {
+    public takeDamage(amount: number, attackerId: string, isCritical: boolean = false, damageSource?: DamageSource): void {
         if (!this.alive || amount <= 0) {
             return;
         }
@@ -171,6 +185,11 @@ export class HealthComponent extends BaseComponent {
         const actualDamage = Math.min(amount, this.currentHealth);
         this.currentHealth = Math.max(0, this.currentHealth - amount);
         this.timeSinceLastDamage = 0; // Reset regen delay timer
+
+        // Track hazard damage for avoidance behavior
+        if (damageSource) {
+            this.lastHazardDamage = damageSource;
+        }
 
         // Emit damage event with world position for visual effects
         if (this.owner) {

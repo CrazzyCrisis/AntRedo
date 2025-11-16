@@ -21,6 +21,7 @@
 
 import { Renderer } from '../Renderer';
 import { Camera } from '../Camera';
+import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 import { ResourceDisplayComponent } from '../components/ResourceDisplayComponent';
 import { PopulationDisplayComponent } from '../components/PopulationDisplayComponent';
@@ -28,6 +29,7 @@ import { PowerBarComponent } from '../components/PowerBarComponent';
 import { QueenPortraitComponent } from '../components/QueenPortraitComponent';
 import { QueenCommandsComponent } from '../components/QueenCommandsComponent';
 import { MinimapComponent } from '../components/MinimapComponent';
+import { BuildingMenuComponent } from '../components/BuildingMenuComponent';
 import { PanelComponent } from '../components/PanelComponent';
 import { Queen } from '../../classes/Queen';
 import { GAME_UI_CONFIG } from '../../config/gameUIConfig';
@@ -100,6 +102,7 @@ export class GameUIOverlay {
     private queenPortrait: QueenPortraitComponent | null = null;
     private commandsUI: QueenCommandsComponent | null = null;
     private minimap: MinimapComponent | null = null;
+    private buildingMenu: BuildingMenuComponent | null = null;
     
     // Unregister functions for cleanup
     private uiUnregisterFunctions: Array<() => void> = [];
@@ -212,6 +215,30 @@ export class GameUIOverlay {
             this.uiUnregisterFunctions.push(this.renderer.register(this.commandsUI));
         }
         
+        // Building Menu (horizontal layout above BUILD button)
+        if (this.config.showCommands && this.sprites.resources) {
+            const commandsY = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
+            const menuY = commandsY + GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetYFromCommands;
+            this.buildingMenu = new BuildingMenuComponent(
+                centerX,
+                menuY,
+                this.config.factionId,
+                this.sprites.resources
+            );
+            this.buildingMenu.visible = false; // Hidden by default
+            this.uiUnregisterFunctions.push(this.renderer.register(this.buildingMenu));
+            
+            // Subscribe to BUILDING_MENU_TOGGLED event
+            this.eventUnsubscribers.push(
+                EventBus.on(GameEvents.BUILDING_MENU_TOGGLED, () => {
+                    if (this.buildingMenu) {
+                        this.buildingMenu.visible = !this.buildingMenu.visible;
+                        this.renderer.markLayerDirty(RenderLayer.UI);
+                    }
+                })
+            );
+        }
+        
         // Minimap (bottom-right)
         if (this.config.showMinimap) {
             const x = centerX + (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetX * halfWidth);
@@ -302,6 +329,10 @@ export class GameUIOverlay {
         if (this.populationDisplay) {
             this.populationDisplay.update();
         }
+        
+        if (this.buildingMenu && this.buildingMenu.visible) {
+            this.buildingMenu.update();
+        }
     }
 
     /**
@@ -310,6 +341,10 @@ export class GameUIOverlay {
     handleMouseClick(x: number, y: number): void {
         if (this.commandsUI) {
             this.commandsUI.handleClick(x, y);
+        }
+        
+        if (this.buildingMenu && this.buildingMenu.visible) {
+            this.buildingMenu.handleClick(x, y);
         }
         
         if (this.minimap) {
@@ -327,6 +362,12 @@ export class GameUIOverlay {
     handleMouseMove(x: number, y: number): void {
         if (this.commandsUI) {
             this.commandsUI.handleMouseMove(x, y);
+        }
+        
+        if (this.buildingMenu && this.buildingMenu.visible) {
+            this.buildingMenu.handleMouseMove(x, y);
+            // Mark UI layer dirty for hover highlighting
+            this.renderer.markLayerDirty(RenderLayer.UI);
         }
         
         if (this.minimap) {
@@ -386,6 +427,12 @@ export class GameUIOverlay {
             this.commandsUI.setPosition(x, y);
         }
         
+        if (this.buildingMenu) {
+            const commandsY = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
+            const menuY = commandsY + GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetYFromCommands;
+            this.buildingMenu.setPosition(centerX, menuY);
+        }
+        
         if (this.minimap) {
             const x = centerX + (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetX * halfWidth);
             const y = centerY - (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetY * halfHeight);
@@ -443,6 +490,7 @@ export class GameUIOverlay {
         this.powerBar = null;
         this.queenPortrait = null;
         this.commandsUI = null;
+        this.buildingMenu = null;
         this.minimap = null;
         
         console.log('✅ GameUIOverlay cleaned up');

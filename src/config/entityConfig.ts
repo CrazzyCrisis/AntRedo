@@ -297,7 +297,7 @@ const RESOURCES: Record<ResourceType, ResourceConfig> = {
 // BUILDING CONFIGURATION
 // ============================================================================
 
-interface BuildingLevel {
+export interface BuildingLevel {
     health: number;
     antCapBonus?: number;         // Additional ant cap for this level
     productionRate?: number;      // Resource production multiplier
@@ -308,7 +308,7 @@ interface BuildingLevel {
     };
 }
 
-interface BuildingConfig {
+export interface BuildingConfig {
     size: { width: number; height: number };  // Variable building sizes
     costs: { wood: number; stone: number };
     constructionTime: number;                  // Seconds to build
@@ -377,6 +377,42 @@ const SPRITE_SCALES: SpriteScales = {
 };
 
 // ============================================================================
+// HAZARD AVOIDANCE CONFIGURATION
+// ============================================================================
+
+interface HazardAvoidanceConfig {
+    ENABLED: boolean;                   // Enable/disable hazard avoidance
+    FLEE_DISTANCE: number;              // Tiles to flee away from hazard
+    FLEE_TIMEOUT_MS: number;            // Max time to spend fleeing (ms)
+    RECENT_DAMAGE_THRESHOLD_MS: number; // Consider damage "recent" if within this time
+    MIN_HEALTH_TO_FLEE: number;         // Only flee if health below this % (0-1)
+}
+
+const HAZARD_AVOIDANCE: Record<string, HazardAvoidanceConfig> = {
+    ant: {
+        ENABLED: true,
+        FLEE_DISTANCE: 4,
+        FLEE_TIMEOUT_MS: 5000,
+        RECENT_DAMAGE_THRESHOLD_MS: 500,
+        MIN_HEALTH_TO_FLEE: 1.0  // Always flee (any health level)
+    },
+    queen: {
+        ENABLED: true,
+        FLEE_DISTANCE: 3,
+        FLEE_TIMEOUT_MS: 4000,
+        RECENT_DAMAGE_THRESHOLD_MS: 500,
+        MIN_HEALTH_TO_FLEE: 0.7  // Only flee below 70% health
+    },
+    boss: {
+        ENABLED: false,          // Bosses don't flee hazards
+        FLEE_DISTANCE: 0,
+        FLEE_TIMEOUT_MS: 0,
+        RECENT_DAMAGE_THRESHOLD_MS: 0,
+        MIN_HEALTH_TO_FLEE: 0
+    }
+};
+
+// ============================================================================
 // EXPORTED CONFIGURATION
 // ============================================================================
 
@@ -386,5 +422,6 @@ export const ENTITY_CONFIG = {
     BOSS,
     RESOURCES,
     BUILDINGS,
-    SPRITE_SCALES
+    SPRITE_SCALES,
+    HAZARD_AVOIDANCE
 } as const;

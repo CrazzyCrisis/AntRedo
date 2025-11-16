@@ -36,6 +36,11 @@ export const GAME_UI_CONFIG = {
             offsetX: -0.65,             // Mid-left
             offsetY: -0.85              // Near bottom (on panel)
         },
+        BUILDING_MENU: {
+            offsetX: 0,                 // Centered horizontally
+            offsetY: -0.70,             // Slightly above BUILD button (-0.85)
+            offsetYFromCommands: -80    // Pixels above Queen Commands (-80 = 80 pixels up)
+        },
         MINIMAP: {
             offsetX: 0.85,              // Near right edge
             offsetY: -0.70             // Bottom right
@@ -46,7 +51,9 @@ export const GAME_UI_CONFIG = {
     SIZES: {
         PORTRAIT: 128,                  // Queen portrait size (pixels)
         MINIMAP: 150,                   // Minimap size (width/height in pixels)
-        POWER_BAR_WIDTH: 400            // Power bar total width
+        POWER_BAR_WIDTH: 400,           // Power bar total width
+        BUILDING_MENU_BUTTON_WIDTH: 180,   // Building menu button width
+        BUILDING_MENU_BUTTON_HEIGHT: 60    // Building menu button height
     },
 
     // UI Component Scales (multipliers applied to base sizes)
@@ -56,7 +63,17 @@ export const GAME_UI_CONFIG = {
         POWER_BAR: 1.0,                 // Power bar and icons scale
         QUEEN_PORTRAIT: 1.3,            // Queen portrait scale
         QUEEN_COMMANDS: 1.2,            // Command buttons scale
+        BUILDING_MENU: 1.0,             // Building menu scale
         MINIMAP: 1.0                    // Minimap scale
+    },
+
+    // Building Menu Settings
+    BUILDING_MENU: {
+        BUTTON_SPACING: 15,             // Horizontal spacing between buttons (pixels)
+        PANEL_PADDING: 15,              // Padding inside menu panel
+        PANEL_BACKGROUND_COLOR: '#2C2C2C',
+        PANEL_ALPHA: 200,               // Alpha value (0-255)
+        RESOURCE_ICON_SIZE: 16          // Resource icon display size
     },
 
     // Default Visibility Flags

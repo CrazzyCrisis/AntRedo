@@ -6,7 +6,7 @@
 import { BaseManager } from './BaseManager';
 import { GameEvents } from '../utils/eventBus';
 import { GameObject } from '../classes/GameObject';
-import { HealthComponent } from '../classes/components/HealthComponent';
+import { HealthComponent, DamageSource } from '../classes/components/HealthComponent';
 import { TileGrid } from '../world/TileGrid';
 import { TileType } from '../world/TileSystem';
 import { HAZARDOUS_TILES, WATER_EFFECT_CONFIG, TILE_PARTICLE_COLORS } from '../config/environmentEffectsConfig';
@@ -152,7 +152,23 @@ export class EnvironmentEffectsManager extends BaseManager {
             if (now - state.lastDamageTime >= hazardConfig.damageInterval) {
                 const health = entity.getComponent('Health') as HealthComponent;
                 if (health && health.isAlive()) {
-                    health.takeDamage(hazardConfig.damagePerSecond, 'environment');
+                    // Use smooth position to get current grid tile for damage source
+                    const smoothPos = entity.getSmoothPosition();
+                    const centerOffset = TILE_SIZE / 2;
+                    const worldX = smoothPos.x + centerOffset;
+                    const worldY = smoothPos.y + centerOffset;
+                    const gridX = Math.floor(worldX / TILE_SIZE);
+                    const gridY = Math.floor(worldY / TILE_SIZE);
+                    
+                    // Create damage source with tile position
+                    const damageSource: DamageSource = {
+                        type: 'hazard',
+                        tileX: gridX,
+                        tileY: gridY,
+                        timestamp: now
+                    };
+                    
+                    health.takeDamage(hazardConfig.damagePerSecond, 'environment', false, damageSource);
                 }
                 state.lastDamageTime = now;
             }

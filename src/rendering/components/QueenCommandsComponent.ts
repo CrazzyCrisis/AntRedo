@@ -177,6 +177,11 @@ export class QueenCommandsComponent implements Renderable {
                     this.deselectCommand();
                 } else {
                     this.selectCommand(command);
+                    
+                    // Special handling for BUILD command - toggle building menu
+                    if (command === 'BUILD') {
+                        EventBus.emit(GameEvents.BUILDING_MENU_TOGGLED);
+                    }
                 }
             }
         }

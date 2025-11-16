@@ -11,6 +11,7 @@ import {
     SpriteComponent,
     EntityManager,
     EventBus,
+    GameEvents,
     setupEntitySpriteBinding,
     TILE_SIZE,
     BuildingType,
@@ -38,13 +39,14 @@ import { Building } from '../classes/Building';
  */
 export class BuildingFactory {
     /**
-     * Create a building with automatic rendering registration
-     * @param renderer - The game renderer
-     * @param constructionSprite - Sprite for construction site
-     * @param completedSprite - Sprite for completed building
+     * Create a building with automatic rendering setup
+     * @param renderer - Renderer instance
+     * @param constructionSprite - Sprite for construction state
+     * @param completedSprite - Sprite for completed state
      * @param gridX - Grid X position (top-left corner)
      * @param gridY - Grid Y position (top-left corner)
      * @param buildingType - Type of building (warehouse, barracks, tower)
+     * @param factionId - Faction ID for building ownership
      * @returns Building model (rendering is handled internally)
      */
     static create(
@@ -53,10 +55,11 @@ export class BuildingFactory {
         completedSprite: any,
         gridX: number,
         gridY: number,
-        buildingType: BuildingType
+        buildingType: BuildingType,
+        factionId: string
     ): Building {
         // Create the building model (starts in construction state)
-        const building = new Building(gridX, gridY, buildingType);
+        const building = new Building(gridX, gridY, buildingType, factionId);
 
         // Create sprite component starting with construction sprite
         // For multi-tile buildings, center sprite on the middle of occupied area
@@ -132,6 +135,17 @@ export class BuildingFactory {
             EventBus.off('BUILDING_LEVELED_UP', levelUpListener);
             EventBus.off('BUILDING_DESTROYED', destroyListener);
         };
+
+        // Emit CONSTRUCTION_SITE_CREATED for ant job system
+        EventBus.emit(GameEvents.CONSTRUCTION_SITE_CREATED, {
+            buildingId: building.id,
+            gridX: building.gridX,
+            gridY: building.gridY,
+            buildingType: building.buildingType,
+            sizeWidth: building.size.width,
+            sizeHeight: building.size.height,
+            factionId: building.factionId
+        });
 
         return building;
     }

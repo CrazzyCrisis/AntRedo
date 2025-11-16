@@ -572,12 +572,17 @@ export function setupEntitySpriteBinding(
     // Import dynamically to avoid circular dependencies
     const { EventBus, GameEvents } = require('./eventBus');
     const { TILE_CONFIG } = require('../config/tileConfig');
+    const { VisualEffectsManager } = require('../managers/VisualEffectsManager');
     
     // Register sprite with renderer
     const unregister = renderer.register(sprite);
     
     // Store sprite component reference on entity for particle scaling
     entity._spriteComponent = sprite;
+    
+    // Register sprite component with VFX manager for flash effects
+    const vfxManager = VisualEffectsManager.getInstance();
+    vfxManager.registerEntitySpriteComponent(entity.id, sprite);
     
     // Set entity ID on sprite for combat animation tracking
     if (sprite.setEntityId && typeof sprite.setEntityId === 'function') {
@@ -621,6 +626,10 @@ export function setupEntitySpriteBinding(
     // and we need to check entity.id for every ENTITY_DESTROYED event
     const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
         if (entityId === entity.id) {
+            // Unregister from VFX manager
+            const vfxManager = VisualEffectsManager.getInstance();
+            vfxManager.unregisterEntitySpriteComponent(entity.id);
+            
             // Cleanup animated sprite subscriptions
             if (isAnimated && sprite.cleanup) {
                 sprite.cleanup();
