@@ -41,12 +41,7 @@ import {
 import { ResourceManager } from '../managers/ResourceManager';
 import { PowerManager } from '../managers/PowerManager';
 import { TileRendererComponent } from '../rendering/components/TileRendererComponent';
-import { ResourceDisplayComponent } from '../rendering/components/ResourceDisplayComponent';
-import { PopulationDisplayComponent } from '../rendering/components/PopulationDisplayComponent';
-import { PowerBarComponent } from '../rendering/components/PowerBarComponent';
-import { QueenPortraitComponent } from '../rendering/components/QueenPortraitComponent';
-import { QueenCommandsComponent } from '../rendering/components/QueenCommandsComponent';
-import { MinimapComponent } from '../rendering/components/MinimapComponent';
+import { GameUIOverlay } from '../rendering/GameUIOverlay';
 import { ENTITY_CONFIG, ResourceType } from '../config/entityConfig';
 
 /**
@@ -65,13 +60,10 @@ export class EntityShowcaseScene implements IScene {
     private resources: Resource[] = [];
     private buildings: Building[] = [];
     
-    // UI Components
-    private resourceDisplay: ResourceDisplayComponent | null = null;
-    private populationDisplay: PopulationDisplayComponent | null = null;
-    private powerBar: PowerBarComponent | null = null;
-    private queenPortrait: QueenPortraitComponent | null = null;
-    private commandsUI: QueenCommandsComponent | null = null;
-    private minimap: MinimapComponent | null = null;
+    // UI Overlay
+    private uiOverlay: GameUIOverlay | null = null;
+    
+    // Tile Renderer
     private tileRenderer: TileRendererComponent | null = null;
     
     // Unregister functions for cleanup
@@ -159,7 +151,7 @@ export class EntityShowcaseScene implements IScene {
         this.spawnResources();
         this.spawnBuildings();
         
-        // Setup UI
+        // Setup UI Overlay
         this.setupUI();
         
         // Setup event listeners
@@ -431,72 +423,50 @@ export class EntityShowcaseScene implements IScene {
     }
 
     /**
-     * Setup all UI components
+     * Setup all UI components using GameUIOverlay
      */
     private setupUI(): void {
-        const padding = 10;
-        
-        // Resource Display (top-left)
-        this.resourceDisplay = new ResourceDisplayComponent(padding, padding, 'player');
-        this.uiUnregisterFunctions.push(this.renderer.register(this.resourceDisplay));
-        
-        // Population Display (left side, below resources)
-        this.populationDisplay = new PopulationDisplayComponent(padding, 100);
-        this.uiUnregisterFunctions.push(this.renderer.register(this.populationDisplay));
-        
-        // Update initial population
-        this.populationDisplay.updateTotal(this.ants.length, 50);
-        
-        // Power Bar (bottom center)
-        this.powerBar = new PowerBarComponent(
-            this.canvasWidth / 2 - 200,
-            this.canvasHeight - 80
+        // Create UI overlay
+        this.uiOverlay = new GameUIOverlay(
+            this.renderer,
+            this.camera,
+            {
+                canvasWidth: this.canvasWidth,
+                canvasHeight: this.canvasHeight,
+                worldWidth: this.worldWidth,
+                worldHeight: this.worldHeight,
+                factionId: 'player',
+                showMinimap: true,
+                showPowerBar: true,
+                showQueenPortrait: true,
+                showCommands: true,
+                showResources: true,
+                showPopulation: true
+            },
+            {
+                queen: this.sprites.queen
+            }
         );
         
-        // Add powers if queen exists
+        // Initialize the overlay
+        this.uiOverlay.initialize();
+        
+        // Set queen reference if it exists
         if (this.queen) {
-            const powers = ['Lightning', 'Fireball', 'Blackhole', 'Tidalwave', 'FinalFlash'];
-            powers.forEach((power, index) => {
-                this.powerBar!.addPower(
-                    index + 1, // key
-                    power, // name
-                    null, // No power sprites for now
-                    10, // maxCooldown in seconds
-                    false // Not locked
-                );
-            });
+            this.uiOverlay.setQueen(this.queen);
+            
+            // Unlock all powers for showcase
+            this.queen.unlockPower('Lightning');
+            this.queen.unlockPower('Fireball');
+            this.queen.unlockPower('Blackhole');
+            this.queen.unlockPower('Tidalwave');
+            this.queen.unlockPower('FinalFlash');
         }
         
-        this.uiUnregisterFunctions.push(this.renderer.register(this.powerBar));
+        // Update initial population
+        this.uiOverlay.updatePopulation(this.ants.length, 50);
         
-        // Queen Portrait (bottom-left)
-        this.queenPortrait = new QueenPortraitComponent(
-            padding,
-            this.canvasHeight - 140,
-            this.sprites.queen
-        );
-        this.uiUnregisterFunctions.push(this.renderer.register(this.queenPortrait));
-        
-        // Queen Commands (bottom mid-left)
-        this.commandsUI = new QueenCommandsComponent(
-            200,
-            this.canvasHeight - 100
-        );
-        this.uiUnregisterFunctions.push(this.renderer.register(this.commandsUI));
-        
-        // Minimap (bottom-right)
-        this.minimap = new MinimapComponent(
-            this.canvasWidth - 160,
-            this.canvasHeight - 160,
-            150,
-            150,
-            this.worldWidth,
-            this.worldHeight
-        );
-        this.minimap.setCamera(this.camera);
-        this.uiUnregisterFunctions.push(this.renderer.register(this.minimap));
-        
-        console.log('✅ All UI components initialized');
+        console.log('✅ GameUIOverlay initialized');
     }
 
     /**
@@ -615,11 +585,9 @@ export class EntityShowcaseScene implements IScene {
             }
         }
         
-        // Update UI components
-        // PowerBar updates automatically via EventBus
-        
-        if (this.queenPortrait) {
-            this.queenPortrait.update();
+        // Update UI components via overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.update();
         }
         
         // CRITICAL: Force entity and UI layers dirty every frame for animations
@@ -632,17 +600,9 @@ export class EntityShowcaseScene implements IScene {
      * Handle mouse clicks
      */
     handleMouseClick(x: number, y: number): void {
-        // Handle UI clicks
-        if (this.commandsUI) {
-            this.commandsUI.handleClick(x, y);
-        }
-        
-        if (this.minimap) {
-            this.minimap.handleClick(x, y);
-        }
-        
-        if (this.populationDisplay) {
-            this.populationDisplay.handleClick(x, y);
+        // Delegate to UI overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.handleMouseClick(x, y);
         }
     }
 
@@ -659,20 +619,20 @@ export class EntityShowcaseScene implements IScene {
     onResize(width: number, height: number): void {
         this.canvasWidth = width;
         this.canvasHeight = height;
-        // UI components would need repositioning here
+        
+        // Update UI overlay with new dimensions
+        if (this.uiOverlay) {
+            this.uiOverlay.onResize(width, height);
+        }
     }
     
     /**
      * Handle mouse movement
      */
     handleMouseMove(x: number, y: number): void {
-        // Handle UI hover states
-        if (this.commandsUI) {
-            this.commandsUI.handleMouseMove(x, y);
-        }
-        
-        if (this.minimap) {
-            this.minimap.handleMouseMove(x, y);
+        // Delegate to UI overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.handleMouseMove(x, y);
         }
     }
 
@@ -680,7 +640,11 @@ export class EntityShowcaseScene implements IScene {
      * Cleanup when leaving scene
      */
     exit(): void {
-
+        // Cleanup UI overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.cleanup();
+            this.uiOverlay = null!;
+        }
         
         // Unregister UI components
         for (const unregister of this.uiUnregisterFunctions) {

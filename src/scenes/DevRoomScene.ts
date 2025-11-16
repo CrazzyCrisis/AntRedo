@@ -34,6 +34,7 @@ import {
 import { CombatVisualHandler } from '../managers/CombatVisualHandler';
 import { ParticleSystem } from '../managers/ParticleSystem';
 import { TileRenderer, TileRenderConfig } from '../world/TileRenderer';
+import { GameUIOverlay } from '../rendering/GameUIOverlay';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -53,6 +54,7 @@ export class DevRoomScene implements IScene {
     private inputManager: InputManager;
     private worldGenConfigMenu: WorldGenConfigMenu | null = null;
     private tileRendererUnregister: (() => void)[] = [];
+    private uiOverlay: GameUIOverlay | null = null;
     
     // Spawning system
     private spawnManager: SpawnManager | null = null;
@@ -222,9 +224,61 @@ export class DevRoomScene implements IScene {
         // Initialize spawning system if entity sprites available
         if (this.entitySprites) {
             this.initializeSpawningSystem(tileGrid);
+            this.setupGameUI();
         } else {
             console.log('[DevRoomScene] Entity sprites not loaded - spawning system disabled');
         }
+    }
+
+    private setupGameUI(): void {
+        // Get camera from CameraManager
+        const camera = CameraManager.getInstance().getCamera();
+        if (!camera) {
+            console.log('[DevRoomScene] Cannot setup UI overlay - camera not initialized');
+            return;
+        }
+        
+        // Get queen from EntityManager
+        const entities = EntityManager.getInstance().getAllEntities();
+        const queen = entities.find(e => e.entityClass === 'queen');
+        
+        if (!this.entitySprites || !queen) {
+            console.log('[DevRoomScene] Cannot setup UI overlay - missing sprites or queen');
+            return;
+        }
+        
+        // Create UI overlay config
+        const tileGrid = GameStateManager.getInstance().getTileGrid();
+        if (!tileGrid) {
+            console.log('[DevRoomScene] Cannot setup UI overlay - missing tile grid');
+            return;
+        }
+        
+        this.uiOverlay = new GameUIOverlay(
+            this.renderer,
+            camera,
+            {
+                canvasWidth: this.canvasWidth,
+                canvasHeight: this.canvasHeight,
+                worldWidth: DEV_ROOM_CONFIG.WORLD.WIDTH * 64,  // World width in pixels (TILE_SIZE = 64)
+                worldHeight: DEV_ROOM_CONFIG.WORLD.HEIGHT * 64, // World height in pixels
+                factionId: 'player',
+                showMinimap: true,
+                showPowerBar: true,
+                showQueenPortrait: true,
+                showCommands: true,
+                showResources: true,
+                showPopulation: true
+            },
+            {
+                queen: this.entitySprites.queen
+            }
+        );
+        
+        this.uiOverlay.initialize();
+        this.uiOverlay.setQueen(queen as any);
+        
+        console.log('[DevRoomScene] ✅ GameUIOverlay initialized');
     }
 
     private createBackButton(): void {
@@ -300,6 +354,12 @@ export class DevRoomScene implements IScene {
         // Stop dev room music
         AudioManager.getInstance().stopBGM();
         
+        // Cleanup UI overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.cleanup();
+            this.uiOverlay = null;
+        }
+        
         // Note: Entity cleanup now handled by CLEANUP_ALL_ENTITIES event in sketch.ts
         // This only cleans up scene-specific UI and resources
         
@@ -353,6 +413,11 @@ export class DevRoomScene implements IScene {
             // Mark UI layer dirty so button hover effects are visible
             this.renderer.markLayerDirty(RenderLayer.UI);
         }
+
+        // Update UI overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.update();
+        }
     }
 
     handleMouseClick(x: number, y: number): void {
@@ -370,6 +435,11 @@ export class DevRoomScene implements IScene {
         // Handle button click
         if (this.backButton) {
             this.backButton.handleClick(x, y);
+        }
+
+        // Delegate to UI overlay
+        if (this.uiOverlay) {
+            this.uiOverlay.handleMouseClick(x, y);
         }
     }
 
