@@ -5,7 +5,7 @@
  */
 
 import { BaseComponent } from './BaseComponent';
-import { EventBus } from '../../utils/eventBus';
+import { EventBus, GameEvents } from '../../utils/eventBus';
 
 /**
  * Available entity states
@@ -86,9 +86,10 @@ export class StateMachineComponent extends BaseComponent {
             this.stateHistory.shift();
         }
 
-        // Emit state change event
+        // Emit state change events
         if (this.owner) {
             EventBus.emit('STATE_CHANGED', this.owner.id, oldState, newState, reason);
+            EventBus.emit(GameEvents.ENTITY_STATE_CHANGED, this.owner.id, oldState, newState);
         }
     }
 

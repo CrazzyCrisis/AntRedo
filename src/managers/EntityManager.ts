@@ -7,7 +7,6 @@
 import { BaseManager } from './BaseManager';
 import {
     GameObject,
-    EventBus,
     GameEvents,
     distance,
     pointInRect
@@ -19,11 +18,15 @@ export class EntityManager extends BaseManager {
     // Entity storage
     private entities: Map<string, GameObject>;
     private entitiesByType: Map<string, Set<string>>;
+    
+    // Tile occupancy tracking (for collision avoidance)
+    private tileOccupants: Map<string, GameObject>;
 
     private constructor() {
         super(); // Initialize BaseManager
         this.entities = new Map();
         this.entitiesByType = new Map();
+        this.tileOccupants = new Map();
         this.setupEventListeners();
     }
 
@@ -42,8 +45,16 @@ export class EntityManager extends BaseManager {
      */
     private setupEventListeners(): void {
         // Auto-remove entities when they're destroyed
-        EventBus.on(GameEvents.ENTITY_DESTROYED, (id: string) => {
+        this.subscribe(GameEvents.ENTITY_DESTROYED, (id: string) => {
             this.removeEntity(id);
+        });
+        
+        // Track tile occupancy when entities move
+        this.subscribe(GameEvents.ENTITY_MOVED, (id: string, gridX: number, gridY: number) => {
+            const entity = this.entities.get(id);
+            if (entity) {
+                this.updateTileOccupancy(entity, gridX, gridY);
+            }
         });
     }
 
@@ -60,6 +71,9 @@ export class EntityManager extends BaseManager {
             this.entitiesByType.set(entity.type, new Set());
         }
         this.entitiesByType.get(entity.type)!.add(entity.id);
+        
+        // Register initial tile occupancy
+        this.registerTileOccupant(entity);
 
         // Emit event
         this.emit('ENTITY_ADDED', entity.id, entity.type);
@@ -80,6 +94,9 @@ export class EntityManager extends BaseManager {
         if (typeSet) {
             typeSet.delete(id);
         }
+        
+        // Unregister from tile occupancy
+        this.unregisterTileOccupant(entity);
 
         // Remove from main storage
         this.entities.delete(id);
@@ -174,6 +191,53 @@ export class EntityManager extends BaseManager {
     }
 
     /**
+     * Get entity occupying a specific tile
+     * @param gridX - Grid column
+     * @param gridY - Grid row
+     * @returns GameObject or undefined if tile is unoccupied
+     */
+    public getTileOccupant(gridX: number, gridY: number): GameObject | undefined {
+        const key = `${gridX},${gridY}`;
+        return this.tileOccupants.get(key);
+    }
+
+    /**
+     * Register entity as occupying a tile
+     * @param entity - GameObject to register
+     */
+    public registerTileOccupant(entity: GameObject): void {
+        const key = `${entity.gridX},${entity.gridY}`;
+        this.tileOccupants.set(key, entity);
+    }
+
+    /**
+     * Unregister entity from tile occupancy
+     * @param entity - GameObject to unregister
+     */
+    public unregisterTileOccupant(entity: GameObject): void {
+        const key = `${entity.gridX},${entity.gridY}`;
+        this.tileOccupants.delete(key);
+    }
+
+    /**
+     * Update tile occupancy when entity moves
+     * @param entity - GameObject that moved
+     * @param newGridX - New grid X position
+     * @param newGridY - New grid Y position
+     */
+    private updateTileOccupancy(entity: GameObject, newGridX: number, newGridY: number): void {
+        // Unregister from old tile
+        this.unregisterTileOccupant(entity);
+        
+        // Update entity position (in case it's not already updated)
+        entity.gridX = newGridX;
+        entity.gridY = newGridY;
+        
+        // Register at new tile
+        this.registerTileOccupant(entity);
+    }
+
+    /**
      * Update all active entities
      * Call this once per frame from your scene's update() method
      * @param deltaTime - Time since last frame in milliseconds
@@ -193,6 +257,7 @@ export class EntityManager extends BaseManager {
     public clear(): void {
         this.entities.clear();
         this.entitiesByType.clear();
+        this.tileOccupants.clear();
     }
 
     /**

@@ -39,12 +39,11 @@ export class GameObject {
     private isMoving: boolean = false;
     
     // Smart snapping system
-    private lastMoveDirectionX: number = 0; // Last non-zero movement direction
-    private lastMoveDirectionY: number = 0;
     private isSnapping: boolean = false; // Currently snapping to tile center
     private snapTargetX: number = 0; // Target position for snapping
     private snapTargetY: number = 0;
     private snapSpeed: number = 8.0; // Tiles per second for snapping (faster than normal movement)
+    public enableSnapping: boolean = true; // Enable/disable snapping (disable for AI-controlled entities)
     
     // Collision box
     public collisionWidth: number;
@@ -107,6 +106,35 @@ export class GameObject {
     }
 
     /**
+     * Move toward a target tile (used by PathfindingComponent)
+     * Returns true when target tile is reached
+     * This method integrates pathfinding with GameObject's smooth movement system
+     * @param targetGridX - Target grid X
+     * @param targetGridY - Target grid Y
+     * @param deltaTime - Time delta in milliseconds
+     * @returns True if target reached
+     */
+    public moveTowardTile(targetGridX: number, targetGridY: number, deltaTime: number): boolean {
+        // Already at target
+        if (this.gridX === targetGridX && this.gridY === targetGridY) {
+            return true;
+        }
+        
+        // Calculate direction toward target
+        const dx = Math.sign(targetGridX - this.gridX);
+        const dy = Math.sign(targetGridY - this.gridY);
+        
+        // Request movement in that direction
+        this.requestMove(dx, dy);
+        
+        // Process movement (this will use smooth interpolation)
+        this.processMovement(deltaTime);
+        
+        // Check if we reached target this frame
+        return this.gridX === targetGridX && this.gridY === targetGridY;
+    }
+
+    /**
      * Request movement in a direction (for time-based movement)
      * Call this every frame with desired direction
      * @param dirX - X direction (-1, 0, or 1)
@@ -131,14 +159,8 @@ export class GameObject {
         const wasMoving = this.isMoving;
         this.isMoving = this.targetMoveX !== 0 || this.targetMoveY !== 0;
         
-        // Store last movement direction when moving
-        if (this.isMoving) {
-            if (this.targetMoveX !== 0) this.lastMoveDirectionX = this.targetMoveX;
-            if (this.targetMoveY !== 0) this.lastMoveDirectionY = this.targetMoveY;
-        }
-        
-        // If we just stopped moving, calculate snap target
-        if (wasMoving && !this.isMoving && !this.isSnapping) {
+        // If we just stopped moving, calculate snap target (only if snapping is enabled)
+        if (wasMoving && !this.isMoving && !this.isSnapping && this.enableSnapping) {
             this.calculateSnapTarget();
             this.isSnapping = true;
         }
@@ -154,14 +176,17 @@ export class GameObject {
             const distanceToTarget = Math.sqrt(dx * dx + dy * dy);
             
             if (distanceToTarget < snapDistance) {
-                // Reached target - snap exactly
+                // Reached target - snap exactly to tile center
                 this.smoothWorldX = this.snapTargetX;
                 this.smoothWorldY = this.snapTargetY;
                 this.isSnapping = false;
                 
                 // Update grid position to match snap target
-                const snapGridX = Math.round(this.snapTargetX / TILE_CONFIG.SIZE);
-                const snapGridY = Math.round(this.snapTargetY / TILE_CONFIG.SIZE);
+                // Use floor because snap target is already tile center (tileX * SIZE + SIZE/2)
+                // Example: snapTarget 336 → 336/32 = 10.5 → floor = 10 ✓
+                const snapGridX = Math.floor(this.snapTargetX / TILE_CONFIG.SIZE);
+                const snapGridY = Math.floor(this.snapTargetY / TILE_CONFIG.SIZE);
+                
                 this.moveTo(snapGridX, snapGridY);
             } else {
                 // Move towards snap target
@@ -210,7 +235,21 @@ export class GameObject {
         if (this.moveAccumulator >= 1.0) {
             const newGridX = this.gridX + this.targetMoveX;
             const newGridY = this.gridY + this.targetMoveY;
-            this.moveTo(newGridX, newGridY);
+            
+            // Check for collision with other ants (only ants bounce into each other)
+            let canMove = true;
+            if (this.type === 'ant') {
+                // Lazy-import EntityManager to avoid circular dependency
+                const { EntityManager } = require('../managers/EntityManager');
+                const occupant = EntityManager.getInstance().getTileOccupant(newGridX, newGridY);
+                if (occupant && occupant.type === 'ant' && occupant.id !== this.id) {
+                    canMove = false; // Tile occupied by another ant - collision!
+                }
+            }
+            
+            if (canMove) {
+                this.moveTo(newGridX, newGridY);
+            }
             
             this.moveAccumulator -= 1.0; // Keep remainder for smooth movement
         }
@@ -221,52 +260,22 @@ export class GameObject {
     }
     
     /**
-     * Calculate which tile center to snap to based on current position and last movement direction
+     * Calculate which tile center to snap to based on current position
+     * Uses rounding to snap to the nearest tile center
      */
     private calculateSnapTarget(): void {
-        // Get current position in tile coordinates (fractional)
-        const currentTileX = this.smoothWorldX / TILE_CONFIG.SIZE;
-        const currentTileY = this.smoothWorldY / TILE_CONFIG.SIZE;
+        // Snap to the nearest tile center (not just floor)
+        // This handles edge cases where entity is at tile boundary (e.g., 319.9 or 320.1)
+        const currentTileX = Math.round(this.smoothWorldX / TILE_CONFIG.SIZE);
+        const currentTileY = Math.round(this.smoothWorldY / TILE_CONFIG.SIZE);
         
-        // Get the tile we're currently "on" (floor)
-        const baseTileX = Math.floor(currentTileX);
-        const baseTileY = Math.floor(currentTileY);
+        // Calculate center of nearest tile
+        const tileCenterX = (currentTileX * TILE_CONFIG.SIZE);
+        const tileCenterY = (currentTileY * TILE_CONFIG.SIZE);
         
-        // Calculate how far we are into the current tile (0 to 1)
-        const progressX = currentTileX - baseTileX;
-        const progressY = currentTileY - baseTileY;
-        
-        // Determine target tile based on last movement direction and progress
-        let targetTileX = baseTileX;
-        let targetTileY = baseTileY;
-        
-        // Horizontal snapping
-        if (this.lastMoveDirectionX !== 0) {
-            if (this.lastMoveDirectionX > 0 && progressX > 0.5) {
-                // Moving right and more than halfway - snap to next tile
-                targetTileX = baseTileX + 1;
-            } else if (this.lastMoveDirectionX < 0 && progressX < 0.5) {
-                // Moving left and less than halfway - snap to previous tile
-                targetTileX = baseTileX - 1;
-            }
-            // Otherwise snap to current tile (baseTileX)
-        }
-        
-        // Vertical snapping
-        if (this.lastMoveDirectionY !== 0) {
-            if (this.lastMoveDirectionY > 0 && progressY > 0.5) {
-                // Moving down and more than halfway - snap to next tile
-                targetTileY = baseTileY + 1;
-            } else if (this.lastMoveDirectionY < 0 && progressY < 0.5) {
-                // Moving up and less than halfway - snap to previous tile
-                targetTileY = baseTileY - 1;
-            }
-            // Otherwise snap to current tile (baseTileY)
-        }
-        
-        // Set snap target to CENTER of target tile (add half tile size)
-        this.snapTargetX = (targetTileX * TILE_CONFIG.SIZE) + (TILE_CONFIG.SIZE / 2);
-        this.snapTargetY = (targetTileY * TILE_CONFIG.SIZE) + (TILE_CONFIG.SIZE / 2);
+        // Set snap target to nearest tile center
+        this.snapTargetX = tileCenterX;
+        this.snapTargetY = tileCenterY;
     }
 
     /**

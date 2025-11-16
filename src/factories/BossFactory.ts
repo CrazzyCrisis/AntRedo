@@ -10,6 +10,7 @@ import {
     SpriteComponent,
     EntityManager,
     setupEntitySpriteBinding,
+    setupHealthBarBinding,
     TILE_SIZE,
     gridToWorldCenter
 } from '../imports/factoryImports';
@@ -73,6 +74,9 @@ export class BossFactory {
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)
         setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES);
+
+        // Setup health bar (automatically tracks position and cleans up)
+        setupHealthBarBinding(boss, renderer, RenderLayer.ABOVE_ENTITIES);
 
         return boss;
     }

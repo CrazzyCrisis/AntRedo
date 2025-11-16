@@ -26,7 +26,10 @@ import {
     InputManager,
     WorldGenConfigMenu,
     EntityManager,
-    CameraManager
+    CameraManager,
+    Building,
+    BuildingFactory,
+    AntFactory
 } from '../imports/sceneImports';
 import { TileRenderer, TileRenderConfig } from '../world/TileRenderer';
 
@@ -56,6 +59,13 @@ export class DevRoomScene implements IScene {
         ant: any;
         queen: any;
         boss: any;
+        building: any;
+        hill1?: any;
+        hill2?: any;
+        hive1?: any;
+        hive2?: any;
+        cone1?: any;
+        cone2?: any;
         resources: {
             food: any;
             wood: any;
@@ -63,6 +73,9 @@ export class DevRoomScene implements IScene {
             magicCrystal: any;
         };
     } | null = null;
+    
+    // Enemy building tracking
+    private enemyBuildings: Array<{ building: Building; spawnTimer: number; spawnInterval: number }> = [];
     
     // Tile colors from config (fallback)
     private tileColors: { [key: number]: string };
@@ -78,13 +91,20 @@ export class DevRoomScene implements IScene {
             ant: any; 
             queen: any; 
             boss: any; 
-            resources: {
-                food: any;
-                wood: any;
-                stone: any;
-                magicCrystal: any;
+            building: any;
+            hill1?: any;
+            hill2?: any;
+            hive1?: any;
+            hive2?: any;
+            cone1?: any;
+            cone2?: any;
+            resources: { 
+                food: any; 
+                wood: any; 
+                stone: any; 
+                magicCrystal: any; 
             };
-        } | null = null
+        } | null
     ) {
         this.renderer = renderer;
         this.canvasWidth = canvasWidth;
@@ -298,6 +318,9 @@ export class DevRoomScene implements IScene {
         if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
             this.worldGenConfigMenu.update();
         }
+        
+        // Update enemy building spawn timers
+        this.updateEnemyBuildingSpawns(16.67);
         
         // Update all entities (Queen, Ants, Bosses, etc.) - EntityManager handles lifecycle
         EntityManager.getInstance().update(16.67); // ~60fps
@@ -579,6 +602,9 @@ export class DevRoomScene implements IScene {
             queen: this.entitySprites.queen
         });
         
+        // Spawn enemy buildings around the map
+        this.spawnEnemyBuildings(tileGrid);
+        
         // Generate a procedural level (tutorial difficulty)
         const levelData = this.levelLoader.loadProceduralLevel({
             difficulty: 'easy',
@@ -620,6 +646,180 @@ export class DevRoomScene implements IScene {
         this.unregisterFunctions.push(waveListener, safeZoneListener);
         
         EventBus.emit(GameEvents.LEVEL_START);
+    }
+
+    /**
+     * Spawn enemy buildings around the map
+     */
+    private spawnEnemyBuildings(tileGrid: TileGrid): void {
+        if (!this.entitySprites) {
+            return;
+        }
+
+        const grid = tileGrid.getGrid();
+        const worldWidth = grid[0].length;
+        const worldHeight = grid.length;
+        
+        // Spawn 3-5 clusters of enemy buildings
+        const numClusters = 3 + Math.floor(Math.random() * 3); // 3-5 clusters
+        const buildingSprites = [
+            this.entitySprites.hill1,
+            this.entitySprites.hill2,
+            this.entitySprites.hive1,
+            this.entitySprites.hive2,
+            this.entitySprites.cone1,
+            this.entitySprites.cone2
+        ];
+        
+        for (let cluster = 0; cluster < numClusters; cluster++) {
+            // Find cluster center
+            let attempts = 0;
+            let clusterCenterX = 0;
+            let clusterCenterY = 0;
+            let foundValidCenter = false;
+            
+            while (attempts < 50 && !foundValidCenter) {
+                clusterCenterX = Math.floor(Math.random() * worldWidth);
+                clusterCenterY = Math.floor(Math.random() * worldHeight);
+                
+                // Check if tile is walkable and not too close to center (where queen spawns)
+                const centerX = Math.floor(worldWidth / 2);
+                const centerY = Math.floor(worldHeight / 2);
+                const distanceFromCenter = Math.sqrt(
+                    Math.pow(clusterCenterX - centerX, 2) + Math.pow(clusterCenterY - centerY, 2)
+                );
+                
+                if (grid[clusterCenterY][clusterCenterX].walkable && distanceFromCenter > 15) {
+                    foundValidCenter = true;
+                }
+                
+                attempts++;
+            }
+            
+            if (!foundValidCenter) {
+                continue;
+            }
+            
+            // Spawn 3-6 buildings in this cluster
+            const buildingsInCluster = 3 + Math.floor(Math.random() * 4); // 3-6 buildings
+            const clusterRadius = 4; // Buildings within 4 tiles of center
+            
+            for (let i = 0; i < buildingsInCluster; i++) {
+                // Find position near cluster center
+                let buildingAttempts = 0;
+                let gridX = clusterCenterX;
+                let gridY = clusterCenterY;
+                let foundValidLocation = false;
+                
+                while (buildingAttempts < 20 && !foundValidLocation) {
+                    // Random offset from cluster center
+                    const offsetX = Math.floor(Math.random() * (clusterRadius * 2 + 1)) - clusterRadius;
+                    const offsetY = Math.floor(Math.random() * (clusterRadius * 2 + 1)) - clusterRadius;
+                    
+                    gridX = clusterCenterX + offsetX;
+                    gridY = clusterCenterY + offsetY;
+                    
+                    // Check bounds and walkability
+                    if (gridX >= 0 && gridX < worldWidth - 1 && // -1 for 2x2 building
+                        gridY >= 0 && gridY < worldHeight - 1 &&
+                        grid[gridY][gridX].walkable &&
+                        grid[gridY + 1][gridX].walkable &&
+                        grid[gridY][gridX + 1].walkable &&
+                        grid[gridY + 1][gridX + 1].walkable) {
+                        
+                        // Check not too close to other buildings (at least 1 tile apart)
+                        let tooClose = false;
+                        for (const existingBuilding of this.enemyBuildings) {
+                            const dx = Math.abs(existingBuilding.building.gridX - gridX);
+                            const dy = Math.abs(existingBuilding.building.gridY - gridY);
+                            if (dx < 2 && dy < 2) { // 2 tile minimum spacing for denser clusters
+                                tooClose = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!tooClose) {
+                            foundValidLocation = true;
+                        }
+                    }
+                    
+                    buildingAttempts++;
+                }
+                
+                if (!foundValidLocation) {
+                    continue;
+                }
+                
+                // Pick random building sprite
+                const sprite = buildingSprites[Math.floor(Math.random() * buildingSprites.length)];
+                
+                // Create building (use same sprite for construction and completed)
+                const building = BuildingFactory.create(
+                    this.renderer,
+                    sprite, // Construction sprite
+                    sprite, // Completed sprite (same for now)
+                    gridX,
+                    gridY,
+                    'tower' // Use tower type for enemy buildings
+                );
+                
+                // Track building for enemy spawning
+                this.enemyBuildings.push({
+                    building,
+                    spawnTimer: 0,
+                    spawnInterval: 5000 + Math.random() * 5000 // 5-10 seconds
+                });
+                
+                console.log(`[DevRoomScene] Spawned enemy building at (${gridX}, ${gridY}) in cluster ${cluster + 1}`);
+            }
+        }
+    }
+
+    /**
+     * Update enemy building spawn timers and spawn ants
+     */
+    private updateEnemyBuildingSpawns(deltaTime: number): void {
+        if (!this.entitySprites) {
+            return;
+        }
+
+        for (const buildingData of this.enemyBuildings) {
+            // Skip if building is destroyed
+            if (!buildingData.building.isActive) {
+                continue;
+            }
+
+            // Update spawn timer
+            buildingData.spawnTimer += deltaTime;
+
+            // Spawn ant if timer elapsed
+            if (buildingData.spawnTimer >= buildingData.spawnInterval) {
+                buildingData.spawnTimer = 0;
+                buildingData.spawnInterval = 5000 + Math.random() * 5000; // Next spawn in 5-10 seconds
+
+                // Spawn enemy ant near building (random adjacent tile)
+                const directions = [
+                    { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
+                    { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+                    { dx: -1, dy: -1 }, { dx: 1, dy: -1 },
+                    { dx: -1, dy: 1 }, { dx: 1, dy: 1 }
+                ];
+                
+                const randomDir = directions[Math.floor(Math.random() * directions.length)];
+                const spawnX = buildingData.building.gridX + randomDir.dx;
+                const spawnY = buildingData.building.gridY + randomDir.dy;
+
+                // Create enemy ant (don't need to store reference, EntityManager tracks it)
+                AntFactory.create(
+                    this.renderer,
+                    spawnX,
+                    spawnY,
+                    'enemy_faction'
+                );
+
+                console.log(`[DevRoomScene] Enemy ant spawned at (${spawnX}, ${spawnY}) from building at (${buildingData.building.gridX}, ${buildingData.building.gridY})`);
+            }
+        }
     }
 
     /**

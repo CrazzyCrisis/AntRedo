@@ -32,6 +32,8 @@
 export { Renderer } from '../rendering/Renderer';
 export { RenderLayer } from '../rendering/RenderLayer';
 export { SpriteComponent } from '../rendering/components/SpriteComponent';
+export { AnimatedSpriteSheetComponent } from '../rendering/components/AnimatedSpriteSheetComponent';
+export type { AnimationConfig } from '../rendering/components/AnimatedSpriteSheetComponent';
 
 // ============================================================================
 // EVENT BUS
@@ -41,7 +43,18 @@ export { EventBus, GameEvents } from '../utils/eventBus';
 // ============================================================================
 // UTILITIES
 // ============================================================================
-export { setupEntitySpriteBinding, gridToWorld, gridToWorldCenter, gridToWorldPosition } from '../utils/helpers';
+export { 
+    setupEntitySpriteBinding, 
+    setupHealthBarBinding, 
+    setupStatusBarBinding,
+    setupHungerBarBinding,
+    setupOxygenBarBinding,
+    setupStaminaBarBinding,
+    gridToWorld, 
+    gridToWorldCenter, 
+    gridToWorldPosition, 
+    createAnimationData 
+} from '../utils/helpers';
 export type { TilePosition } from '../utils/helpers';
 export { TILE_SIZE } from '../world/TileSystem';
 
@@ -54,3 +67,10 @@ export { EntityManager } from '../managers/EntityManager';
 // CONFIG
 // ============================================================================
 export { ResourceType, BuildingType, ENTITY_CONFIG } from '../config/entityConfig';
+export { 
+    ANT_ANIMATIONS, 
+    QUEEN_ANIMATIONS, 
+    BOSS_ANIMATIONS,
+    JOB_TO_ANIMATION_MAP,
+    JOB_TO_SPRITESHEET_MAP 
+} from '../config/animationConfig';

@@ -8,7 +8,6 @@ import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
 import { Pathfinder, PathNode } from '../../world/Pathfinder';
 import { TileData } from '../../world/TileSystem';
-import { lerp } from '../../utils/helpers';
 
 /**
  * PathfindingComponent
@@ -20,13 +19,6 @@ export class PathfindingComponent extends BaseComponent {
     private pathIndex: number = 0;
     private speed: number;              // Tiles per second
     private moving: boolean = false;
-    
-    // Smooth movement tracking
-    private currentProgress: number = 0;  // 0.0 to 1.0 progress to next node
-    private fromCol: number = 0;
-    private fromRow: number = 0;
-    private toCol: number = 0;
-    private toRow: number = 0;
 
     /**
      * Create a new PathfindingComponent
@@ -42,8 +34,7 @@ export class PathfindingComponent extends BaseComponent {
      * Hook: Initialize movement tracking after attach
      */
     protected onAttached(): void {
-        this.fromCol = this.owner.gridX;
-        this.fromRow = this.owner.gridY;
+        // No initialization needed - GameObject handles movement
     }
 
     /**
@@ -111,22 +102,14 @@ export class PathfindingComponent extends BaseComponent {
         // Store path and start following
         this.currentPath = path;
         this.pathIndex = 0;
-        this.currentProgress = 0;
         this.moving = true;
 
         // Skip first node if it's our current position
         if (path.length > 0 && path[0].col === this.owner.gridX && path[0].row === this.owner.gridY) {
             this.pathIndex = 1;
         }
-
-        // Initialize movement from current position to next node
-        this.fromCol = this.owner.gridX;
-        this.fromRow = this.owner.gridY;
         
-        if (this.pathIndex < path.length) {
-            this.toCol = path[this.pathIndex].col;
-            this.toRow = path[this.pathIndex].row;
-        } else {
+        if (this.pathIndex >= path.length) {
             // Path only had start node - complete immediately
             this.completePathFollowing();
             return;
@@ -137,6 +120,7 @@ export class PathfindingComponent extends BaseComponent {
 
     /**
      * Follow the current path
+     * Uses GameObject's smooth movement system instead of direct lerp
      * @param deltaTime - Time elapsed in milliseconds
      */
     private followPath(deltaTime: number): void {
@@ -144,35 +128,25 @@ export class PathfindingComponent extends BaseComponent {
             return;
         }
 
-        // Calculate movement progress (convert ms to seconds, multiply by tiles/second)
-        const progressDelta = (deltaTime / 1000) * this.speed;
-        this.currentProgress += progressDelta;
+        // Get next waypoint
+        if (this.pathIndex >= this.currentPath.length) {
+            this.completePathFollowing();
+            return;
+        }
 
-        // Check if reached next node
-        if (this.currentProgress >= 1.0) {
-            this.currentProgress = 0;
+        const nextNode = this.currentPath[this.pathIndex];
+        
+        // Use GameObject's moveTowardTile - this handles smooth movement
+        const reached = this.owner.moveTowardTile(nextNode.col, nextNode.row, deltaTime);
+        
+        if (reached) {
+            // Advance to next waypoint
             this.pathIndex++;
-
+            
             // Check if path complete
             if (this.pathIndex >= this.currentPath.length) {
                 this.completePathFollowing();
-                return;
             }
-
-            // Move to next segment
-            this.fromCol = this.owner.gridX;
-            this.fromRow = this.owner.gridY;
-            this.toCol = this.currentPath[this.pathIndex].col;
-            this.toRow = this.currentPath[this.pathIndex].row;
-        }
-
-        // Lerp between current and next node
-        const newCol = Math.round(lerp(this.fromCol, this.toCol, this.currentProgress));
-        const newRow = Math.round(lerp(this.fromRow, this.toRow, this.currentProgress));
-
-        // Update owner position if changed
-        if (newCol !== this.owner.gridX || newRow !== this.owner.gridY) {
-            this.owner.moveTo(newCol, newRow);
         }
     }
 
@@ -228,7 +202,6 @@ export class PathfindingComponent extends BaseComponent {
     public clearPath(): void {
         this.currentPath = [];
         this.pathIndex = 0;
-        this.currentProgress = 0;
         this.moving = false;
     }
 

@@ -19,3 +19,5 @@ export { MultiPartComponent, SpritePart } from './components/MultiPartComponent'
 export { AnimatedSpriteComponent } from './components/AnimatedSpriteComponent';
 export { ButtonComponent } from './components/ButtonComponent';
 export { UIContainer } from './components/UIContainer';
+export { HealthBarComponent } from './components/HealthBarComponent';
+export { StatusBarComponent } from './components/StatusBarComponent';

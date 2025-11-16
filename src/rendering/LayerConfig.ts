@@ -13,9 +13,9 @@ export interface LayerConfig {
 }
 
 /**
- * Layer configurations for all 7 render layers.
+ * Layer configurations for all 8 render layers.
  * Static layers (BACKGROUND, GROUND, GROUND_DECORATIONS) are not cleared every frame.
- * Dynamic layers (ENTITIES, ABOVE_ENTITIES, UI, DEBUG) are cleared every frame.
+ * Dynamic layers (ENTITIES, ABOVE_ENTITIES, VISUAL_EFFECTS, UI, DEBUG) are cleared every frame.
  * Only ENTITIES and ABOVE_ENTITIES layers use depth sorting.
  */
 export const LAYER_CONFIGS: Record<RenderLayer, LayerConfig> = {
@@ -38,6 +38,10 @@ export const LAYER_CONFIGS: Record<RenderLayer, LayerConfig> = {
     [RenderLayer.ABOVE_ENTITIES]: {
         clearEveryFrame: true,
         depthSort: true
+    },
+    [RenderLayer.VISUAL_EFFECTS]: {
+        clearEveryFrame: true,
+        depthSort: false
     },
     [RenderLayer.UI]: {
         clearEveryFrame: true,

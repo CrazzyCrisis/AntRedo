@@ -319,7 +319,6 @@ export class EntityShowcaseScene implements IScene {
                 
                 const ant = AntFactory.create(
                     this.renderer,
-                    this.sprites.ant,
                     gridX,
                     gridY,
                     'player',

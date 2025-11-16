@@ -18,6 +18,7 @@
 // CORE SCENE SYSTEMS
 // ============================================================================
 export { IScene } from '../scenes/IScene';
+export { BaseGameScene } from '../scenes/BaseGameScene';
 export { Renderer } from '../rendering/Renderer';
 export { Camera } from '../rendering/Camera';
 export { RenderLayer } from '../rendering/RenderLayer';

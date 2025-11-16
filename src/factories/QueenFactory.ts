@@ -5,6 +5,7 @@ import {
     EventBus,
     GameEvents,
     setupEntitySpriteBinding,
+    setupHealthBarBinding,
     TILE_SIZE,
     EntityManager,
     gridToWorldCenter
@@ -72,6 +73,9 @@ export class QueenFactory {
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)
         setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES);
+
+        // Setup health bar (automatically tracks position and cleans up)
+        setupHealthBarBinding(queen, renderer, RenderLayer.ABOVE_ENTITIES);
 
         // 4. Register with EntityManager for update() lifecycle
         EntityManager.getInstance().addEntity(queen);

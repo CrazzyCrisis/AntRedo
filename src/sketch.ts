@@ -77,12 +77,29 @@ let entitySprites: {
     queen: any;
     boss: any;
     building: any;
+    hill1: any;
+    hill2: any;
+    hive1: any;
+    hive2: any;
+    cone1: any;
+    cone2: any;
     resources: {
         food: any;
         wood: any;
         stone: any;
         magicCrystal: any;
     };
+} | null = null;
+
+// Preloaded entity spritesheets for animation system
+let entitySpritesheets: {
+    default: any;
+    warrior: any;
+    scout: any;
+    builder: any;
+    farmer: any;
+    spitter: any;
+    queen: any;
 } | null = null;
 
 function preload() {
@@ -115,12 +132,29 @@ function preload() {
         queen: loadImage(getEntitySpritePath(ENTITY_SPRITES.queen)),
         boss: loadImage(getEntitySpritePath(ENTITY_SPRITES.boss)),
         building: loadImage(getEntitySpritePath(ENTITY_SPRITES.building)),
+        hill1: loadImage(getEntitySpritePath(ENTITY_SPRITES.hill1)),
+        hill2: loadImage(getEntitySpritePath(ENTITY_SPRITES.hill2)),
+        hive1: loadImage(getEntitySpritePath(ENTITY_SPRITES.hive1)),
+        hive2: loadImage(getEntitySpritePath(ENTITY_SPRITES.hive2)),
+        cone1: loadImage(getEntitySpritePath(ENTITY_SPRITES.cone1)),
+        cone2: loadImage(getEntitySpritePath(ENTITY_SPRITES.cone2)),
         resources: {
             food: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.food)),
             wood: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.wood)),
             stone: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.stone)),
             magicCrystal: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.magicCrystal))
         }
+    };
+    
+    // Load entity spritesheets for animation system
+    entitySpritesheets = {
+        default: loadImage('assets/spriteSheets/Default.png'),
+        warrior: loadImage('assets/spriteSheets/Warrior.png'),
+        scout: loadImage('assets/spriteSheets/Scout.png'),
+        builder: loadImage('assets/spriteSheets/Builder.png'),
+        farmer: loadImage('assets/spriteSheets/Farmer.png'),
+        spitter: loadImage('assets/spriteSheets/Spitter.png'),
+        queen: loadImage('assets/spriteSheets/Queen.png')
     };
     
     // Load tile edge sprites (frills)
@@ -415,14 +449,24 @@ function windowResized() {
     }
 }
 
-// Make functions available to p5.js
-(window as any).preload = preload;
-(window as any).setup = setup;
-(window as any).draw = draw;
-(window as any).keyPressed = keyPressed;
-(window as any).keyReleased = keyReleased;
-(window as any).mousePressed = mousePressed;
-(window as any).mouseMoved = mouseMoved;
-(window as any).mouseDragged = mouseDragged;
-(window as any).mouseReleased = mouseReleased;
-(window as any).windowResized = windowResized;
+// Make functions available to p5.js (only in browser environment)
+if (typeof window !== 'undefined') {
+    (window as any).preload = preload;
+    (window as any).setup = setup;
+    (window as any).draw = draw;
+    (window as any).keyPressed = keyPressed;
+    (window as any).keyReleased = keyReleased;
+    (window as any).mousePressed = mousePressed;
+    (window as any).mouseMoved = mouseMoved;
+    (window as any).mouseDragged = mouseDragged;
+    (window as any).mouseReleased = mouseReleased;
+    (window as any).windowResized = windowResized;
+}
+
+// Export preloaded assets for use in factories/scenes
+export { menuImages, tileSprites, tileEdgeSprites, entitySprites };
+
+// Helper to get entity spritesheet (accessed via window in browser)
+export function getEntitySpritesheet(name: string): any {
+    return entitySpritesheets ? (entitySpritesheets as any)[name] : null;
+}

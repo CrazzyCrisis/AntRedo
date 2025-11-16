@@ -284,7 +284,7 @@ interface BuildingConfig {
 
 const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     warehouse: {
-        size: { width: 3, height: 3 },
+        size: { width: 2, height: 2 },
         costs: { wood: 20, stone: 10 },
         constructionTime: 30,
         levels: [
@@ -304,7 +304,7 @@ const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ]
     },
     tower: {
-        size: { width: 1, height: 1 },
+        size: { width: 2, height: 2 },
         costs: { wood: 10, stone: 20 },
         constructionTime: 20,
         levels: [

@@ -5,7 +5,9 @@
  */
 
 import { BaseComponent } from './BaseComponent';
-import { EventBus } from '../../utils/eventBus';
+import { EventBus, GameEvents } from '../../utils/eventBus';
+import { gridToWorldCenter } from '../../utils/helpers';
+import { TILE_SIZE } from '../../world/TileSystem';
 
 /**
  * HealthComponent
@@ -70,8 +72,9 @@ export class HealthComponent extends BaseComponent {
      * Take damage
      * @param amount - Damage amount
      * @param attackerId - ID of attacking entity (for kill tracking)
+     * @param isCritical - Whether this is a critical hit (for visual effects)
      */
-    public takeDamage(amount: number, attackerId: string): void {
+    public takeDamage(amount: number, attackerId: string, isCritical: boolean = false): void {
         if (!this.alive || amount <= 0) {
             return;
         }
@@ -81,9 +84,10 @@ export class HealthComponent extends BaseComponent {
         this.currentHealth = Math.max(0, this.currentHealth - amount);
         this.timeSinceLastDamage = 0; // Reset regen delay timer
 
-        // Emit damage event
+        // Emit damage event with world position for visual effects
         if (this.owner) {
-            EventBus.emit('ENTITY_DAMAGED', this.owner.id, actualDamage, this.currentHealth);
+            const worldPos = gridToWorldCenter(this.owner.gridX, this.owner.gridY, TILE_SIZE);
+            EventBus.emit(GameEvents.ENTITY_DAMAGE, this.owner.id, actualDamage, worldPos.x, worldPos.y, isCritical);
         }
 
         // Check for death
@@ -104,9 +108,10 @@ export class HealthComponent extends BaseComponent {
         const actualHeal = Math.min(amount, this.maxHealth - this.currentHealth);
         this.currentHealth = Math.min(this.maxHealth, this.currentHealth + amount);
 
-        // Emit heal event
+        // Emit heal event with world position for visual effects
         if (this.owner && actualHeal > 0) {
-            EventBus.emit('ENTITY_HEALED', this.owner.id, actualHeal, this.currentHealth);
+            const worldPos = gridToWorldCenter(this.owner.gridX, this.owner.gridY, TILE_SIZE);
+            EventBus.emit(GameEvents.ENTITY_HEALED, this.owner.id, actualHeal, worldPos.x, worldPos.y);
         }
     }
 
@@ -114,7 +119,7 @@ export class HealthComponent extends BaseComponent {
      * Handle death
      * @param killerId - ID of entity that killed this one
      */
-    private die(killerId: string): void {
+    private die(_killerId: string): void {
         if (!this.alive) {
             return;
         }
@@ -122,9 +127,10 @@ export class HealthComponent extends BaseComponent {
         this.alive = false;
         this.currentHealth = 0;
 
-        // Emit death event
+        // Emit death event with world position for visual effects
         if (this.owner) {
-            EventBus.emit('ENTITY_DIED', this.owner.id, killerId);
+            const worldPos = gridToWorldCenter(this.owner.gridX, this.owner.gridY, TILE_SIZE);
+            EventBus.emit(GameEvents.ENTITY_DIED, this.owner.id, worldPos.x, worldPos.y);
             
             // Destroy the owner GameObject
             this.owner.destroy();

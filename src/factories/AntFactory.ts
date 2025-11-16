@@ -1,14 +1,19 @@
 import {
     Renderer,
     RenderLayer,
-    SpriteComponent,
+    AnimatedSpriteSheetComponent,
     setupEntitySpriteBinding,
+    setupHealthBarBinding,
     TILE_SIZE,
     EntityManager,
-    gridToWorldCenter
+    gridToWorldCenter,
+    JOB_TO_ANIMATION_MAP,
+    JOB_TO_SPRITESHEET_MAP
 } from '../imports/factoryImports';
 import { Ant } from '../classes/Ant';
 import { AntJobComponent } from '../classes/components/AntJobComponent';
+import { EntityState } from '../classes/components/StateMachineComponent';
+import { getEntitySpritesheet } from '../sketch';
 
 /**
  * AntFactory creates Ant entities with automatic rendering setup.
@@ -30,7 +35,6 @@ export class AntFactory {
     /**
      * Create an ant with automatic rendering registration
      * @param renderer - The game renderer
-     * @param sprite - The ant sprite image
      * @param gridX - Initial grid X position
      * @param gridY - Initial grid Y position
      * @param factionId - Faction identifier for team
@@ -39,7 +43,6 @@ export class AntFactory {
      */
     static create(
         renderer: Renderer,
-        sprite: any,
         gridX: number,
         gridY: number,
         factionId: string,
@@ -53,24 +56,69 @@ export class AntFactory {
             ant.setJob(jobType);
         }
 
-        // Create sprite component with Y-position as depth for proper sorting
+        // Get spritesheet for this job type
+        const spritesheetName = (JOB_TO_SPRITESHEET_MAP as any)[jobType] || 'default';
+        const spritesheet = getEntitySpritesheet(spritesheetName);
+
+        // Get animations for this job type
+        const animations = (JOB_TO_ANIMATION_MAP as any)[jobType];
+
+        // Create animated sprite component
         // MUST use world coordinates for initial position (centered in tile)
         const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
-        const spriteComponent = new SpriteComponent(
-            sprite,
+        
+        // Get debug name for logging
+        const debugJobName = spritesheetName.toLowerCase();
+        
+        const animatedSprite = new AnimatedSpriteSheetComponent(
+            spritesheet,
             worldX,
             worldY,
-            RenderLayer.ENTITIES,
-            gridY, // Y-coordinate determines depth (ants behind trees)
-            32, // width
-            32, // height
-            -16, // offsetX to center sprite
-            -16  // offsetY to center sprite
+            debugJobName
         );
+        
+        // Center the sprite (32x32 frames, so offset by -16, -16)
+        animatedSprite.setOffset(-16, -16);
+        
+        // Set depth for proper sorting (Y-coordinate determines depth - ants behind trees)
+        animatedSprite.setDepth(gridY);
+        animatedSprite.setLayer(RenderLayer.ENTITIES);
+
+        // Add all animations for this ant's job
+        if (animations) {
+            animatedSprite.addAnimation('idle', animations.idle);
+            animatedSprite.addAnimation('walk', animations.walk);
+            animatedSprite.addAnimation('attack', animations.attack);
+            animatedSprite.addAnimation('gather', animations.gather);
+            animatedSprite.addAnimation('build', animations.build);
+            animatedSprite.addAnimation('die', animations.die);
+        }
+
+        // Map entity states to animation names
+        const stateToAnimationMap = new Map<EntityState, string>([
+            [EntityState.IDLE, 'idle'],
+            [EntityState.FOLLOWING, 'walk'],
+            [EntityState.PATROLLING, 'walk'],
+            [EntityState.SCOUTING, 'walk'],
+            [EntityState.RETURNING, 'walk'],
+            [EntityState.ATTACKING, 'attack'],
+            [EntityState.COMBAT, 'attack'],
+            [EntityState.GATHERING, 'gather'],
+            [EntityState.BUILDING, 'build'],
+            [EntityState.HEALING, 'idle']
+        ]);
+
+        // Connect animated sprite to entity's state machine
+        animatedSprite.setOwnerEntity(ant.id, stateToAnimationMap);
+
+        // Start with idle animation
+        animatedSprite.playAnimation('idle');
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        // Grid coordinates → world coordinates (centered in tile)
-        setupEntitySpriteBinding(ant, spriteComponent, renderer, RenderLayer.ENTITIES);
+        setupEntitySpriteBinding(ant, animatedSprite, renderer, RenderLayer.ENTITIES);
+
+        // Setup health bar (automatically tracks position and cleans up)
+        setupHealthBarBinding(ant, renderer, RenderLayer.ABOVE_ENTITIES);
 
         // Register with EntityManager for update() lifecycle
         EntityManager.getInstance().addEntity(ant);

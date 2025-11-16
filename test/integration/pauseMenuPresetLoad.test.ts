@@ -82,6 +82,19 @@ describe('Pause Menu Preset Loading Integration', () => {
         
         const mockTileSprites = {};
         const mockTileEdgeSprites = {};
+        const mockEntitySprites = {
+            ant: {},
+            queen: {},
+            boss: {},
+            berry: {},
+            leaf: {},
+            hill1: {},
+            hill2: {},
+            hive1: {},
+            hive2: {},
+            cone1: {},
+            cone2: {}
+        };
         
         // Create fresh renderer
         renderer = new Renderer(mockP5 as any, TEST_CANVAS.WIDTH, TEST_CANVAS.HEIGHT);
@@ -93,7 +106,8 @@ describe('Pause Menu Preset Loading Integration', () => {
             TEST_CANVAS.HEIGHT,
             mockBackButtonImg as any,
             mockTileSprites,
-            mockTileEdgeSprites
+            mockTileEdgeSprites,
+            mockEntitySprites as any
         );
         
         // Enter DevRoomScene to initialize world

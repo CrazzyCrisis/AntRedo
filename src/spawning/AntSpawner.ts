@@ -279,15 +279,10 @@ export class AntSpawner {
         jobType: number,
         factionId: string
     ): Ant | null {
-        const sprite = this.antSprites.get(jobType);
-        if (!sprite) {
-            console.error(`❌ Ant sprite not registered for job type ${jobType}. Registered types: ${Array.from(this.antSprites.keys())}`);
-            return null;
-        }
-
+        // NOTE: AntFactory now loads its own spritesheets internally
+        // No need to check or pass sprite parameter anymore
         return AntFactory.create(
             this.renderer,
-            sprite,
             gridX,
             gridY,
             factionId,

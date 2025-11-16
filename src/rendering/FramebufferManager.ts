@@ -22,7 +22,7 @@ export class FramebufferManager {
     }
 
     /**
-     * Create framebuffers for all 7 layers
+     * Create framebuffers for all 8 layers
      */
     private initializeFramebuffers(): void {
         const layers = [
@@ -31,6 +31,7 @@ export class FramebufferManager {
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
             RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS,
             RenderLayer.UI,
             RenderLayer.DEBUG
         ];
@@ -41,7 +42,8 @@ export class FramebufferManager {
             RenderLayer.GROUND,
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
-            RenderLayer.ABOVE_ENTITIES
+            RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS
         ];
 
         layers.forEach(layer => {

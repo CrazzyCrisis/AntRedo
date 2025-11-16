@@ -203,15 +203,29 @@ export const DEFAULT_SPAWN_CONFIG: SpawnConfig = {
             resourceType: 'food',
             noiseLayer: 'resources',
             threshold: { min: 0.6, max: 1.0 },
-            density: 0.003
+            density: 0.05
         },
         {
             bounds: { x: 0, y: 0, width: 100, height: 100 },
             resourceType: 'wood',
             noiseLayer: 'resources',
             threshold: { min: 0.3, max: 0.6 },
-            density: 0.02
-        }
+            density: 0.05
+        },
+        {
+            bounds: { x: 0, y: 0, width: 100, height: 100 },
+            resourceType: 'stone',
+            noiseLayer: 'resources',
+            threshold: { min: 0.3, max: 0.6 },
+            density: 0.05
+        },
+        {
+            bounds: { x: 0, y: 0, width: 100, height: 100 },
+            resourceType: 'magicCrystal',
+            noiseLayer: 'resources',
+            threshold: { min: 0.3, max: 0.6 },
+            density: 0.05
+        },
     ],
     
     enemyNests: [

@@ -48,6 +48,7 @@
 - **Consistent naming** - Follow existing conventions
 - **Minimal boilerplate** - Use factories, base classes, helpers to eliminate repetitive code
 - **Clear abstractions** - Hide complexity behind simple interfaces
+- **NO SUMMARY DOCUMENTS** - Do not create markdown files to document changes unless explicitly requested by user, always update checklists and architecture docs as needed
 
 ### Helper Extraction Workflow
 1. **Identify pattern** - See code appearing 2+ times

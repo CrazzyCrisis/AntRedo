@@ -1,5 +1,5 @@
 /**
- * RenderLayer enum defines the 7 rendering layers in order of draw priority.
+ * RenderLayer enum defines the 8 rendering layers in order of draw priority.
  * Lower values are drawn first (background), higher values drawn last (foreground).
  */
 export enum RenderLayer {
@@ -8,6 +8,7 @@ export enum RenderLayer {
     GROUND_DECORATIONS = 2,
     ENTITIES = 3,
     ABOVE_ENTITIES = 4,
-    UI = 5,
-    DEBUG = 6
+    VISUAL_EFFECTS = 5,  // Damage numbers, flashes, particles - above entities, below UI
+    UI = 6,
+    DEBUG = 7
 }

@@ -34,6 +34,9 @@ export class Boss extends GameObject {
     constructor(gridX: number, gridY: number, patrolPath: Array<{gridX: number; gridY: number}>, projectileType: 'homing' | 'straight' = 'homing') {
         super('boss', gridX, gridY);
         
+        // Disable snapping for AI-controlled boss (uses pathfinding)
+        this.enableSnapping = false;
+        
         // Initialize boss properties
         this.patrolPath = patrolPath;
         this.patrolIndex = 0;

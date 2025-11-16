@@ -6,10 +6,18 @@ import { RenderLayer } from '../../src/rendering/RenderLayer';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { AntJobComponent } from '../../src/classes/components/AntJobComponent';
 
+// Mock getEntitySpritesheet function
+(global as any).getEntitySpritesheet = () => {
+    return {
+        width: 192,  // 6 columns * 32px
+        height: 192, // 6 rows * 32px
+        copy: () => {}
+    };
+};
+
 describe('AntFactory', () => {
     let renderer: Renderer;
     let mockP5: any;
-    let mockSprite: any;
 
     beforeEach(() => {
         EventBus.clear();
@@ -32,14 +40,9 @@ describe('AntFactory', () => {
                 ellipse: () => {},
                 beginShape: () => {},
                 vertex: () => {},
-                endShape: () => {}
+                endShape: () => {},
+                copy: () => {}
             })
-        };
-
-        // Mock sprite
-        mockSprite = {
-            width: 32,
-            height: 32
         };
 
         renderer = new Renderer(mockP5, 800, 600);
@@ -51,7 +54,7 @@ describe('AntFactory', () => {
 
     describe('Factory Creation', () => {
         it('should create ant at grid position', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
 
             expect(ant).to.be.instanceOf(Ant);
             expect(ant.gridX).to.equal(5);
@@ -59,13 +62,13 @@ describe('AntFactory', () => {
         });
 
         it('should create ant with faction ID', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 0, 0, 'player_faction');
+            const ant = AntFactory.create(renderer, 0, 0, 'player_faction');
 
             expect(ant.getFactionId()).to.equal('player_faction');
         });
 
         it('should create ant with default GATHERER job', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
+            const ant = AntFactory.create(renderer, 0, 0, 'faction_1');
             const jobComponent = ant.getComponent('AntJob') as AntJobComponent;
 
             expect(jobComponent?.getCurrentJob()).to.equal(AntJobComponent.JOB_GATHERER);
@@ -74,7 +77,6 @@ describe('AntFactory', () => {
         it('should create ant with custom job type', () => {
             const ant = AntFactory.create(
                 renderer,
-                mockSprite,
                 0,
                 0,
                 'faction_1',
@@ -88,7 +90,7 @@ describe('AntFactory', () => {
 
     describe('Rendering Integration', () => {
         it('should register sprite with renderer', () => {
-            AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            AntFactory.create(renderer, 5, 10, 'faction_1');
 
             // Verify renderer has renderable on ENTITIES layer
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
@@ -96,7 +98,7 @@ describe('AntFactory', () => {
         });
 
         it('should use Y position as depth for sprite sorting', () => {
-            AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            AntFactory.create(renderer, 5, 10, 'faction_1');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const spriteComponent = renderables[0];
@@ -106,7 +108,7 @@ describe('AntFactory', () => {
         });
 
         it.skip('should update sprite position on ENTITY_MOVED event', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
 
             // Get sprite component
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
@@ -134,7 +136,7 @@ describe('AntFactory', () => {
         });
 
         it('should remove sprite on ENTITY_DESTROYED event', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
 
             // Verify sprite exists
             let renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
@@ -157,7 +159,7 @@ describe('AntFactory', () => {
                 originalMarkDirty(layer);
             };
             
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
             
             // Reset counter after creation
             dirtyLayerCalls = 0;
@@ -172,7 +174,7 @@ describe('AntFactory', () => {
 
     describe('Component Integration', () => {
         it('should create ant with all 9 components', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
+            const ant = AntFactory.create(renderer, 0, 0, 'faction_1');
 
             expect(ant.getComponent('StateMachine')).to.exist;
             expect(ant.getComponent('Pathfinding')).to.exist;
@@ -186,7 +188,7 @@ describe('AntFactory', () => {
         });
 
         it('should create autonomous ant by default', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
+            const ant = AntFactory.create(renderer, 0, 0, 'faction_1');
 
             expect(ant.isAutonomous()).to.be.true;
         });
@@ -194,13 +196,13 @@ describe('AntFactory', () => {
 
     describe('Cleanup', () => {
         it('should provide cleanup method', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
 
             expect((ant as any)._cleanup).to.be.a('function');
         });
 
         it('should cleanup sprite and listeners on manual cleanup', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
 
             // Verify sprite exists
             let renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
@@ -215,7 +217,7 @@ describe('AntFactory', () => {
         });
 
         it('should handle destroy event after manual cleanup', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 5, 10, 'faction_1');
+            const ant = AntFactory.create(renderer, 5, 10, 'faction_1');
 
             // Manual cleanup
             (ant as any)._cleanup();
@@ -229,17 +231,17 @@ describe('AntFactory', () => {
 
     describe('Multiple Ants', () => {
         it('should create multiple ants with separate sprites', () => {
-            AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            AntFactory.create(renderer, mockSprite, 5, 5, 'faction_1');
-            AntFactory.create(renderer, mockSprite, 10, 10, 'faction_2');
+            AntFactory.create(renderer, 0, 0, 'faction_1');
+            AntFactory.create(renderer, 5, 5, 'faction_1');
+            AntFactory.create(renderer, 10, 10, 'faction_2');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             expect(renderables).to.have.lengthOf(3);
         });
 
         it.skip('should only update sprite for matching ant ID', () => {
-            const ant1 = AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            AntFactory.create(renderer, mockSprite, 5, 5, 'faction_1'); // ant2
+            const ant1 = AntFactory.create(renderer, 0, 0, 'faction_1');
+            AntFactory.create(renderer, 5, 5, 'faction_1'); // ant2
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const sprite1 = renderables[0];
@@ -264,8 +266,8 @@ describe('AntFactory', () => {
         });
 
         it('should only remove sprite for matching ant ID on destroy', () => {
-            const ant1 = AntFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            AntFactory.create(renderer, mockSprite, 5, 5, 'faction_1');
+            const ant1 = AntFactory.create(renderer, 0, 0, 'faction_1');
+            AntFactory.create(renderer, 5, 5, 'faction_1');
 
             // Destroy ant1
             EventBus.emit('ENTITY_DESTROYED', ant1.id, 'ant');
@@ -278,21 +280,21 @@ describe('AntFactory', () => {
 
     describe('Edge Cases', () => {
         it('should handle negative grid positions', () => {
-            const ant = AntFactory.create(renderer, mockSprite, -5, -10, 'faction_1');
+            const ant = AntFactory.create(renderer, -5, -10, 'faction_1');
 
             expect(ant.gridX).to.equal(-5);
             expect(ant.gridY).to.equal(-10);
         });
 
         it('should handle large grid positions', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 1000, 2000, 'faction_1');
+            const ant = AntFactory.create(renderer, 1000, 2000, 'faction_1');
 
             expect(ant.gridX).to.equal(1000);
             expect(ant.gridY).to.equal(2000);
         });
 
         it('should handle empty faction ID', () => {
-            const ant = AntFactory.create(renderer, mockSprite, 0, 0, '');
+            const ant = AntFactory.create(renderer, 0, 0, '');
 
             expect(ant.getFactionId()).to.equal('');
         });
@@ -305,3 +307,4 @@ describe('AntFactory', () => {
         });
     });
 });
+

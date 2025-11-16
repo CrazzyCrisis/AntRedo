@@ -100,6 +100,12 @@ export const ENTITY_SPRITES = {
     
     // Buildings
     building: '16x16 Tiles/anthill.png',
+    hill1: 'Buildings/Hill/Hill1.png',
+    hill2: 'Buildings/Hill/Hill2.png',
+    hive1: 'Buildings/Hive/Hive1.png',
+    hive2: 'Buildings/Hive/Hive2.png',
+    cone1: 'Buildings/Cone/Cone1.png',
+    cone2: 'Buildings/Cone/Cone2.png',
     
     // Resources
     resources: {

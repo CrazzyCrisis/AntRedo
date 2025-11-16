@@ -554,10 +554,11 @@ export function calculatePushForce(
 // ============================================================================
 
 /**
- * Setup automatic sprite-to-entity binding with EventBus listeners
+ * Setup automatic sprite-to-entity binding with EventBus listeners (supports animated sprites)
  * Handles sprite registration, ENTITY_MOVED tracking, ENTITY_DESTROYED cleanup
+ * Automatically calls update() on animated sprites
  * @param entity - GameObject to bind sprite to
- * @param sprite - SpriteComponent to register
+ * @param sprite - SpriteComponent or AnimatedSpriteSheetComponent to register
  * @param renderer - Renderer instance
  * @param layer - RenderLayer for sprite
  * @param gridToWorldFn - Function to convert grid coordinates to world coordinates
@@ -570,14 +571,31 @@ export function setupEntitySpriteBinding(
 ): void {
     // Import dynamically to avoid circular dependencies
     const { EventBus, GameEvents } = require('./eventBus');
+    const { TILE_CONFIG } = require('../config/tileConfig');
     
     // Register sprite with renderer
     const unregister = renderer.register(sprite);
     
+    // Check if this is an animated sprite (duck typing)
+    const isAnimated = 'playAnimation' in sprite && typeof sprite.update === 'function';
+    
+    // For animated sprites, wrap entity update to call sprite.update()
+    if (isAnimated && entity.update) {
+        const originalUpdate = entity.update.bind(entity);
+        entity.update = (deltaTime: number) => {
+            originalUpdate(deltaTime);
+            sprite.update(); // Advance animation frames
+        };
+    }
+    
+    // Center offset for sprite rendering (sprites use CENTER mode, world coords are top-left)
+    const centerOffset = TILE_CONFIG.SIZE / 2;
+    
     // Listen for smooth position updates - update sprite position for smooth rendering
     const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
         if (entityId === entity.id) {
-            sprite.setPosition(smoothX, smoothY);
+            // Add center offset so sprite is centered in tile (sprites draw from CENTER)
+            sprite.setPosition(smoothX + centerOffset, smoothY + centerOffset);
             renderer.markLayerDirty(layer);
         }
     });
@@ -595,6 +613,10 @@ export function setupEntitySpriteBinding(
     // and we need to check entity.id for every ENTITY_DESTROYED event
     const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
         if (entityId === entity.id) {
+            // Cleanup animated sprite subscriptions
+            if (isAnimated && sprite.cleanup) {
+                sprite.cleanup();
+            }
             unregister();
             EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
             EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
@@ -604,11 +626,276 @@ export function setupEntitySpriteBinding(
     
     // Store cleanup function on entity for manual cleanup
     entity._cleanup = () => {
+        if (isAnimated && sprite.cleanup) {
+            sprite.cleanup();
+        }
         unregister();
         EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
         EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
         EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
     };
+}
+
+/**
+ * Setup automatic health bar binding for entities with HealthComponent
+ * Handles health bar registration, position tracking, and cleanup
+ * Health bar automatically shows/hides based on health changes
+ * 
+ * @param entity - GameObject with HealthComponent
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for health bar (typically ABOVE_ENTITIES)
+ * @returns HealthBarComponent instance for manual control if needed
+ */
+export function setupHealthBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    // Import dynamically to avoid circular dependencies
+    const { EventBus, GameEvents } = require('./eventBus');
+    const { HealthBarComponent } = require('../rendering/components/HealthBarComponent');
+    
+    // Get health component
+    const healthComp = entity.getComponent('Health');
+    if (!healthComp) {
+        console.warn(`Entity ${entity.id} has no HealthComponent - health bar not created`);
+        return null;
+    }
+    
+    // Get initial world position (assume entity has worldX/worldY or use grid conversion)
+    let worldX = entity.worldX || 0;
+    let worldY = entity.worldY || 0;
+    
+    // If entity only has grid coordinates, convert them
+    if (worldX === 0 && worldY === 0 && entity.gridX !== undefined) {
+        const worldPos = gridToWorldCenter(entity.gridX, entity.gridY, require('../world/TileSystem').TILE_SIZE);
+        worldX = worldPos.x;
+        worldY = worldPos.y;
+    }
+    
+    // Create health bar component
+    const healthBar = new HealthBarComponent(
+        entity.id,
+        worldX,
+        worldY,
+        healthComp.getCurrentHealth(),
+        healthComp.getMaxHealth()
+    );
+    
+    // Register health bar with renderer
+    const unregister = renderer.register(healthBar);
+    
+    // Listen for smooth position updates - update health bar position
+    const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
+        if (entityId === entity.id) {
+            healthBar.setPosition(smoothX, smoothY);
+            renderer.markLayerDirty(layer); // Mark layer dirty for redraw
+        }
+    });
+    
+    // Listen for grid position updates - update depth sorting
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, _gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
+            healthBar.depth = gridY; // Update depth for proper sorting
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for entity destruction - cleanup health bar
+    const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+        if (entityId === entity.id) {
+            healthBar.destroy();
+            unregister();
+            EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+            EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+            EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        }
+    });
+    
+    // Extend entity's cleanup function to include health bar
+    const originalCleanup = entity._cleanup;
+    entity._cleanup = () => {
+        healthBar.destroy();
+        unregister();
+        EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+        EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+        EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        if (originalCleanup) originalCleanup();
+    };
+    
+    return healthBar;
+}
+
+/**
+ * Setup status bar binding for an entity with automatic rendering and cleanup.
+ * Generic version that works with any component type (health, hunger, oxygen, stamina, etc.)
+ * 
+ * This helper:
+ * 1. Creates StatusBarComponent from entity's specified component
+ * 2. Registers with renderer on specified layer
+ * 3. Listens to ENTITY_SMOOTH_POSITION_UPDATE and ENTITY_MOVED for position updates
+ * 4. Marks layer dirty on updates for proper rendering
+ * 5. Cleans up on ENTITY_DESTROYED
+ * 
+ * @param entity - Entity with component and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for status bar (typically ABOVE_ENTITIES)
+ * @param barType - Type of bar ('health', 'hunger', 'oxygen', etc.) - matches statusBarConfig.ts keys
+ * @param componentName - Name of component to read from (e.g., 'Health', 'Hunger')
+ * @param customWidth - Optional custom bar width
+ * @param customHeight - Optional custom bar height
+ * @param customOffsetY - Optional custom vertical offset
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupStatusBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any,
+    barType: string,
+    componentName: string,
+    customWidth?: number,
+    customHeight?: number,
+    customOffsetY?: number
+): any {
+    // Import dynamically to avoid circular dependencies
+    const { EventBus, GameEvents } = require('./eventBus');
+    const { StatusBarComponent } = require('../rendering/components/StatusBarComponent');
+    
+    // Get component
+    const component = entity.getComponent(componentName);
+    if (!component) {
+        console.warn(`Entity ${entity.id} has no ${componentName} component - ${barType} bar not created`);
+        return null;
+    }
+    
+    // Get initial world position (assume entity has worldX/worldY or use grid conversion)
+    let worldX = entity.worldX || 0;
+    let worldY = entity.worldY || 0;
+    
+    // If entity only has grid coordinates, convert them
+    if (worldX === 0 && worldY === 0 && entity.gridX !== undefined) {
+        const worldPos = gridToWorldCenter(entity.gridX, entity.gridY, require('../world/TileSystem').TILE_SIZE);
+        worldX = worldPos.x;
+        worldY = worldPos.y;
+    }
+    
+    // Get current and max values (try common method names)
+    let currentValue = 0;
+    let maxValue = 100;
+    
+    if (typeof component.getCurrentHealth === 'function') {
+        currentValue = component.getCurrentHealth();
+        maxValue = component.getMaxHealth();
+    } else if (typeof component.getCurrent === 'function') {
+        currentValue = component.getCurrent();
+        maxValue = component.getMax();
+    } else if (typeof component.getValue === 'function') {
+        currentValue = component.getValue();
+        maxValue = component.getMaxValue();
+    }
+    
+    // Create status bar component
+    const statusBar = new StatusBarComponent(
+        entity.id,
+        worldX,
+        worldY,
+        barType,
+        maxValue,
+        customWidth,
+        customHeight,
+        customOffsetY
+    );
+    
+    // Set initial value
+    statusBar.updateValue(currentValue, maxValue);
+    
+    // Register status bar with renderer
+    const unregister = renderer.register(statusBar);
+    
+    // Listen for smooth position updates - update status bar position
+    const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
+        if (entityId === entity.id) {
+            statusBar.setPosition(smoothX, smoothY);
+            renderer.markLayerDirty(layer); // Mark layer dirty for redraw
+        }
+    });
+    
+    // Listen for grid position updates - update depth sorting
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, _gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
+            statusBar.depth = gridY; // Update depth for proper sorting
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for entity destruction - cleanup status bar
+    const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+        if (entityId === entity.id) {
+            statusBar.destroy();
+            unregister();
+            EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+            EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+            EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        }
+    });
+    
+    // Extend entity's cleanup function to include status bar
+    const originalCleanup = entity._cleanup;
+    entity._cleanup = () => {
+        statusBar.destroy();
+        unregister();
+        EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+        EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+        EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        if (originalCleanup) originalCleanup();
+    };
+    
+    return statusBar;
+}
+
+/**
+ * Setup hunger bar binding for an entity - convenience wrapper for setupStatusBarBinding
+ * @param entity - Entity with HungerComponent and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for hunger bar (typically ABOVE_ENTITIES)
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupHungerBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    return setupStatusBarBinding(entity, renderer, layer, 'hunger', 'Hunger');
+}
+
+/**
+ * Setup oxygen bar binding for an entity - convenience wrapper for setupStatusBarBinding
+ * @param entity - Entity with OxygenComponent and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for oxygen bar (typically ABOVE_ENTITIES)
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupOxygenBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    return setupStatusBarBinding(entity, renderer, layer, 'oxygen', 'Oxygen');
+}
+
+/**
+ * Setup stamina bar binding for an entity - convenience wrapper for setupStatusBarBinding
+ * @param entity - Entity with StaminaComponent and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for stamina bar (typically ABOVE_ENTITIES)
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupStaminaBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    return setupStatusBarBinding(entity, renderer, layer, 'stamina', 'Stamina');
 }
 
 // ============================================================================
@@ -1005,5 +1292,46 @@ export function getButtonStateColor(
     if (isSelected) return colors.selected;
     if (isHovered) return colors.hover;
     return colors.normal;
+}
+
+// ============================================================================
+// ANIMATION HELPERS
+// ============================================================================
+
+/**
+ * Create animation config object
+ * Helper factory for creating animation configurations
+ * 
+ * @param row - Grid row (0-indexed)
+ * @param startCol - Starting column (0-indexed)
+ * @param endCol - Ending column (inclusive)
+ * @param frameWidth - Frame width in pixels
+ * @param frameHeight - Frame height in pixels
+ * @param speed - Frames between animation frames (default: 5)
+ * @param loop - Loop animation (default: true)
+ * @returns Animation config object
+ * 
+ * @example
+ * const idleAnim = createAnimationData(0, 0, 1, 32, 32, 8, true);
+ * animSprite.addAnimation('idle', idleAnim);
+ */
+export function createAnimationData(
+    row: number,
+    startCol: number,
+    endCol: number,
+    frameWidth: number,
+    frameHeight: number,
+    speed: number = 5,
+    loop: boolean = true
+): any {
+    return {
+        row,
+        startCol,
+        endCol,
+        frameWidth,
+        frameHeight,
+        speed,
+        loop
+    };
 }
 

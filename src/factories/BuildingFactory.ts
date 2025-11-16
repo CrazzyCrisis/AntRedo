@@ -59,16 +59,22 @@ export class BuildingFactory {
         const building = new Building(gridX, gridY, buildingType);
 
         // Create sprite component starting with construction sprite
-        // MUST use world coordinates for initial position (centered in tile)
-        const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
+        // For multi-tile buildings, center sprite on the middle of occupied area
+        // 2x2 building: center should be at gridX+0.5, gridY+0.5 in tile coordinates
+        const centerOffsetX = (building.size.width - 1) * 0.5;
+        const centerOffsetY = (building.size.height - 1) * 0.5;
+        const centerGridX = gridX + centerOffsetX;
+        const centerGridY = gridY + centerOffsetY;
+        const { x: worldX, y: worldY } = gridToWorldCenter(centerGridX, centerGridY, TILE_SIZE);
+        
         const spriteComponent = new SpriteComponent(
             constructionSprite,
             worldX,
             worldY,
             RenderLayer.GROUND_DECORATIONS,
             0, // Static depth for buildings
-            building.size.width * 16, // Width in pixels (tile size 16)
-            building.size.height * 16, // Height in pixels
+            building.size.width * 32, // Width in pixels (2x scale for larger sprites)
+            building.size.height * 32, // Height in pixels (2x scale for larger sprites)
             0, // No offset (aligned to grid)
             0
         );

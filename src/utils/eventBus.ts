@@ -237,6 +237,9 @@ export const GameEvents = {
     ENTITY_SMOOTH_POSITION_UPDATE: 'entity:smooth:position:update', // For smooth rendering
     ENTITY_DESTROYED: 'entity:destroyed',
     ENTITY_UPDATED: 'entity:updated',
+    ENTITY_STATE_CHANGED: 'entity:state:changed', // (entityId, oldState, newState) - for animation system
+    ENTITY_DAMAGE: 'entity:damage', // (entityId, amount, x, y, isCritical?) - for visual effects
+    ENTITY_HEALED: 'entity:healed', // (entityId, amount, x, y) - for visual effects
     CLEANUP_ALL_ENTITIES: 'cleanup:all:entities', // Broadcast to destroy all entities
     
     // Ant events
