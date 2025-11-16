@@ -686,18 +686,13 @@ export function setupHealthBarBinding(
         healthComp.getMaxHealth()
     );
     
-    console.log(`[HealthBar] Created for entity ${entity.id} at (${worldX}, ${worldY}) - HP: ${healthComp.getCurrentHealth()}/${healthComp.getMaxHealth()}`);
-    
     // Set sprite scale if available
     if (entity._spriteComponent && entity._spriteComponent.scale) {
         healthBar.setSpriteScale(entity._spriteComponent.scale);
-        console.log(`[HealthBar] Set sprite scale to ${entity._spriteComponent.scale} for entity ${entity.id}`);
     }
     
     // Register health bar with renderer
     const unregister = renderer.register(healthBar);
-    console.log(`[HealthBar] Registered with renderer on layer ${healthBar.layer} for entity ${entity.id}`);
-    
     // Listen for smooth position updates - update health bar position
     const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
         if (entityId === entity.id) {
@@ -705,7 +700,6 @@ export function setupHealthBarBinding(
             const newX = smoothX + centerOffsetValue;
             const newY = smoothY + centerOffsetValue;
             healthBar.setPosition(newX, newY);
-            console.log(`[HealthBar] Position updated for ${entityId}: (${newX}, ${newY})`);
             renderer.markLayerDirty(layer); // Mark layer dirty for redraw
         }
     });

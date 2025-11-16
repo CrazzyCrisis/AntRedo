@@ -22,10 +22,13 @@ export class HealthComponent extends BaseComponent {
     private regenRate: number;          // Health per second regeneration
     private alive: boolean = true;
     private timeSinceLastDamage: number = Infinity; // Track game time for regen delay (start at Infinity = always regenerating initially)
+    private timeSinceLastHeal: number = 0; // Track time since last colony healing tick
     private entityType: 'ant' | 'queen' | 'boss'; // Entity type for healing config
     private factionId: string;          // Faction ID for resource access
     
     private readonly REGEN_DELAY = 3000; // 3 seconds before regen starts after damage
+    private readonly HEALING_DELAY = 5000; // 5 seconds after last damage before colony healing starts
+    private readonly HEALING_INTERVAL = 2000; // 2 seconds between healing ticks
 
     /**
      * Create a new HealthComponent
@@ -47,7 +50,15 @@ export class HealthComponent extends BaseComponent {
      * Lifecycle: Update health regeneration and colony food-based healing
      */
     update(deltaTime: number): void {
-        if (!this.alive || this.currentHealth >= this.maxHealth) {
+        if (!this.alive) {
+            return;
+        }
+
+        // Try colony food-based healing FIRST (even if at full health, to check conditions)
+        this.tryColonyHealing(deltaTime);
+
+        // Skip natural regeneration if at full health
+        if (this.currentHealth >= this.maxHealth) {
             return;
         }
 
@@ -74,9 +85,6 @@ export class HealthComponent extends BaseComponent {
             const regenAmount = (regenTime / 1000) * this.regenRate;
             this.heal(regenAmount);
         }
-
-        // Colony food-based healing (separate from natural regen)
-        this.tryColonyHealing(deltaTime);
     }
 
     /**
@@ -84,20 +92,40 @@ export class HealthComponent extends BaseComponent {
      * @param deltaTime - Time since last update (milliseconds)
      */
     private tryColonyHealing(deltaTime: number): void {
+        // Dead entities cannot heal
+        if (!this.alive) {
+            return;
+        }
+
+        // Must wait HEALING_DELAY after last damage before healing starts
+        if (this.timeSinceLastDamage < this.HEALING_DELAY) {
+            return;
+        }
+
+        // Update time since last heal
+        this.timeSinceLastHeal += deltaTime;
+
+        // Only heal every HEALING_INTERVAL (2 seconds)
+        if (this.timeSinceLastHeal < this.HEALING_INTERVAL) {
+            return;
+        }
+
+        // Reset heal timer
+        this.timeSinceLastHeal = 0;
+
         // Get healing config for this entity type
         const healConfig = this.getHealingConfig();
         if (!healConfig) {
             return; // No healing config for this entity type
         }
 
-        // Check if health is below threshold for food-based healing
-        const healthPercent = this.currentHealth / this.maxHealth;
-        if (healthPercent >= healConfig.MIN_HEALTH_PERCENT) {
-            return; // Health is above healing threshold
+        // Heal to max health (not just to threshold)
+        if (this.currentHealth >= this.maxHealth) {
+            return; // Already at full health
         }
 
-        // Calculate food to consume this frame
-        const foodToConsume = healConfig.FOOD_COST_PER_SECOND * (deltaTime / 1000);
+        // Calculate food to consume for one healing tick
+        const foodToConsume = healConfig.FOOD_COST_PER_SECOND * (this.HEALING_INTERVAL / 1000);
         
         // Try to consume food from colony (dynamic require to avoid circular dependency)
         const { ResourceManager } = require('../../managers/ResourceManager');
@@ -106,7 +134,6 @@ export class HealthComponent extends BaseComponent {
         if (resourceManager.consumeFoodForHealing(this.factionId, foodToConsume)) {
             // Successfully consumed food - apply healing
             const healAmount = healConfig.RATE_PER_FOOD * foodToConsume;
-            console.log(`[ColonyHealing] ${this.owner?.id} (${this.entityType}) consumed ${foodToConsume.toFixed(2)} food, healing ${healAmount.toFixed(2)} HP (${this.currentHealth.toFixed(1)}/${this.maxHealth})`);
             this.heal(healAmount);
         }
         // If no food available, simply don't heal (entity won't die from lack of food healing)

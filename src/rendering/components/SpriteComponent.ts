@@ -1,6 +1,7 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
+import { TILE_CONFIG } from '../../config/tileConfig';
 
 /**
  * SpriteComponent renders a single sprite at a position.
@@ -21,6 +22,8 @@ export class SpriteComponent implements Renderable {
     private combatOffsetY: number = 0; // Combat animation offset (in tiles)
     private entityId: string | null = null; // For combat animation tracking
     private tintColor: { r: number; g: number; b: number; a?: number } | null = null;
+    private outlineColor: { r: number; g: number; b: number } | null = null; // Outline color
+    private outlineThickness: number = 2; // Outline thickness in pixels
     public scale: number = 1;
     public rotation: number = 0; // Radians
     private unsubscribeOffset: (() => void) | null = null; // Cleanup function
@@ -47,8 +50,8 @@ export class SpriteComponent implements Renderable {
             this.width = width || sprite.width;
             this.height = height || sprite.height;
         } else {
-            this.width = width || 16; // Default tile size
-            this.height = height || 16;
+            this.width = width || TILE_CONFIG.SIZE; // Default tile size
+            this.height = height || TILE_CONFIG.SIZE;
         }
         
         this.offsetX = offsetX;
@@ -90,6 +93,16 @@ export class SpriteComponent implements Renderable {
     }
 
     /**
+     * Set outline effect
+     * @param color RGB color object {r, g, b} (0-255) or null to disable outline
+     * @param thickness Outline thickness in pixels (default: 2)
+     */
+    setOutline(color: { r: number; g: number; b: number } | null, thickness: number = 2): void {
+        this.outlineColor = color;
+        this.outlineThickness = thickness;
+    }
+
+    /**
      * Set scale (multiplier for width/height)
      */
     setScale(scale: number): void {
@@ -118,6 +131,27 @@ export class SpriteComponent implements Renderable {
                 }
             }
         );
+        
+        // Subscribe to hover events for outline
+        const hoverStartListener = EventBus.on('ENTITY_HOVER_START', (id: string) => {
+            if (id === this.entityId) {
+                this.setOutline({ r: 255, g: 255, b: 0 }, 2); // Yellow outline on hover
+            }
+        });
+        
+        const hoverEndListener = EventBus.on('ENTITY_HOVER_END', (id: string) => {
+            if (id === this.entityId) {
+                this.setOutline(null); // Remove outline
+            }
+        });
+        
+        // Store cleanup functions
+        const originalUnsubscribe = this.unsubscribeOffset;
+        this.unsubscribeOffset = () => {
+            if (originalUnsubscribe) originalUnsubscribe();
+            EventBus.off('ENTITY_HOVER_START', hoverStartListener);
+            EventBus.off('ENTITY_HOVER_END', hoverEndListener);
+        };
     }
 
     /**
@@ -198,10 +232,14 @@ export class SpriteComponent implements Renderable {
             }
         }
         
-        // Calculate final position with combat animation offset (tile-based offset * 16px)
-        const TILE_SIZE = 16;
-        const finalOffsetX = this.combatOffsetX * TILE_SIZE;
-        const finalOffsetY = this.combatOffsetY * TILE_SIZE;
+        // Calculate final position with combat animation offset (tile-based offset * TILE_CONFIG.SIZE px)
+        const finalOffsetX = this.combatOffsetX * TILE_CONFIG.SIZE;
+        const finalOffsetY = this.combatOffsetY * TILE_CONFIG.SIZE;
+        
+        // Draw outline first if enabled
+        if (this.outlineColor) {
+            this.drawOutline(graphics, finalOffsetX, finalOffsetY);
+        }
         
         // Draw sprite (always centered at position due to CENTER imageMode)
         if (this.rotation !== 0 || this.scale !== 1) {
@@ -232,6 +270,83 @@ export class SpriteComponent implements Renderable {
         // Restore graphics state if transformed
         if (this.rotation !== 0 || this.scale !== 1) {
             graphics.pop();
+        }
+    }
+
+    /**
+     * Draw outline by sampling sprite pixels and detecting edges
+     * CPU-based method - samples sprite pixels and draws outline manually
+     */
+    private drawOutline(graphics: any, finalOffsetX: number, finalOffsetY: number): void {
+        if (!this.outlineColor || !this.sprite) return;
+
+        // Sample sprite pixels to find edges
+        this.sprite.loadPixels();
+        const pixels = this.sprite.pixels;
+        const w = this.sprite.width;
+        const h = this.sprite.height;
+
+        // Set outline color
+        graphics.stroke(this.outlineColor.r, this.outlineColor.g, this.outlineColor.b);
+        graphics.strokeWeight(this.outlineThickness);
+        graphics.noFill();
+
+        // Sample grid for outline detection (check every few pixels for performance)
+        const step = 1; // Sample every pixel
+        
+        for (let y = 0; y < h; y += step) {
+            for (let x = 0; x < w; x += step) {
+                const idx = (y * w + x) * 4;
+                const alpha = pixels[idx + 3];
+
+                // If current pixel is opaque, check neighbors for transparent pixels
+                if (alpha > 128) {
+                    let hasTransparentNeighbor = false;
+
+                    // Check 8 neighbors
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+
+                            const nx = x + dx;
+                            const ny = y + dy;
+
+                            // Check bounds
+                            if (nx < 0 || nx >= w || ny < 0 || ny >= h) {
+                                hasTransparentNeighbor = true;
+                                break;
+                            }
+
+                            const nIdx = (ny * w + nx) * 4;
+                            const nAlpha = pixels[nIdx + 3];
+
+                            if (nAlpha <= 128) {
+                                hasTransparentNeighbor = true;
+                                break;
+                            }
+                        }
+                        if (hasTransparentNeighbor) break;
+                    }
+
+                    // If edge pixel, draw outline point
+                    if (hasTransparentNeighbor) {
+                        // Convert sprite space to world space
+                        const worldX = x - w / 2;
+                        const worldY = y - h / 2;
+
+                        if (this.rotation !== 0 || this.scale !== 1) {
+                            // Transformed: draw at sprite-local coordinates
+                            graphics.point(worldX + finalOffsetX, worldY + finalOffsetY);
+                        } else {
+                            // Non-transformed: draw at world position
+                            graphics.point(
+                                this.x + this.offsetX + worldX + finalOffsetX,
+                                this.y + this.offsetY + worldY + finalOffsetY
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 }

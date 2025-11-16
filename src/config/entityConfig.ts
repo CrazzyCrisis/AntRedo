@@ -90,8 +90,8 @@ const ANT: AntConfig = {
     },
 
     HEALING: {
-        RATE_PER_FOOD: 2.0,           // Heal 2 HP per food per second
-        FOOD_COST_PER_SECOND: 0.5,    // Consume 0.5 food from colony per second while healing
+        RATE_PER_FOOD: 20.0,          // Heal 20 HP per food consumed
+        FOOD_COST_PER_SECOND: 0.5,    // Consume 0.5 food/sec (1 food per 2-sec tick)
         MIN_HEALTH_PERCENT: 0.8       // Only heal when below 80% health
     },
 
@@ -143,8 +143,8 @@ const QUEEN: QueenConfig = {
     attackGCD: 800,      // 0.8 second global cooldown for attacks
 
     HEALING: {
-        RATE_PER_FOOD: 5.0,           // Queen heals faster: 5 HP per food per second
-        FOOD_COST_PER_SECOND: 1.0,    // Consumes 1 food from colony per second while healing
+        RATE_PER_FOOD: 20.0,          // Heal 20 HP per food consumed
+        FOOD_COST_PER_SECOND: 0.5,    // Consume 0.5 food/sec (1 food per 2-sec tick)
         MIN_HEALTH_PERCENT: 0.9       // Queen heals when below 90% health
     },
 
@@ -238,7 +238,7 @@ const BOSS: BossConfig = {
     attackRange: 2,           // Melee range in grid tiles
 
     HEALING: {
-        RATE_PER_FOOD: 3.0,           // Boss heals 3 HP per food per second (slower than queen)
+        RATE_PER_FOOD: 20.0,          // Heal 20 HP per food consumed
         FOOD_COST_PER_SECOND: 0.0,    // Bosses don't consume colony food (enemy faction)
         MIN_HEALTH_PERCENT: 0.7       // Boss heals when below 70% health
     },

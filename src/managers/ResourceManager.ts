@@ -1,4 +1,5 @@
 ﻿import { BaseManager } from './BaseManager';
+import { GameEvents } from '../utils/eventBus';
 /**
  * ResourceManager - Resource Economy Manager (CONTROLLER)
  * Singleton manager for tracking and managing faction resources
@@ -99,7 +100,7 @@ export class ResourceManager extends BaseManager {
         factionResources[type] += amount;
 
         // Emit update event for UI
-        this.emit('RESOURCE_UPDATED', factionId, type, factionResources[type]);
+        this.emit(GameEvents.RESOURCE_UPDATED, factionId, type, factionResources[type]);
     }
 
     /**
@@ -124,7 +125,7 @@ export class ResourceManager extends BaseManager {
         factionResources[type] -= amount;
 
         // Emit update event for UI
-        this.emit('RESOURCE_UPDATED', factionId, type, factionResources[type]);
+        this.emit(GameEvents.RESOURCE_UPDATED, factionId, type, factionResources[type]);
 
         return true;
     }
@@ -231,7 +232,7 @@ export class ResourceManager extends BaseManager {
         }
 
         factionResources[type] = amount;
-        this.emit('RESOURCE_UPDATED', factionId, type, amount);
+        this.emit(GameEvents.RESOURCE_UPDATED, factionId, type, amount);
     }
 
     /**

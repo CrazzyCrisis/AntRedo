@@ -31,21 +31,18 @@ export class PathVisualizerComponent implements Renderable {
         // Listen for path events to mark layer dirty immediately
         EventBus.on('PATH_FOUND', (entityId: string) => {
             if (entityId === this.entityId) {
-                console.log('[PathVisualizer] Path found, marking DEBUG layer dirty');
                 this.renderer.markLayerDirty(RenderLayer.DEBUG);
             }
         });
         
         EventBus.on('PATH_COMPLETE', (entityId: string) => {
             if (entityId === this.entityId) {
-                console.log('[PathVisualizer] Path complete, marking DEBUG layer dirty');
                 this.renderer.markLayerDirty(RenderLayer.DEBUG);
             }
         });
         
         EventBus.on('PATH_FAILED', (entityId: string) => {
             if (entityId === this.entityId) {
-                console.log('[PathVisualizer] Path failed, marking DEBUG layer dirty');
                 this.renderer.markLayerDirty(RenderLayer.DEBUG);
             }
         });

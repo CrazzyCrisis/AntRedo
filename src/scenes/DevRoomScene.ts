@@ -31,6 +31,7 @@ import {
     BuildingFactory,
     AntFactory
 } from '../imports/sceneImports';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 import { ResourceManager } from '../managers/ResourceManager';
 import { Camera } from '../rendering/Camera';
 import { CombatVisualHandler } from '../managers/CombatVisualHandler';
@@ -66,6 +67,7 @@ export class DevRoomScene implements IScene {
     private playerQueen: any | null = null; // Reference to player's queen for click commands
     private camera: Camera | null = null; // Camera reference for coordinate conversion
     private tileHighlight: TileHighlightComponent | null = null; // Visual tile highlight for debugging
+    private hoveredEntityId: string | null = null; // Track currently hovered entity for outline
     
     // Spawning system
     private spawnManager: SpawnManager | null = null;
@@ -298,18 +300,16 @@ export class DevRoomScene implements IScene {
         if (pathfindingComponent) {
             const pathVisualizer = new PathVisualizerComponent(queen, pathfindingComponent, this.renderer);
             this.unregisterFunctions.push(this.renderer.register(pathVisualizer));
-            console.log('[DevRoomScene] ✅ Path visualizer registered');
-        }
+          }
         
         // Setup tile highlight for debugging
         this.tileHighlight = new TileHighlightComponent(camera, this.renderer);
         this.unregisterFunctions.push(this.renderer.register(this.tileHighlight));
-        console.log('[DevRoomScene] ✅ Tile highlighter registered');
         
         // Create UI overlay config
         const tileGrid = GameStateManager.getInstance().getTileGrid();
         if (!tileGrid) {
-            console.log('[DevRoomScene] Cannot setup UI overlay - missing tile grid');
+            console.warn('[DevRoomScene] Cannot setup UI overlay - missing tile grid');
             return;
         }
         
@@ -343,6 +343,9 @@ export class DevRoomScene implements IScene {
         
         this.uiOverlay.initialize();
         this.uiOverlay.setQueen(queen as any);
+        
+        // Refresh resource display after resources are initialized
+        this.uiOverlay.refreshResourceDisplay();
         
         console.log('[DevRoomScene] ✅ GameUIOverlay initialized');
     }
@@ -521,6 +524,9 @@ export class DevRoomScene implements IScene {
         if (this.tileHighlight) {
             this.tileHighlight.updateMousePosition(x, y);
         }
+        
+        // Update entity hover outlines
+        this.updateEntityHover(x, y);
         
         // Forward to pause menu if paused
         if (this.isPaused && this.pauseMenu) {
@@ -1181,6 +1187,87 @@ export class DevRoomScene implements IScene {
         }
         this.worldGenConfigMenu.show();
         this.renderer.markLayerDirty(RenderLayer.UI);
+    }
+    
+    /**
+     * Update entity hover outlines based on mouse position
+     */
+    private updateEntityHover(screenX: number, screenY: number): void {
+        if (!this.camera) return;
+
+        // Convert screen to world coordinates
+        const { x: worldX, y: worldY } = this.camera.screenToWorld(screenX, screenY);
+
+        // Get all entities and check which one is hovered
+        const entityManager = EntityManager.getInstance();
+        const allEntities = [
+            ...entityManager.getEntitiesByType('ant'),
+            ...entityManager.getEntitiesByType('queen'),
+            ...entityManager.getEntitiesByType('boss'),
+            ...entityManager.getEntitiesByType('resource'),
+            ...entityManager.getEntitiesByType('building')
+        ];
+
+        let newHoveredId: string | null = null;
+        let closestDistance = Infinity;
+
+        // Check each entity for hover - use smooth position (rendered position) not grid position
+        for (const entity of allEntities) {
+            // Get smooth position (actual rendered position)
+            const smoothPos = (entity as any).getSmoothPosition?.() || { x: entity.worldX, y: entity.worldY };
+            // worldX/worldY are top-left of tile, but sprites are drawn centered
+            // Add half collision size to get sprite center position
+            const entityX = smoothPos.x + entity.collisionWidth / 2;
+            const entityY = smoothPos.y + entity.collisionHeight / 2;
+
+            // Get sprite scale from entity config
+            let spriteScale = 1.0;
+            if (entity.type === 'queen') spriteScale = ENTITY_CONFIG.SPRITE_SCALES.queen;
+            else if (entity.type === 'ant') spriteScale = ENTITY_CONFIG.SPRITE_SCALES.ant;
+            else if (entity.type === 'boss') spriteScale = ENTITY_CONFIG.SPRITE_SCALES.boss;
+            else if (entity.type === 'resource') spriteScale = ENTITY_CONFIG.SPRITE_SCALES.resource;
+            else if (entity.type === 'building') spriteScale = ENTITY_CONFIG.SPRITE_SCALES.building;
+
+            // Calculate visual size accounting for sprite scale
+            const visualWidth = entity.collisionWidth * spriteScale;
+            const visualHeight = entity.collisionHeight * spriteScale;
+
+            const halfWidth = visualWidth / 2;
+            const halfHeight = visualHeight / 2;
+
+            // Check if mouse is within entity visual bounds
+            if (
+                worldX >= entityX - halfWidth &&
+                worldX <= entityX + halfWidth &&
+                worldY >= entityY - halfHeight &&
+                worldY <= entityY + halfHeight
+            ) {
+                // Calculate distance from center for tie-breaking (prefer closest entity)
+                const dx = worldX - entityX;
+                const dy = worldY - entityY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < closestDistance) {
+                    closestDistance = dist;
+                    newHoveredId = entity.id;
+                }
+            }
+        }
+
+        // Update outline if hover changed
+        if (newHoveredId !== this.hoveredEntityId) {
+            // Remove outline from previously hovered entity
+            if (this.hoveredEntityId) {
+                EventBus.emit('ENTITY_HOVER_END', this.hoveredEntityId);
+            }
+
+            // Add outline to newly hovered entity
+            if (newHoveredId) {
+                EventBus.emit('ENTITY_HOVER_START', newHoveredId);
+            }
+
+            this.hoveredEntityId = newHoveredId;
+        }
     }
     
     /**

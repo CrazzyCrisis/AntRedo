@@ -45,11 +45,6 @@ export class Renderer {
         if (layerArray) {
             layerArray.push(renderable);
             this.markLayerDirty(layer);
-            
-            // Debug log for VISUAL_EFFECTS layer
-            if (layer === RenderLayer.VISUAL_EFFECTS) {
-                console.log(`[Renderer] Registered on VISUAL_EFFECTS layer. Total count: ${layerArray.length}`, renderable);
-            }
         }
 
         // Return unregister function
@@ -131,11 +126,6 @@ export class Renderer {
         const fb = this.framebufferManager.getFramebuffer(layer);
         const layerConfig = LAYER_CONFIGS[layer];
         const renderables = this.renderables.get(layer) || [];
-        
-        // Debug log for VISUAL_EFFECTS layer
-        if (layer === RenderLayer.VISUAL_EFFECTS) {
-            console.log(`[Renderer] Rendering VISUAL_EFFECTS layer with ${renderables.length} renderables`);
-        }
 
         // Clear framebuffer when layer is dirty (being re-rendered)
         // This is essential when camera moves - even static layers need clearing

@@ -1,14 +1,16 @@
 /**
- * ParticleSystem - Simple particle effect system
+ * ParticleSystem - Simple particle effect system with object pooling
  * 
  * Listens to PARTICLE_SPAWN events and creates visual particle effects
- * Currently a stub implementation - can be enhanced with proper particle rendering
+ * Uses object pooling for performance optimization
  */
 
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { Renderer } from '../rendering/Renderer';
 import { RenderLayer } from '../rendering/RenderLayer';
 import { Renderable } from '../rendering/Renderable';
+import { TILE_CONFIG } from '../config/tileConfig';
+import { ObjectPool } from '../utils/ObjectPool';
 
 interface ParticleSpawnOptions {
     count?: number;
@@ -32,9 +34,34 @@ export class ParticleSystem {
     
     private renderer: Renderer | null = null;
     private particles: Particle[] = [];
+    private particlePool: ObjectPool<Particle>;
     private unregisterRenderable: (() => void) | null = null;
     
     private constructor() {
+        // Initialize object pool for particles (pre-create 100, max 500)
+        this.particlePool = new ObjectPool<Particle>(
+            () => ({
+                x: 0,
+                y: 0,
+                vx: 0,
+                vy: 0,
+                life: 0,
+                maxLife: 0,
+                color: [255, 255, 255]
+            }),
+            (particle) => {
+                particle.x = 0;
+                particle.y = 0;
+                particle.vx = 0;
+                particle.vy = 0;
+                particle.life = 0;
+                particle.maxLife = 0;
+                particle.color = [255, 255, 255];
+            },
+            100, // Initial pool size
+            500  // Max pool size
+        );
+
         // Listen for particle spawn events
         EventBus.on(GameEvents.PARTICLE_SPAWN, 
             (effectType: string, x: number, y: number, options: ParticleSpawnOptions) => {
@@ -75,25 +102,25 @@ export class ParticleSystem {
         const velocity = options.velocity || 2;
         const lifetime = options.lifetime || 500;
         
-        // Convert grid coordinates to world coordinates (assuming TILE_SIZE = 16)
-        const TILE_SIZE = 16;
-        const worldX = x * TILE_SIZE + TILE_SIZE / 2;
-        const worldY = y * TILE_SIZE + TILE_SIZE / 2;
+        // Convert grid coordinates to world coordinates
+        const worldX = x * TILE_CONFIG.SIZE + TILE_CONFIG.SIZE / 2;
+        const worldY = y * TILE_CONFIG.SIZE + TILE_CONFIG.SIZE / 2;
         
-        // Create particles in random directions
+        // Create particles in random directions using object pool
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = velocity * (0.5 + Math.random() * 0.5);
             
-            this.particles.push({
-                x: worldX,
-                y: worldY,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: lifetime,
-                maxLife: lifetime,
-                color: color as [number, number, number]
-            });
+            const particle = this.particlePool.acquire();
+            particle.x = worldX;
+            particle.y = worldY;
+            particle.vx = Math.cos(angle) * speed;
+            particle.vy = Math.sin(angle) * speed;
+            particle.life = lifetime;
+            particle.maxLife = lifetime;
+            particle.color = color as [number, number, number];
+            
+            this.particles.push(particle);
         }
         
         // Mark layer dirty for re-render
@@ -122,8 +149,9 @@ export class ParticleSystem {
             // Update lifetime
             particle.life -= deltaTime;
             
-            // Remove dead particles
+            // Remove dead particles and return to pool
             if (particle.life <= 0) {
+                this.particlePool.release(particle);
                 this.particles.splice(i, 1);
             }
         }
@@ -155,13 +183,23 @@ export class ParticleSystem {
     }
     
     /**
-     * Clear all particles
+     * Clear all particles and return them to pool
      */
     public clear(): void {
+        // Return all particles to pool
+        this.particles.forEach(particle => this.particlePool.release(particle));
         this.particles = [];
+        
         if (this.renderer) {
             this.renderer.markLayerDirty(RenderLayer.ABOVE_ENTITIES);
         }
+    }
+    
+    /**
+     * Get pool statistics for debugging
+     */
+    public getPoolStats(): { available: number; inUse: number; total: number } {
+        return this.particlePool.getStats();
     }
     
     /**
@@ -172,6 +210,10 @@ export class ParticleSystem {
             this.unregisterRenderable();
             this.unregisterRenderable = null;
         }
+        
+        // Return all particles to pool before clearing
+        this.particles.forEach(particle => this.particlePool.release(particle));
         this.particles = [];
+        this.particlePool.clear();
     }
 }

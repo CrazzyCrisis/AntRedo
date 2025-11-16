@@ -55,6 +55,11 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     private offsetX: number = 0;
     private offsetY: number = 0;
 
+    // Outline rendering
+    private outlineColor: { r: number; g: number; b: number } | null = null;
+    private outlineThickness: number = 2;
+    private unsubscribeHover: (() => void) | null = null;
+
     constructor(spritesheet: any, x: number, y: number, debugJobType?: string) {
         this.spritesheet = spritesheet;
         this.x = x;
@@ -117,6 +122,25 @@ export class AnimatedSpriteSheetComponent implements Renderable {
                 }
             }
         );
+
+        // Subscribe to hover events for outline
+        const hoverStartListener = EventBus.on('ENTITY_HOVER_START', (id: string) => {
+            if (id === this.ownerEntityId) {
+                this.setOutline({ r: 255, g: 255, b: 0 }, 2); // Yellow outline on hover
+            }
+        });
+        
+        const hoverEndListener = EventBus.on('ENTITY_HOVER_END', (id: string) => {
+            if (id === this.ownerEntityId) {
+                this.setOutline(null); // Remove outline
+            }
+        });
+        
+        // Store cleanup function for hover listeners
+        this.unsubscribeHover = () => {
+            EventBus.off('ENTITY_HOVER_START', hoverStartListener);
+            EventBus.off('ENTITY_HOVER_END', hoverEndListener);
+        };
 
         // Subscribe to movement events for automatic idle/walk switching
         this.unsubscribeMovement = EventBus.on(
@@ -241,6 +265,25 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     }
 
     /**
+     * Draw outline around sprite
+     */
+    private drawOutline(graphics: any, config: AnimationConfig, _srcX: number, _srcY: number, _currentCol: number): void {
+        if (!this.outlineColor) return;
+
+        // Draw outline as a rect for animated sprites
+        graphics.stroke(this.outlineColor.r, this.outlineColor.g, this.outlineColor.b);
+        graphics.strokeWeight(this.outlineThickness);
+        graphics.noFill();
+
+        const drawX = this.x + this.offsetX;
+        const drawY = this.y + this.offsetY;
+        const drawWidth = config.frameWidth * this.scale;
+        const drawHeight = config.frameHeight * this.scale;
+        
+        graphics.rect(drawX, drawY, drawWidth, drawHeight);
+    }
+
+    /**
      * Render current animation frame
      */
     render(graphics: any): void {
@@ -269,6 +312,11 @@ export class AnimatedSpriteSheetComponent implements Renderable {
         const currentCol = config.startCol + this.currentFrame;
         const srcX = currentCol * config.frameWidth;
         const srcY = config.row * config.frameHeight;
+
+        // Draw outline if enabled (before main sprite)
+        if (this.outlineColor) {
+            this.drawOutline(graphics, config, srcX, srcY, currentCol);
+        }
 
         // Apply transforms if needed
         const needsTransform = this.rotation !== 0 || this.scale !== 1;
@@ -342,6 +390,16 @@ export class AnimatedSpriteSheetComponent implements Renderable {
     }
 
     /**
+     * Set outline for hover effect
+     * @param color RGB color or null to disable
+     * @param thickness Outline thickness in pixels
+     */
+    setOutline(color: { r: number; g: number; b: number } | null, thickness: number = 2): void {
+        this.outlineColor = color;
+        this.outlineThickness = thickness;
+    }
+
+    /**
      * Cleanup (unsubscribe from EventBus)
      */
     cleanup(): void {
@@ -352,6 +410,10 @@ export class AnimatedSpriteSheetComponent implements Renderable {
         if (this.unsubscribeMovement) {
             this.unsubscribeMovement();
             this.unsubscribeMovement = null;
+        }
+        if (this.unsubscribeHover) {
+            this.unsubscribeHover();
+            this.unsubscribeHover = null;
         }
     }
 }

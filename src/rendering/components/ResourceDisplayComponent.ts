@@ -77,6 +77,21 @@ export class ResourceDisplayComponent implements Renderable {
         this.entityManager = entityManager;
     }
 
+    /**
+     * Refresh resource counts from ResourceManager
+     * Call this after initializing resources to sync the UI
+     */
+    public refreshFromResourceManager(): void {
+        // Dynamic import to avoid circular dependency
+        const { ResourceManager } = require('../../managers/ResourceManager');
+        const resourceManager = ResourceManager.getInstance();
+        
+        this.resources.food = resourceManager.getResourceCount(this.factionId, 'food');
+        this.resources.wood = resourceManager.getResourceCount(this.factionId, 'wood');
+        this.resources.stone = resourceManager.getResourceCount(this.factionId, 'stone');
+        this.resources.magicCrystals = resourceManager.getResourceCount(this.factionId, 'magicCrystal');
+    }
+
     private setupEventListeners(): void {
         // Listen for resource updates
         EventBus.on(GameEvents.RESOURCE_UPDATED, (factionId: string, resourceType: string, newAmount: number) => {

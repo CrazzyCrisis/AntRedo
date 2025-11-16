@@ -74,7 +74,6 @@ export class HealthBarComponent implements Renderable {
         // Listen for damage events
         EventBus.on(GameEvents.ENTITY_DAMAGE, (entityId: string, _damage: number, _x: number, _y: number) => {
             if (entityId === this.entityId) {
-                console.log(`[HealthBar] Received ENTITY_DAMAGE event for ${entityId}`);
                 // Get updated health from entity
                 const entity = EntityManager.getInstance().getEntity(entityId);
                 if (entity) {
@@ -82,8 +81,7 @@ export class HealthBarComponent implements Renderable {
                     if (healthComp) {
                         const newHealth = healthComp.getCurrentHealth();
                         const maxHealth = healthComp.getMaxHealth();
-                        console.log(`[HealthBar] Updating health from HealthComponent: ${newHealth}/${maxHealth}`);
-                        this.updateHealth(newHealth, maxHealth);
+                       this.updateHealth(newHealth, maxHealth);
                     }
                 }
             }
@@ -100,7 +98,6 @@ export class HealthBarComponent implements Renderable {
                     if (healthComp) {
                         const newHealth = healthComp.getCurrentHealth();
                         const maxHealth = healthComp.getMaxHealth();
-                        console.log(`[HealthBar] Updating health from HealthComponent: ${newHealth}/${maxHealth}`);
                         this.updateHealth(newHealth, maxHealth);
                     }
                 }
@@ -114,7 +111,6 @@ export class HealthBarComponent implements Renderable {
      * @param maxHealth - New max health (for when entity gets buffed/debuffed)
      */
     public updateHealth(currentHealth: number, maxHealth?: number): void {
-        console.log(`[HealthBar] updateHealth() called for ${this.entityId}: ${currentHealth}/${maxHealth || this.maxHealth}`);
         this.currentHealth = currentHealth;
         if (maxHealth !== undefined) {
             this.maxHealth = maxHealth;
@@ -200,8 +196,6 @@ export class HealthBarComponent implements Renderable {
      * Render health bar above entity
      */
     render(graphics: any): void {
-        console.log(`[HealthBar] render() called for ${this.entityId} at (${this.x}, ${this.y}) - HP: ${this.currentHealth}/${this.maxHealth}, shouldDisplay: ${this.shouldDisplay()}`);
-        
         // Check if should display
         if (!this.shouldDisplay()) {
             return;

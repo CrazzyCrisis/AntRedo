@@ -242,6 +242,16 @@ export class GameUIOverlay {
     }
 
     /**
+     * Refresh resource display from ResourceManager
+     * Call this after resources are initialized to sync the UI
+     */
+    refreshResourceDisplay(): void {
+        if (this.resourceDisplay) {
+            this.resourceDisplay.refreshFromResourceManager();
+        }
+    }
+
+    /**
      * Set the queen reference for portrait updates
      */
     setQueen(queen: Queen): void {
