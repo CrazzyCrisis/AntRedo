@@ -191,8 +191,8 @@ export const DEFAULT_SPAWN_CONFIG: SpawnConfig = {
     
     starterAnts: {
         builders: 1,
-        gatherers: 0,
-        scouts: 0
+        gatherers: 2,
+        scouts: 1
     },
     
     antClusters: [],

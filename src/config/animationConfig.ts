@@ -389,7 +389,7 @@ export const QUEEN_ANIMATIONS = {
         endCol: 1,
         frameWidth: 16,
         frameHeight: 16,
-        speed: 6,
+        speed: 12,
         loop: true
     } as AnimationConfig,
     attack: {

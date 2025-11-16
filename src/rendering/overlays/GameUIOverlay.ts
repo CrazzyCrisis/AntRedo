@@ -217,6 +217,7 @@ export class GameUIOverlay {
         
         // Building Menu (horizontal layout above BUILD button)
         if (this.config.showCommands && this.sprites.resources) {
+            console.log('[GameUIOverlay] Creating building menu...');
             const commandsY = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
             const menuY = commandsY + GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetYFromCommands;
             this.buildingMenu = new BuildingMenuComponent(
@@ -227,16 +228,24 @@ export class GameUIOverlay {
             );
             this.buildingMenu.visible = false; // Hidden by default
             this.uiUnregisterFunctions.push(this.renderer.register(this.buildingMenu));
+            console.log('[GameUIOverlay] Building menu created and registered');
             
             // Subscribe to BUILDING_MENU_TOGGLED event
             this.eventUnsubscribers.push(
                 EventBus.on(GameEvents.BUILDING_MENU_TOGGLED, () => {
+                    console.log('[GameUIOverlay] BUILDING_MENU_TOGGLED received');
                     if (this.buildingMenu) {
+                        const wasVisible = this.buildingMenu.visible;
                         this.buildingMenu.visible = !this.buildingMenu.visible;
+                        console.log(`[GameUIOverlay] Building menu visibility: ${wasVisible} -> ${this.buildingMenu.visible}`);
                         this.renderer.markLayerDirty(RenderLayer.UI);
+                    } else {
+                        console.log('[GameUIOverlay] Building menu is null!');
                     }
                 })
             );
+        } else {
+            console.log(`[GameUIOverlay] Building menu NOT created - showCommands: ${this.config.showCommands}, sprites.resources: ${!!this.sprites.resources}`);
         }
         
         // Minimap (bottom-right)

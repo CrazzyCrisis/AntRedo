@@ -180,6 +180,7 @@ export class QueenCommandsComponent implements Renderable {
                     
                     // Special handling for BUILD command - toggle building menu
                     if (command === 'BUILD') {
+                        console.log('[QueenCommands] BUILD button clicked - emitting BUILDING_MENU_TOGGLED');
                         EventBus.emit(GameEvents.BUILDING_MENU_TOGGLED);
                     }
                 }

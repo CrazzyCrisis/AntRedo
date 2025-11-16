@@ -368,11 +368,11 @@ interface SpriteScales {
 
 const SPRITE_SCALES: SpriteScales = {
     ant: 1.0,           // Ants at normal 32x32 sprite size
-    queen: 2.5,         // Queen 150% larger (80x80)
-    boss: 4.0,          // Bosses big (320x320)
+    queen: 1.25,         // Queen 150% larger (80x80)
+    boss: 3.0,          // Bosses big (320x320)
     resource: 1.0,      // We are ants, resources appear larger (160x160)
     projectile: 1.0,    // Projectiles at normal size
-    building: 4.0,      // Buildings at normal size
+    building: 10.0,      // Buildings at normal size
     decoration: 1.0     // Decorations at normal size
 };
 
