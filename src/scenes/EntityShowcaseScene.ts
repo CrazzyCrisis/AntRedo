@@ -395,7 +395,8 @@ export class EntityShowcaseScene implements IScene {
             this.sprites.building,
             95,
             85,
-            'warehouse'
+            'warehouse',
+            'player'
         );
         
         // Complete construction immediately for showcase
@@ -411,7 +412,8 @@ export class EntityShowcaseScene implements IScene {
             this.sprites.building,
             105,
             85,
-            'barracks'
+            'barracks',
+            'player'
         );
         
         barracks.startConstruction();

@@ -285,7 +285,7 @@ export class DevRoomScene implements IScene {
             );
             
             // Register building sprites for ghost preview
-            if (this.entitySprites.hill1 && this.entitySprites.hive1 && this.entitySprites.cone1) {
+            if (this.entitySprites?.hill1 && this.entitySprites?.hive1 && this.entitySprites?.cone1) {
                 this.buildingPlacementManager.registerBuildingSprites({
                     warehouse: this.entitySprites.hill1,
                     barracks: this.entitySprites.hive1,
