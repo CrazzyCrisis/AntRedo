@@ -377,27 +377,27 @@ export const QUEEN_ANIMATIONS = {
     idle: {
         row: 0,
         startCol: 0,
-        endCol: 1,
-        frameWidth: 48, // Larger than worker ants
-        frameHeight: 48,
-        speed: 10, // Slower, regal movement
+        endCol: 0,
+        frameWidth: 16,
+        frameHeight: 16,
+        speed: 10, 
         loop: true
     } as AnimationConfig,
     walk: {
-        row: 0,
-        startCol: 2,
-        endCol: 5,
-        frameWidth: 48,
-        frameHeight: 48,
+        row: 1,
+        startCol: 0,
+        endCol: 1,
+        frameWidth: 16,
+        frameHeight: 16,
         speed: 6,
         loop: true
     } as AnimationConfig,
     attack: {
-        row: 1,
+        row: 2,
         startCol: 0,
         endCol: 3,
-        frameWidth: 48,
-        frameHeight: 48,
+        frameWidth: 16,
+        frameHeight: 16,
         speed: 4,
         loop: true
     } as AnimationConfig,
@@ -405,8 +405,8 @@ export const QUEEN_ANIMATIONS = {
         row: 1,
         startCol: 4,
         endCol: 7,
-        frameWidth: 48,
-        frameHeight: 48,
+        frameWidth: 16,
+        frameHeight: 16,
         speed: 8,
         loop: true
     } as AnimationConfig,
@@ -414,8 +414,8 @@ export const QUEEN_ANIMATIONS = {
         row: 2,
         startCol: 0,
         endCol: 3,
-        frameWidth: 48,
-        frameHeight: 48,
+        frameWidth: 16,
+        frameHeight: 16,
         speed: 8,
         loop: true
     } as AnimationConfig,
@@ -423,9 +423,9 @@ export const QUEEN_ANIMATIONS = {
         row: 2,
         startCol: 4,
         endCol: 7,
-        frameWidth: 48,
-        frameHeight: 48,
-        speed: 12, // Dramatic death
+        frameWidth: 16,
+        frameHeight: 16,
+        speed: 12,
         loop: false
     } as AnimationConfig
 };

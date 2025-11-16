@@ -65,7 +65,6 @@ export class SpawnManager extends BaseManager {
     private enemySpawner: EnemySpawner | null = null;
     private noiseManager: NoiseLayerManager | null = null;
     private safeZone: SafeZone | null = null;
-    private queenSprite: any = null;
     
     // Entity tracking
     private trackedEntities: EntityTracking = {
@@ -149,12 +148,6 @@ export class SpawnManager extends BaseManager {
         if (sprites.boss && this.enemySpawner) {
             this.enemySpawner.registerBossSprite(sprites.boss);
         }
-        
-        // Register queen sprite
-        if (sprites.queen) {
-            this.queenSprite = sprites.queen;
-        }
-        
 
     }
     
@@ -292,10 +285,9 @@ export class SpawnManager extends BaseManager {
     private spawnQueen(gridX: number, gridY: number, factionId: string): Queen | null {
         if (!this.renderer) return null;
         
-        // Use registered queen sprite
+        // Create queen using factory (sprite loaded automatically)
         const queen = QueenFactory.create(
             this.renderer,
-            this.queenSprite, // Use registered sprite
             gridX,
             gridY,
             factionId

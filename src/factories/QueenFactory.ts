@@ -1,7 +1,7 @@
 import {
     Renderer,
     RenderLayer,
-    SpriteComponent,
+    AnimatedSpriteSheetComponent,
     EventBus,
     GameEvents,
     setupEntitySpriteBinding,
@@ -10,8 +10,11 @@ import {
     EntityManager,
     gridToWorldCenter
 } from '../imports/factoryImports';
+import { QUEEN_ANIMATIONS } from '../config/animationConfig';
+import { getEntitySpritesheet } from '../sketch';
 import { Queen } from '../classes/Queen';
 import { ENTITY_CONFIG } from '../config/entityConfig';
+import { EntityState } from '../classes/components/StateMachineComponent';
 
 /**
  * QueenFactory - CONTROLLER
@@ -37,7 +40,6 @@ export class QueenFactory {
      * ENFORCES: Only one Queen per faction can exist
      * 
      * @param renderer Renderer instance for sprite registration
-     * @param sprite p5.Image sprite for queen
      * @param gridX Grid X position
      * @param gridY Grid Y position
      * @param factionId Faction ID for team identification
@@ -46,7 +48,6 @@ export class QueenFactory {
      */
     static create(
         renderer: Renderer,
-        sprite: any,
         gridX: number,
         gridY: number,
         factionId: string
@@ -66,33 +67,71 @@ export class QueenFactory {
         // 2. Register Queen as active for this faction
         QueenFactory.activeQueens.set(factionId, queen);
 
-        // 3. Create View (SpriteComponent) - MUST use world coordinates for initial position
+        // 3. Get queen spritesheet
+        const spritesheet = getEntitySpritesheet('queen');
+
+        // 4. Create View (AnimatedSpriteSheetComponent) - MUST use world coordinates for initial position
         const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
-        const spriteComponent = new SpriteComponent(
-            sprite,
+        
+        const animatedSprite = new AnimatedSpriteSheetComponent(
+            spritesheet,
             worldX,
             worldY,
-            RenderLayer.ENTITIES,
-            gridY  // depth = Y position for sorting
+            'queen'
         );
-
+        
+        // Center the sprite (48x48 frames, so offset by -24, -24)
+        animatedSprite.setOffset(-24, -24);
+        
         // Apply configured sprite scale
-        spriteComponent.scale = ENTITY_CONFIG.SPRITE_SCALES.queen;
+        animatedSprite.scale = ENTITY_CONFIG.SPRITE_SCALES.queen;
+        
+        // Set depth for proper sorting (Y-coordinate determines depth)
+        animatedSprite.setDepth(gridY);
+        animatedSprite.setLayer(RenderLayer.ENTITIES);
+
+        // Add all queen animations
+        animatedSprite.addAnimation('idle', QUEEN_ANIMATIONS.idle);
+        animatedSprite.addAnimation('walk', QUEEN_ANIMATIONS.walk);
+        animatedSprite.addAnimation('attack', QUEEN_ANIMATIONS.attack);
+        animatedSprite.addAnimation('gather', QUEEN_ANIMATIONS.gather);
+        animatedSprite.addAnimation('build', QUEEN_ANIMATIONS.build);
+        animatedSprite.addAnimation('die', QUEEN_ANIMATIONS.die);
+
+        // Map entity states to animation names
+        const stateToAnimationMap = new Map<EntityState, string>([
+            [EntityState.IDLE, 'idle'],
+            [EntityState.FOLLOWING, 'walk'],
+            [EntityState.PATROLLING, 'walk'],
+            [EntityState.SCOUTING, 'walk'],
+            [EntityState.RETURNING, 'walk'],
+            [EntityState.ATTACKING, 'attack'],
+            [EntityState.COMBAT, 'attack'],
+            [EntityState.GATHERING, 'gather'],
+            [EntityState.BUILDING, 'build'],
+            [EntityState.HEALING, 'idle'],
+            [EntityState.FLEEING_HAZARD, 'walk']
+        ]);
+
+        // Connect animated sprite to entity's state machine
+        animatedSprite.setOwnerEntity(queen.id, stateToAnimationMap);
+
+        // Start with idle animation
+        animatedSprite.playAnimation('idle');
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        // Grid coordinates → world coordinates (centered in tile)
-        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES);
+        setupEntitySpriteBinding(queen, animatedSprite, renderer, RenderLayer.ENTITIES);
 
         // Setup health bar (automatically tracks position and cleans up)
         setupHealthBarBinding(queen, renderer, RenderLayer.VISUAL_EFFECTS);
 
-        // 4. Register with EntityManager for update() lifecycle (MUST happen before ResourceGatheringComponent can function)
+        // 5. Register with EntityManager for update() lifecycle (MUST happen before ResourceGatheringComponent can function)
         EntityManager.getInstance().addEntity(queen);
         
-        // 4.5. Request camera follow (MUST happen AFTER EntityManager registration)
+        // 5.5. Request camera follow (MUST happen AFTER EntityManager registration)
         EventBus.emit(GameEvents.CAMERA_FOLLOW_ENTITY, queen.id);
 
-        // 5. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
+        // 6. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
         const originalCleanup = (queen as any)._cleanup;
         const diedListener = EventBus.once('ENTITY_DIED', (entityId: string) => {
             if (entityId === queen.id) {
@@ -101,14 +140,14 @@ export class QueenFactory {
             }
         });
 
-        // 6. Extend cleanup to include faction tracking (handles both destroy() and death)
+        // 7. Extend cleanup to include faction tracking (handles both destroy() and death)
         (queen as any)._cleanup = () => {
             QueenFactory.activeQueens.delete(factionId); // Remove from active queens
             originalCleanup(); // Call helper's cleanup (handles ENTITY_DESTROYED)
             EventBus.off('ENTITY_DIED', diedListener);
         };
 
-        // 7. Return Model only (View is hidden)
+        // 8. Return Model only (View is hidden)
         return queen;
     }
 
