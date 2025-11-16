@@ -55,8 +55,9 @@ export class QueenFactory {
         if (QueenFactory.activeQueens.has(factionId)) {
             throw new Error(`Queen already exists for faction '${factionId}'. Only one Queen per faction is allowed.`);
         }
-        // 1. Create Model (Queen with 3 components)
-        const queen = new Queen(gridX, gridY, factionId);
+        // 1. Create Model (Queen with 6 components: Pathfinding, Health, Combat, Vision, Inventory, ResourceGathering)
+        const entityManager = EntityManager.getInstance();
+        const queen = new Queen(gridX, gridY, factionId, entityManager);
 
         // 2. Register Queen as active for this faction
         QueenFactory.activeQueens.set(factionId, queen);
@@ -81,7 +82,7 @@ export class QueenFactory {
         // Setup health bar (automatically tracks position and cleans up)
         setupHealthBarBinding(queen, renderer, RenderLayer.ABOVE_ENTITIES);
 
-        // 4. Register with EntityManager for update() lifecycle
+        // 4. Register with EntityManager for update() lifecycle (MUST happen before ResourceGatheringComponent can function)
         EntityManager.getInstance().addEntity(queen);
         
         // 4.5. Request camera follow (MUST happen AFTER EntityManager registration)

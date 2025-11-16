@@ -19,19 +19,34 @@
  *   uiOverlay.cleanup();
  */
 
-import { Renderer } from './Renderer';
-import { Camera } from './Camera';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { ResourceDisplayComponent } from './components/ResourceDisplayComponent';
-import { PopulationDisplayComponent } from './components/PopulationDisplayComponent';
-import { PowerBarComponent } from './components/PowerBarComponent';
-import { QueenPortraitComponent } from './components/QueenPortraitComponent';
-import { QueenCommandsComponent } from './components/QueenCommandsComponent';
-import { MinimapComponent } from './components/MinimapComponent';
-import { Queen } from '../classes/Queen';
+import { Renderer } from '../Renderer';
+import { Camera } from '../Camera';
+import { EventBus, GameEvents } from '../../utils/eventBus';
+import { ResourceDisplayComponent } from '../components/ResourceDisplayComponent';
+import { PopulationDisplayComponent } from '../components/PopulationDisplayComponent';
+import { PowerBarComponent } from '../components/PowerBarComponent';
+import { QueenPortraitComponent } from '../components/QueenPortraitComponent';
+import { QueenCommandsComponent } from '../components/QueenCommandsComponent';
+import { MinimapComponent } from '../components/MinimapComponent';
+import { PanelComponent } from '../components/PanelComponent';
+import { Queen } from '../../classes/Queen';
+import { GAME_UI_CONFIG } from '../../config/gameUIConfig';
+import { EntityManager } from '../../managers/EntityManager';
 
 export interface GameUISprites {
     queen: any;
+    ant?: any;
+    resources?: {
+        food: any;
+        wood: any;
+        stone: any;
+        magicCrystal: any;
+    };
+    jobSprites?: {
+        worker?: any;
+        warrior?: any;
+        scout?: any;
+    };
 }
 
 export interface GameUIConfig {
@@ -52,12 +67,33 @@ export interface GameUIConfig {
  * GameUIOverlay manages all standard game UI components
  */
 export class GameUIOverlay {
+    /**
+     * Extract the idle frame (first frame) from a spritesheet
+     * Useful for getting a single sprite from animated spritesheets for UI display
+     * @param spritesheet - The spritesheet image (p5.Image)
+     * @returns A 16x16 p5.Image containing just the idle frame, or null if spritesheet is invalid
+     */
+    public static extractIdleFrame(spritesheet: any): any {
+        if (!spritesheet) return null;
+        
+        // Idle frame is at row 0, col 0 (16x16 pixels)
+        const frameWidth = 16;
+        const frameHeight = 16;
+        const x = 0;
+        const y = 0;
+        
+        // Use p5.js get() to extract the specific region
+        // Note: This creates a new p5.Image with just that frame
+        return spritesheet.get(x, y, frameWidth, frameHeight);
+    }
+
     private renderer: Renderer;
     private camera: Camera;
     private config: GameUIConfig;
     private sprites: GameUISprites;
     
     // UI Components
+    private bottomPanel: PanelComponent | null = null;
     private resourceDisplay: ResourceDisplayComponent | null = null;
     private populationDisplay: PopulationDisplayComponent | null = null;
     private powerBar: PowerBarComponent | null = null;
@@ -78,12 +114,12 @@ export class GameUIOverlay {
         this.renderer = renderer;
         this.camera = camera;
         this.config = {
-            showMinimap: true,
-            showPowerBar: true,
-            showQueenPortrait: true,
-            showCommands: true,
-            showResources: true,
-            showPopulation: true,
+            showMinimap: GAME_UI_CONFIG.DEFAULT_VISIBILITY.MINIMAP,
+            showPowerBar: GAME_UI_CONFIG.DEFAULT_VISIBILITY.POWER_BAR,
+            showQueenPortrait: GAME_UI_CONFIG.DEFAULT_VISIBILITY.QUEEN_PORTRAIT,
+            showCommands: GAME_UI_CONFIG.DEFAULT_VISIBILITY.COMMANDS,
+            showResources: GAME_UI_CONFIG.DEFAULT_VISIBILITY.RESOURCES,
+            showPopulation: GAME_UI_CONFIG.DEFAULT_VISIBILITY.POPULATION,
             ...config
         };
         this.sprites = sprites;
@@ -93,63 +129,104 @@ export class GameUIOverlay {
      * Initialize all UI components
      */
     initialize(): void {
-        const padding = 10;
         const { canvasWidth, canvasHeight } = this.config;
+        
+        // Calculate screen center and half dimensions for normalized coordinate conversion
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
+        const halfWidth = canvasWidth / 2;
+        const halfHeight = canvasHeight / 2;
+        
+        // Bottom Panel (render first so it's behind other UI elements)
+        const panelY = centerY - (GAME_UI_CONFIG.LAYOUT.BOTTOM_PANEL.offsetY * halfHeight);
+        const panelHeight = GAME_UI_CONFIG.LAYOUT.BOTTOM_PANEL.height;
+        this.bottomPanel = new PanelComponent(
+            0,
+            panelY - panelHeight / 2,
+            canvasWidth,
+            panelHeight,
+            '#808080', // Grey
+            100 // Transparent
+        );
+        this.uiUnregisterFunctions.push(this.renderer.register(this.bottomPanel));
         
         // Resource Display (top-left)
         if (this.config.showResources) {
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.RESOURCE_DISPLAY.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.RESOURCE_DISPLAY.offsetY * halfHeight);
             this.resourceDisplay = new ResourceDisplayComponent(
-                padding,
-                padding,
-                this.config.factionId
+                x,
+                y,
+                this.config.factionId,
+                this.sprites.resources
             );
+            this.resourceDisplay.scale = GAME_UI_CONFIG.SCALES.RESOURCE_DISPLAY;
+            // Pass EntityManager for querying ant inventories
+            this.resourceDisplay.setEntityManager(EntityManager.getInstance());
             this.uiUnregisterFunctions.push(this.renderer.register(this.resourceDisplay));
         }
         
         // Population Display (left side, below resources)
         if (this.config.showPopulation) {
-            this.populationDisplay = new PopulationDisplayComponent(padding, 100);
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.POPULATION_DISPLAY.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.POPULATION_DISPLAY.offsetY * halfHeight);
+            this.populationDisplay = new PopulationDisplayComponent(
+                x,
+                y,
+                this.sprites.ant,
+                this.config.factionId,
+                this.sprites.jobSprites
+            );
+            // TODO: Implement scale for PopulationDisplayComponent
+            // this.populationDisplay.scale = GAME_UI_CONFIG.SCALES.POPULATION_DISPLAY;
             this.uiUnregisterFunctions.push(this.renderer.register(this.populationDisplay));
         }
         
         // Power Bar (bottom center)
         if (this.config.showPowerBar) {
-            this.powerBar = new PowerBarComponent(
-                canvasWidth / 2 - 200,
-                canvasHeight - 80
-            );
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.POWER_BAR.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.POWER_BAR.offsetY * halfHeight);
+            this.powerBar = new PowerBarComponent(x, y);
+            // TODO: Implement scale for PowerBarComponent
+            // this.powerBar.scale = GAME_UI_CONFIG.SCALES.POWER_BAR;
             this.uiUnregisterFunctions.push(this.renderer.register(this.powerBar));
         }
         
         // Queen Portrait (bottom-left)
         if (this.config.showQueenPortrait && this.sprites.queen) {
-            this.queenPortrait = new QueenPortraitComponent(
-                padding,
-                canvasHeight - 140,
-                this.sprites.queen
-            );
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.QUEEN_PORTRAIT.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_PORTRAIT.offsetY * halfHeight);
+            this.queenPortrait = new QueenPortraitComponent(x, y, this.sprites.queen);
+            // TODO: Implement scale for QueenPortraitComponent
+            // this.queenPortrait.scale = GAME_UI_CONFIG.SCALES.QUEEN_PORTRAIT;
             this.uiUnregisterFunctions.push(this.renderer.register(this.queenPortrait));
         }
         
         // Queen Commands (bottom mid-left)
         if (this.config.showCommands) {
-            this.commandsUI = new QueenCommandsComponent(
-                200,
-                canvasHeight - 100
-            );
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
+            this.commandsUI = new QueenCommandsComponent(x, y);
+            // TODO: Implement scale for QueenCommandsComponent
+            // this.commandsUI.scale = GAME_UI_CONFIG.SCALES.QUEEN_COMMANDS;
             this.uiUnregisterFunctions.push(this.renderer.register(this.commandsUI));
         }
         
         // Minimap (bottom-right)
         if (this.config.showMinimap) {
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetY * halfHeight);
+            const minimapSize = GAME_UI_CONFIG.SIZES.MINIMAP;
             this.minimap = new MinimapComponent(
-                canvasWidth - 160,
-                canvasHeight - 160,
-                150,
-                150,
+                x,
+                y,
+                minimapSize,
+                minimapSize,
                 this.config.worldWidth,
                 this.config.worldHeight
             );
+            // TODO: Implement scale for MinimapComponent
+            // this.minimap.scale = GAME_UI_CONFIG.SCALES.MINIMAP;
             this.minimap.setCamera(this.camera);
             this.uiUnregisterFunctions.push(this.renderer.register(this.minimap));
             
@@ -211,6 +288,10 @@ export class GameUIOverlay {
         if (this.queenPortrait) {
             this.queenPortrait.update();
         }
+        
+        if (this.populationDisplay) {
+            this.populationDisplay.update();
+        }
     }
 
     /**
@@ -250,23 +331,55 @@ export class GameUIOverlay {
         this.config.canvasWidth = width;
         this.config.canvasHeight = height;
         
-        const padding = 10;
+        // Calculate screen center and half dimensions for normalized coordinate conversion
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
         
-        // Reposition UI components
+        // Reposition bottom panel
+        if (this.bottomPanel) {
+            const panelY = centerY - (GAME_UI_CONFIG.LAYOUT.BOTTOM_PANEL.offsetY * halfHeight);
+            const panelHeight = GAME_UI_CONFIG.LAYOUT.BOTTOM_PANEL.height;
+            this.bottomPanel.setPosition(0, panelY - panelHeight / 2);
+            this.bottomPanel.setSize(width, panelHeight);
+        }
+        
+        // Reposition UI components using normalized coordinates
+        if (this.resourceDisplay) {
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.RESOURCE_DISPLAY.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.RESOURCE_DISPLAY.offsetY * halfHeight);
+            this.resourceDisplay.setPosition(x, y);
+        }
+        
+        if (this.populationDisplay) {
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.POPULATION_DISPLAY.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.POPULATION_DISPLAY.offsetY * halfHeight);
+            this.populationDisplay.setPosition(x, y);
+        }
+        
         if (this.powerBar) {
-            this.powerBar.setPosition(width / 2 - 200, height - 80);
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.POWER_BAR.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.POWER_BAR.offsetY * halfHeight);
+            this.powerBar.setPosition(x, y);
         }
         
         if (this.queenPortrait) {
-            this.queenPortrait.setPosition(padding, height - 140);
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.QUEEN_PORTRAIT.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_PORTRAIT.offsetY * halfHeight);
+            this.queenPortrait.setPosition(x, y);
         }
         
         if (this.commandsUI) {
-            this.commandsUI.setPosition(200, height - 100);
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
+            this.commandsUI.setPosition(x, y);
         }
         
         if (this.minimap) {
-            this.minimap.setPosition(width - 160, height - 160);
+            const x = centerX + (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetX * halfWidth);
+            const y = centerY - (GAME_UI_CONFIG.LAYOUT.MINIMAP.offsetY * halfHeight);
+            this.minimap.setPosition(x, y);
         }
     }
 

@@ -31,10 +31,12 @@ import {
     BuildingFactory,
     AntFactory
 } from '../imports/sceneImports';
+import { Camera } from '../rendering/Camera';
 import { CombatVisualHandler } from '../managers/CombatVisualHandler';
+import { CombatManager } from '../managers/CombatManager';
 import { ParticleSystem } from '../managers/ParticleSystem';
 import { TileRenderer, TileRenderConfig } from '../world/TileRenderer';
-import { GameUIOverlay } from '../rendering/GameUIOverlay';
+import { GameUIOverlay } from '../rendering/overlays/GameUIOverlay';
 
 export class DevRoomScene implements IScene {
     private renderer: Renderer;
@@ -55,6 +57,8 @@ export class DevRoomScene implements IScene {
     private worldGenConfigMenu: WorldGenConfigMenu | null = null;
     private tileRendererUnregister: (() => void)[] = [];
     private uiOverlay: GameUIOverlay | null = null;
+    private playerQueen: any | null = null; // Reference to player's queen for click commands
+    private camera: Camera | null = null; // Camera reference for coordinate conversion
     
     // Spawning system
     private spawnManager: SpawnManager | null = null;
@@ -76,6 +80,13 @@ export class DevRoomScene implements IScene {
             stone: any;
             magicCrystal: any;
         };
+    } | null = null;
+    private entitySpritesheets: {
+        default?: any;
+        warrior?: any;
+        scout?: any;
+        builder?: any;
+        farmer?: any;
     } | null = null;
     
     // Enemy building tracking
@@ -108,6 +119,13 @@ export class DevRoomScene implements IScene {
                 stone: any; 
                 magicCrystal: any; 
             };
+        } | null,
+        entitySpritesheets?: {
+            default?: any;
+            warrior?: any;
+            scout?: any;
+            builder?: any;
+            farmer?: any;
         } | null
     ) {
         this.renderer = renderer;
@@ -117,9 +135,13 @@ export class DevRoomScene implements IScene {
         this.tileSprites = tileSprites;
         this.tileEdgeSprites = tileEdgeSprites;
         this.entitySprites = entitySprites;
+        this.entitySpritesheets = entitySpritesheets || null;
         this.gameState = GameStateManager.getInstance();
         this.worldGenerator = new WorldGenerator();
         this.inputManager = InputManager.getInstance();
+        
+        // Initialize combat system for automatic melee attacks
+        CombatManager.getInstance();
         
         // Initialize combat visual handler for sprite animations, camera shake, sounds
         CombatVisualHandler.getInstance();
@@ -238,6 +260,9 @@ export class DevRoomScene implements IScene {
             return;
         }
         
+        // Store camera reference for click handling
+        this.camera = camera;
+        
         // Get queen from EntityManager
         const entities = EntityManager.getInstance().getAllEntities();
         const queen = entities.find(e => e.entityClass === 'queen');
@@ -246,6 +271,9 @@ export class DevRoomScene implements IScene {
             console.log('[DevRoomScene] Cannot setup UI overlay - missing sprites or queen');
             return;
         }
+        
+        // Store queen reference for click commands
+        this.playerQueen = queen;
         
         // Create UI overlay config
         const tileGrid = GameStateManager.getInstance().getTileGrid();
@@ -271,7 +299,14 @@ export class DevRoomScene implements IScene {
                 showPopulation: true
             },
             {
-                queen: this.entitySprites.queen
+                queen: this.entitySprites.queen,
+                ant: this.entitySprites.ant,
+                resources: this.entitySprites.resources,
+                jobSprites: this.entitySpritesheets ? {
+                    worker: GameUIOverlay.extractIdleFrame(this.entitySpritesheets.default),
+                    warrior: GameUIOverlay.extractIdleFrame(this.entitySpritesheets.warrior),
+                    scout: GameUIOverlay.extractIdleFrame(this.entitySpritesheets.scout)
+                } : undefined
             }
         );
         
@@ -430,17 +465,24 @@ export class DevRoomScene implements IScene {
         // Forward to world gen config menu if visible
         if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
             this.worldGenConfigMenu.handleMouseClick(x, y);
+            return;
         }
         
         // Handle button click
-        if (this.backButton) {
+        if (this.backButton && this.backButton.isMouseOver(x, y)) {
             this.backButton.handleClick(x, y);
+            return;
         }
 
-        // Delegate to UI overlay
+        // Delegate to UI overlay (check if click was on UI)
         if (this.uiOverlay) {
             this.uiOverlay.handleMouseClick(x, y);
+            // Note: UI overlay doesn't return whether it handled the click
+            // For now, any click goes through to world
         }
+        
+        // World click: Handle queen commands (move/gather/attack)
+        this.handleWorldClick(x, y);
     }
 
     handleMouseMove(x: number, y: number): void {
@@ -471,6 +513,136 @@ export class DevRoomScene implements IScene {
         // Forward to world gen config menu if visible
         if (this.worldGenConfigMenu && this.worldGenConfigMenu.isVisible()) {
             this.worldGenConfigMenu.handleMouseUp();
+        }
+    }
+
+    /**
+     * Handle clicks on the game world (not UI)
+     * Implements smart targeting:
+     * - Click on resource → pathfind and gather
+     * - Click on enemy → pathfind and attack
+     * - Click on ground → pathfind to location
+     */
+    private handleWorldClick(screenX: number, screenY: number): void {
+        if (!this.playerQueen || !this.camera) return;
+
+        // Convert screen coordinates to world coordinates
+        const { x: worldX, y: worldY } = this.camera.screenToWorld(screenX, screenY);
+        
+        // Convert world coordinates to grid coordinates
+        const TILE_SIZE = 64; // From TileSystem
+        const gridX = Math.floor(worldX / TILE_SIZE);
+        const gridY = Math.floor(worldY / TILE_SIZE);
+
+        // Check if clicked on an entity
+        const clickedEntity = this.findEntityAtPosition(gridX, gridY);
+        
+        if (clickedEntity) {
+            // Clicked on an entity - determine action based on type
+            if (clickedEntity.type === 'resource') {
+                // Resource: Start gathering
+                this.commandQueenToGather(clickedEntity);
+            } else if (this.isEnemy(clickedEntity)) {
+                // Enemy: Attack
+                this.commandQueenToAttack(clickedEntity);
+            } else {
+                // Friendly or neutral: Just move there
+                this.commandQueenToMove(gridX, gridY);
+            }
+        } else {
+            // Clicked on empty ground: Move there
+            this.commandQueenToMove(gridX, gridY);
+        }
+    }
+
+    /**
+     * Find entity at grid position (within collision radius)
+     */
+    private findEntityAtPosition(gridX: number, gridY: number): any | null {
+        const entityManager = EntityManager.getInstance();
+        const allEntities = entityManager.getAllEntities();
+        
+        for (const entity of allEntities) {
+            if (!entity.isActive) continue;
+            
+            // Check if click is within entity's tile (simple grid check)
+            if (Math.floor(entity.gridX) === gridX && Math.floor(entity.gridY) === gridY) {
+                return entity;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if entity is enemy to player queen
+     */
+    private isEnemy(entity: any): boolean {
+        // Check if entity has a faction
+        if (entity.getFactionId && typeof entity.getFactionId === 'function') {
+            const entityFaction = entity.getFactionId();
+            const queenFaction = this.playerQueen.getFactionId();
+            return entityFaction !== queenFaction;
+        }
+        
+        // Bosses are always enemies
+        if (entity.type === 'boss') {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Command queen to move to location
+     */
+    private commandQueenToMove(gridX: number, gridY: number): void {
+        const pathfinding = this.playerQueen.getComponent('Pathfinding');
+        const tileGrid = GameStateManager.getInstance().getTileGrid();
+        
+        if (pathfinding && tileGrid) {
+            const grid = tileGrid.getGrid();
+            pathfinding.findPath(gridX, gridY, grid);
+            console.log(`[DevRoomScene] Queen commanded to move to (${gridX}, ${gridY})`);
+        }
+    }
+
+    /**
+     * Command queen to gather resource
+     */
+    private commandQueenToGather(resource: any): void {
+        // For now, just move to the resource location
+        // TODO: Implement actual gathering behavior for Queen
+        const pathfinding = this.playerQueen.getComponent('Pathfinding');
+        const tileGrid = GameStateManager.getInstance().getTileGrid();
+        
+        if (pathfinding && tileGrid) {
+            const grid = tileGrid.getGrid();
+            pathfinding.findPath(Math.floor(resource.gridX), Math.floor(resource.gridY), grid);
+            console.log(`[DevRoomScene] Queen commanded to gather resource at (${resource.gridX}, ${resource.gridY})`);
+            
+            // TODO: Add resource gathering component/behavior to Queen
+            // For now, Queen will just move to resource location
+        }
+    }
+
+    /**
+     * Command queen to attack enemy
+     */
+    private commandQueenToAttack(enemy: any): void {
+        const combat = this.playerQueen.getComponent('Combat');
+        const pathfinding = this.playerQueen.getComponent('Pathfinding');
+        const tileGrid = GameStateManager.getInstance().getTileGrid();
+        
+        if (combat && pathfinding && tileGrid) {
+            // Set combat target
+            combat.setTarget(enemy.id);
+            
+            // Move towards enemy
+            const grid = tileGrid.getGrid();
+            pathfinding.findPath(Math.floor(enemy.gridX), Math.floor(enemy.gridY), grid);
+            
+            console.log(`[DevRoomScene] Queen commanded to attack ${enemy.type} at (${enemy.gridX}, ${enemy.gridY})`);
         }
     }
     

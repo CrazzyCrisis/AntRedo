@@ -167,8 +167,8 @@ export class PowerBarComponent implements Renderable {
         
         // Draw each power
         this.powers.forEach((power, index) => {
-            const powerX = this.x - (totalWidth / 2) + this.padding + (index * this.spacing) + (this.iconSize / 2);
-            const powerY = this.y - (barHeight / 2) + this.padding + (this.iconSize / 2);
+            const powerX = this.x - (totalWidth / 2) + this.padding + (index * this.spacing);
+            const powerY = this.y;
             
             // Draw power icon
             graphics.imageMode('center' as any);

@@ -4,7 +4,7 @@
  */
 
 import { EventBus, GameEvents } from '../utils/eventBus';
-import { VFX_PRESETS } from '../config/visualEffectsConfig';
+import { VFX_PRESETS } from '../config/visualEffects';
 
 /**
  * Show damage on an entity (spawns damage number + flash)

@@ -18,7 +18,7 @@
 
 ### 1. Import and Create
 ```typescript
-import { GameUIOverlay } from '../rendering/GameUIOverlay';
+import { GameUIOverlay } from '../rendering/overlays/GameUIOverlay';
 
 export class MyGameScene implements IScene {
     private uiOverlay: GameUIOverlay | null = null;

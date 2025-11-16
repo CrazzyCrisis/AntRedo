@@ -2,6 +2,9 @@ import { GameObject } from './GameObject';
 import { PathfindingComponent } from './components/PathfindingComponent';
 import { HealthComponent } from './components/HealthComponent';
 import { CombatComponent } from './components/CombatComponent';
+import { VisionComponent } from './components/VisionComponent';
+import { InventoryComponent } from './components/InventoryComponent';
+import { ResourceGatheringComponent } from './components/ResourceGatheringComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { InputManager } from '../managers/InputManager';
 import { ENTITY_CONFIG } from '../config/entityConfig';
@@ -21,7 +24,7 @@ export interface QueenPower {
 /**
  * Queen class - player-controlled entity with power system
  * 
- * Components: Pathfinding, Health, Combat (3 total)
+ * Components: Pathfinding, Health, Combat, Vision, Inventory, ResourceGathering (6 total)
  * 
  * Features:
  * - Power system with unlock/upgrade/cooldown mechanics
@@ -38,11 +41,14 @@ export class Queen extends GameObject {
     private commandRadius: number = 15;
     private powers: Map<string, QueenPower> = new Map();
     private keybindMap: Map<string, string> = new Map();
+    // @ts-expect-error - Used in constructor to pass to ResourceGatheringComponent
+    private entityManager: any;
 
-    constructor(gridX: number, gridY: number, factionId: string) {
+    constructor(gridX: number, gridY: number, factionId: string, entityManager?: any) {
         super('queen', gridX, gridY);
         this.factionId = factionId;
         this.entityClass = 'queen'; // Set entity class for tile speed modifiers
+        this.entityManager = entityManager;
         
         // Set movement speed (tiles per second)
         this.moveSpeed = ENTITY_CONFIG.QUEEN.speed; // Queen moves at 4 tiles/second
@@ -54,6 +60,13 @@ export class Queen extends GameObject {
             ENTITY_CONFIG.QUEEN.attackDamage,
             ENTITY_CONFIG.QUEEN.attackRange, 
             ENTITY_CONFIG.QUEEN.attackGCD)); // Stronger combat
+        this.addComponent('Vision', new VisionComponent(10, 360)); // 10 grid range, 360 degrees (circle vision)
+        this.addComponent('Inventory', new InventoryComponent(50)); // Queen has larger inventory (50 vs ant's 10)
+        
+        // Add resource gathering component if EntityManager is available
+        if (entityManager) {
+            this.addComponent('ResourceGathering', new ResourceGatheringComponent(entityManager));
+        }
 
         // Initialize power system
         this.initializePowers();

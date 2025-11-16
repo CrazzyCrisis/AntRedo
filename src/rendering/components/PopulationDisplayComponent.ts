@@ -2,6 +2,8 @@ import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 import { drawUIPanel, smoothTransition, hexToRgb } from '../../utils/helpers';
+import { EntityManager } from '../../managers/EntityManager';
+import { FactionManager } from '../../managers/FactionManager';
 
 /**
  * Ant type information for breakdown display
@@ -9,7 +11,7 @@ import { drawUIPanel, smoothTransition, hexToRgb } from '../../utils/helpers';
 interface AntTypeCount {
     type: 'WORKER' | 'WARRIOR' | 'SCOUT';
     count: number;
-    icon: string; // Emoji or sprite key
+    icon: any; // Sprite object (p5.Image)
     color: string; // Color for count text
 }
 
@@ -21,6 +23,7 @@ interface AntTypeCount {
 export class PopulationDisplayComponent implements Renderable {
     public layer: RenderLayer = RenderLayer.UI;
     public depth: number = 950; // Between powers (900) and resources (1000)
+    public scale: number = 1.0; // Configurable scale multiplier
     
     private x: number;
     private y: number;
@@ -30,12 +33,12 @@ export class PopulationDisplayComponent implements Renderable {
     
     // Ant type counts
     private antTypes: AntTypeCount[] = [
-        { type: 'WORKER', count: 0, icon: '🐜', color: '#FFD700' }, // Gold
-        { type: 'WARRIOR', count: 0, icon: '⚔️', color: '#FF4444' }, // Red
-        { type: 'SCOUT', count: 0, icon: '👁️', color: '#4CAF50' }   // Green
+        { type: 'WORKER', count: 0, icon: null, color: '#FFD700' }, // Gold
+        { type: 'WARRIOR', count: 0, icon: null, color: '#FF4444' }, // Red
+        { type: 'SCOUT', count: 0, icon: null, color: '#4CAF50' }   // Green
     ];
     
-    // Layout settings
+    // Layout properties
     private panelWidth: number = 180;
     private panelHeight: number = 60; // Collapsed height
     private expandedHeight: number = 160; // Expanded height
@@ -53,11 +56,41 @@ export class PopulationDisplayComponent implements Renderable {
     // Animation
     private currentHeight: number = 60;
     private animationSpeed: number = 0.2; // Lerp speed for smooth transitions
+    private antSprite: any = null;
+    private factionId: string = 'player'; // Default to player faction
     
-    constructor(x: number, y: number) {
+    constructor(
+        x: number,
+        y: number,
+        antSprite?: any,
+        factionId?: string,
+        jobSprites?: { worker?: any; warrior?: any; scout?: any }
+    ) {
         this.x = x;
         this.y = y;
         this.currentHeight = this.panelHeight;
+        if (antSprite) {
+            this.antSprite = antSprite;
+        }
+        if (factionId) {
+            this.factionId = factionId;
+        }
+        
+        // Set job-specific sprites if provided
+        if (jobSprites) {
+            if (jobSprites.worker) {
+                const workerType = this.antTypes.find(t => t.type === 'WORKER');
+                if (workerType) workerType.icon = jobSprites.worker;
+            }
+            if (jobSprites.warrior) {
+                const warriorType = this.antTypes.find(t => t.type === 'WARRIOR');
+                if (warriorType) warriorType.icon = jobSprites.warrior;
+            }
+            if (jobSprites.scout) {
+                const scoutType = this.antTypes.find(t => t.type === 'SCOUT');
+                if (scoutType) scoutType.icon = jobSprites.scout;
+            }
+        }
         
         this.setupEventListeners();
     }
@@ -175,9 +208,52 @@ export class PopulationDisplayComponent implements Renderable {
     }
     
     /**
-     * Update animation state
+     * Update animation state and query real-time ant counts
      */
     public update(): void {
+        // Query real-time ant counts from EntityManager
+        const entityManager = EntityManager.getInstance();
+        const allAnts = entityManager.getEntitiesByType('ant');
+        
+        // Filter ants by faction
+        const factionAnts = allAnts.filter((ant: any) => ant.getFactionId() === this.factionId);
+        this.currentAnts = factionAnts.length;
+        
+        // Get ant cap from FactionManager
+        const factionManager = FactionManager.getInstance();
+        const faction = factionManager.getFaction(this.factionId);
+        if (faction) {
+            this.maxAnts = faction.antCap;
+        }
+        
+        // Count ants by type (job component)
+        this.antTypes.forEach(antType => antType.count = 0);
+        factionAnts.forEach((ant: any) => {
+            const jobComponent = ant.getComponent('AntJob');
+            if (jobComponent) {
+                const jobName = jobComponent.getCurrentJob();
+                // Map job names to display types
+                if (jobName === 'GATHERER' || jobName === 'BUILDER' || jobName === 'FARMER') {
+                    const workerType = this.antTypes.find(t => t.type === 'WORKER');
+                    if (workerType) workerType.count++;
+                } else if (jobName === 'FIGHTER') {
+                    const warriorType = this.antTypes.find(t => t.type === 'WARRIOR');
+                    if (warriorType) warriorType.count++;
+                } else if (jobName === 'SCOUT') {
+                    const scoutType = this.antTypes.find(t => t.type === 'SCOUT');
+                    if (scoutType) scoutType.count++;
+                } else {
+                    // Default to worker if no job or unknown job
+                    const workerType = this.antTypes.find(t => t.type === 'WORKER');
+                    if (workerType) workerType.count++;
+                }
+            } else {
+                // No job component, count as worker
+                const workerType = this.antTypes.find(t => t.type === 'WORKER');
+                if (workerType) workerType.count++;
+            }
+        });
+        
         // Smooth height animation using helper
         const targetHeight = this.isExpanded ? this.expandedHeight : this.panelHeight;
         this.currentHeight = smoothTransition(this.currentHeight, targetHeight, this.animationSpeed, 1);
@@ -201,8 +277,13 @@ export class PopulationDisplayComponent implements Renderable {
         graphics.textSize(this.fontSize);
         
         // Ant icon
-        graphics.textSize(this.iconSize);
-        graphics.text('🐜', this.x + this.padding, currentY);
+        if (this.antSprite) {
+            graphics.imageMode('corner' as any);
+            graphics.image(this.antSprite, this.x + this.padding, currentY, this.iconSize, this.iconSize);
+        } else {
+            graphics.textSize(this.iconSize);
+            graphics.text('🐜', this.x + this.padding, currentY);
+        }
         
         // Total count text
         graphics.textSize(this.fontSize);
@@ -241,10 +322,21 @@ export class PopulationDisplayComponent implements Renderable {
             
             // Draw each ant type
             this.antTypes.forEach(antType => {
-                // Icon
-                graphics.fill(255, 255, 255, textAlpha);
-                graphics.textSize(this.iconSize - 4);
-                graphics.text(antType.icon, this.x + this.padding + 10, currentY);
+                // Icon (sprite or fallback to emoji)
+                if (antType.icon) {
+                    graphics.push();
+                    graphics.tint(255, 255, 255, textAlpha);
+                    graphics.imageMode('corner' as any);
+                    graphics.image(antType.icon, this.x + this.padding + 10, currentY, this.iconSize - 4, this.iconSize - 4);
+                    graphics.noTint();
+                    graphics.pop();
+                } else {
+                    // Fallback to emoji if sprite not available
+                    graphics.fill(255, 255, 255, textAlpha);
+                    graphics.textSize(this.iconSize - 4);
+                    const fallbackIcon = antType.type === 'WORKER' ? '🐜' : antType.type === 'WARRIOR' ? '⚔️' : '👁️';
+                    graphics.text(fallbackIcon, this.x + this.padding + 10, currentY);
+                }
                 
                 // Type name and count
                 graphics.textSize(this.fontSize - 2);

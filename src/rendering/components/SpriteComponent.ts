@@ -134,11 +134,9 @@ export class SpriteComponent implements Renderable {
      * Render sprite to graphics context
      */
     render(graphics: any): void {
-        // Set image mode to CENTER so sprites are drawn from their center
-        graphics.imageMode((window as any).CENTER);
-        
         // If no sprite, render bright magenta placeholder
         if (!this.sprite) {
+            graphics.imageMode((window as any).CORNER);  // Reset to corner for placeholder rectangles
             console.warn(`⚠️ NULL sprite at (${this.x}, ${this.y}) layer=${this.layer} depth=${this.depth}`);
             graphics.fill(255, 0, 255); // Magenta
             graphics.stroke(255, 255, 0); // Yellow border
@@ -179,10 +177,16 @@ export class SpriteComponent implements Renderable {
         // Save graphics state if transform needed
         if (this.rotation !== 0 || this.scale !== 1) {
             graphics.push();
-            graphics.translate(this.x + this.offsetX + (this.width * this.scale) / 2, 
-                             this.y + this.offsetY + (this.height * this.scale) / 2);
+            // Translate to the position (no centering offset needed - we'll use CENTER mode)
+            graphics.translate(this.x + this.offsetX, this.y + this.offsetY);
             if (this.rotation !== 0) graphics.rotate(this.rotation);
             if (this.scale !== 1) graphics.scale(this.scale);
+            
+            // Use CENTER mode so image is drawn centered at the translated position
+            graphics.imageMode((window as any).CENTER);
+        } else {
+            // For non-transformed sprites, use CENTER mode
+            graphics.imageMode((window as any).CENTER);
         }
         
         // Apply tint if set (for faction recoloring)
@@ -196,23 +200,25 @@ export class SpriteComponent implements Renderable {
         
         // Calculate final position with combat animation offset (tile-based offset * 16px)
         const TILE_SIZE = 16;
-        const finalOffsetX = this.offsetX + (this.combatOffsetX * TILE_SIZE);
-        const finalOffsetY = this.offsetY + (this.combatOffsetY * TILE_SIZE);
+        const finalOffsetX = this.combatOffsetX * TILE_SIZE;
+        const finalOffsetY = this.combatOffsetY * TILE_SIZE;
         
-        // Draw sprite (centered if transformed, otherwise top-left)
+        // Draw sprite (always centered at position due to CENTER imageMode)
         if (this.rotation !== 0 || this.scale !== 1) {
+            // Transformed: draw at origin (0,0) since we already translated
             graphics.image(
                 this.sprite,
-                -(this.width * this.scale) / 2,
-                -(this.height * this.scale) / 2,
-                this.width * this.scale,
-                this.height * this.scale
+                finalOffsetX,
+                finalOffsetY,
+                this.width,
+                this.height
             );
         } else {
+            // Non-transformed: draw at world position
             graphics.image(
                 this.sprite,
-                this.x + finalOffsetX,
-                this.y + finalOffsetY,
+                this.x + this.offsetX + finalOffsetX,
+                this.y + this.offsetY + finalOffsetY,
                 this.width,
                 this.height
             );

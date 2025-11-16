@@ -576,6 +576,9 @@ export function setupEntitySpriteBinding(
     // Register sprite with renderer
     const unregister = renderer.register(sprite);
     
+    // Store sprite component reference on entity for particle scaling
+    entity._spriteComponent = sprite;
+    
     // Set entity ID on sprite for combat animation tracking
     if (sprite.setEntityId && typeof sprite.setEntityId === 'function') {
         sprite.setEntityId(entity.id);

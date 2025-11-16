@@ -230,11 +230,11 @@ combatVisualHandler.update();
 - `src/utils/eventBus.ts` - Added 6 new combat events (3 sequencing + 3 visual)
 
 **Integration Points (Remaining):**
-- [ ] Initialize CombatVisualHandler in game scene
-- [ ] SpriteComponent listens to SPRITE_OFFSET_CHANGED
-- [ ] ParticleSystem listens to PARTICLE_SPAWN
-- [ ] Camera listens to CAMERA_SHAKE
-- [ ] Add combat sound assets (combat_whoosh, combat_impact)
+- [x] Initialize CombatVisualHandler in game scene
+- [x] SpriteComponent listens to SPRITE_OFFSET_CHANGED
+- [x] ParticleSystem listens to PARTICLE_SPAWN
+- [x] Camera listens to CAMERA_SHAKE
+- [ ] Add combat sound assets (combat_whoosh, combat_impact) - **USER TO COMPLETE**
 - Particle effects on hit
 
 ## Notes

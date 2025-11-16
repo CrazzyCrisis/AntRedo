@@ -8,13 +8,17 @@ import {
     EntityManager,
     gridToWorldCenter,
     JOB_TO_ANIMATION_MAP,
-    JOB_TO_SPRITESHEET_MAP
+    JOB_TO_SPRITESHEET_MAP,
+    EventBus
 } from '../imports/factoryImports';
+import { FactionManager } from '../managers/FactionManager';
 import { Ant } from '../classes/Ant';
 import { AntJobComponent } from '../classes/components/AntJobComponent';
+import { ResourceGatheringComponent } from '../classes/components/ResourceGatheringComponent';
 import { EntityState } from '../classes/components/StateMachineComponent';
 import { getEntitySpritesheet } from '../sketch';
 import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ProgressBarComponent } from '../rendering/components/ProgressBarComponent';
 
 /**
  * AntFactory creates Ant entities with automatic rendering setup.
@@ -124,8 +128,57 @@ export class AntFactory {
         // Setup health bar (automatically tracks position and cleans up)
         setupHealthBarBinding(ant, renderer, RenderLayer.ABOVE_ENTITIES);
 
+        // Create progress bar for resource gathering (initially hidden)
+        const progressBar = new ProgressBarComponent(worldX, worldY);
+        progressBar.hide(); // Start hidden
+        const progressBarUnregister = renderer.register(progressBar);
+
+        // Setup resource gathering component
+        const gatheringComponent = new ResourceGatheringComponent(EntityManager.getInstance());
+        
+        // Wire progress bar to gathering component
+        gatheringComponent.setProgressBarCallback((progress: number, show: boolean) => {
+            if (show) {
+                progressBar.setProgress(progress);
+                progressBar.show();
+                // Update position to follow ant
+                const { x, y } = gridToWorldCenter(ant.gridX, ant.gridY, TILE_SIZE);
+                progressBar.updatePosition(x, y);
+            } else {
+                progressBar.hide();
+            }
+        });
+
+        // Attach gathering component to ant
+        ant.addComponent('ResourceGathering', gatheringComponent);
+
+        // Cleanup progress bar when ant destroyed
+        const originalCleanup = (ant as any)._cleanup;
+        (ant as any)._cleanup = () => {
+            if (originalCleanup) originalCleanup();
+            progressBarUnregister();
+        };
+
+        // Listen for ENTITY_MOVED to update progress bar position
+        const moveListener = EventBus.on('ENTITY_MOVED', (entityId: string, gridX: number, gridY: number) => {
+            if (entityId === ant.id && progressBar.isVisible()) {
+                const { x, y } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
+                progressBar.updatePosition(x, y);
+            }
+        });
+
+        // Add move listener to cleanup
+        const prevCleanup = (ant as any)._cleanup;
+        (ant as any)._cleanup = () => {
+            if (prevCleanup) prevCleanup();
+            EventBus.off('ENTITY_MOVED', moveListener);
+        };
+
         // Register with EntityManager for update() lifecycle
         EntityManager.getInstance().addEntity(ant);
+        
+        // Register ant with FactionManager for population tracking
+        FactionManager.getInstance().addAntToFaction(ant.id, factionId);
 
         return ant;
     }

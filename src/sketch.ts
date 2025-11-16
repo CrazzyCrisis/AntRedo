@@ -21,7 +21,6 @@ import { Camera } from './rendering/Camera';
 import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
 import { AudioSettingsScene } from './scenes/AudioSettingsScene';
-import { EntityShowcaseScene } from './scenes/EntityShowcaseScene';
 import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH, ENTITY_SPRITES, getEntitySpritePath } from './config/spriteMapping';
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
@@ -216,6 +215,10 @@ function setup() {
     const { EnvironmentEffectsManager } = require('./managers/EnvironmentEffectsManager');
     EnvironmentEffectsManager.getInstance().setRenderer(renderer);
     
+    // Initialize visual effects with renderer (for damage numbers, flash effects)
+    const { VisualEffectsManager } = require('./managers/VisualEffectsManager');
+    VisualEffectsManager.getInstance().setRenderer(renderer);
+    
     // Initialize AudioManager with event-driven playback
     AudioManager.getInstance().initialize();
     
@@ -243,7 +246,8 @@ function setup() {
                 menuImages.backButton,
                 tileSprites,
                 tileEdgeSprites,
-                entitySprites
+                entitySprites,
+                entitySpritesheets
             );
             SceneManager.getInstance().switchScene(devRoomScene, 'DevRoom');
         }
@@ -365,33 +369,6 @@ function keyPressed() {
     
     // Forward to scene manager
     SceneManager.getInstance().handleKeyPress(key);
-    
-    // Launch EntityShowcaseScene with 'T' key
-    if (key === 't' || key === 'T') {
-
-        
-        // Ensure sprites are loaded
-        if (!entitySprites) {
-            console.error('❌ Entity sprites not loaded! Press T again after assets load.');
-            return;
-        }
-        
-        if (!tileSprites || !tileEdgeSprites) {
-            console.error('❌ Tile sprites not loaded! Press T again after assets load.');
-            return;
-        }
-        
-        const showcaseScene = new EntityShowcaseScene(
-            renderer,
-            camera,
-            window.innerWidth,
-            window.innerHeight,
-            entitySprites,
-            tileSprites,
-            tileEdgeSprites
-        );
-        SceneManager.getInstance().switchScene(showcaseScene, 'EntityShowcase');
-    }
     
     // if (gameManager) {
     //     gameManager.handleKeyPressed(keyCode);

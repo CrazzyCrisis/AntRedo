@@ -9,7 +9,7 @@ import { BaseManager } from './BaseManager';
 import { GameEvents } from '../utils/eventBus';
 import { DamageNumberComponent } from '../rendering/components/DamageNumberComponent';
 import { FlashEffectComponent } from '../rendering/components/FlashEffectComponent';
-import { DAMAGE_NUMBER_CONFIG, FLASH_EFFECT_CONFIG } from '../config/visualEffectsConfig';
+import { DAMAGE_NUMBER_CONFIG, FLASH_EFFECT_CONFIG } from '../config/visualEffects';
 import { Renderer } from '../rendering/Renderer';
 
 export class VisualEffectsManager extends BaseManager {

@@ -1,6 +1,7 @@
 import { IScene } from '../scenes/IScene';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { EnvironmentEffectsManager } from './EnvironmentEffectsManager';
+import { VisualEffectsManager } from './VisualEffectsManager';
 import { EntityManager } from './EntityManager';
 import { GameStateManager } from './GameStateManager';
 
@@ -14,10 +15,12 @@ export class SceneManager {
     private currentScene: IScene | null = null;
     private currentSceneName: string = '';
     private environmentEffects: EnvironmentEffectsManager;
+    private visualEffects: VisualEffectsManager;
 
     private constructor() {
         // Private constructor for singleton
         this.environmentEffects = EnvironmentEffectsManager.getInstance();
+        this.visualEffects = VisualEffectsManager.getInstance();
         
         // Listen for scene changes to update environment effects TileGrid
         EventBus.on(GameEvents.SCENE_CHANGE, () => {
@@ -70,7 +73,7 @@ export class SceneManager {
 
     /**
      * Update current scene (call every frame)
-     * Also updates cross-scene systems like environment effects
+     * Also updates cross-scene systems like environment effects and visual effects
      */
     public update(): void {
         if (this.currentScene) {
@@ -82,6 +85,9 @@ export class SceneManager {
         if (entities.length > 0) {
             this.environmentEffects.update(entities);
         }
+        
+        // Update visual effects (damage numbers, flash effects, particle animations)
+        this.visualEffects.update();
     }
 
     /**

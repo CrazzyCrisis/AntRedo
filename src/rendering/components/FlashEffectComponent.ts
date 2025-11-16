@@ -1,6 +1,6 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
-import { FLASH_EFFECT_CONFIG } from '../../config/visualEffectsConfig';
+import { FLASH_EFFECT_CONFIG } from '../../config/visualEffects';
 
 /**
  * FlashEffectComponent - Flash a sprite with a color (damage, heal, etc.)

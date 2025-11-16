@@ -101,6 +101,7 @@ export class Renderer {
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
             RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS,
             RenderLayer.UI,
             RenderLayer.DEBUG
         ];
@@ -168,6 +169,7 @@ export class Renderer {
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
             RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS,
             RenderLayer.UI,
             RenderLayer.DEBUG
         ];

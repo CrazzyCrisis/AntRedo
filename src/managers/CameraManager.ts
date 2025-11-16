@@ -116,11 +116,13 @@ export class CameraManager {
         const cameraMoved = this.camera.update();
         
         // If camera moved, mark all camera-affected layers as dirty so they re-render
+        // (All layers except UI and DEBUG are camera-aware)
         if (cameraMoved && this.renderer) {
             this.renderer.markLayerDirty(RenderLayer.GROUND);
             this.renderer.markLayerDirty(RenderLayer.GROUND_DECORATIONS);
             this.renderer.markLayerDirty(RenderLayer.ENTITIES);
             this.renderer.markLayerDirty(RenderLayer.ABOVE_ENTITIES);
+            this.renderer.markLayerDirty(RenderLayer.VISUAL_EFFECTS);
         }
     }
     

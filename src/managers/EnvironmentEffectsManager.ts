@@ -10,9 +10,11 @@ import { HealthComponent } from '../classes/components/HealthComponent';
 import { TileGrid } from '../world/TileGrid';
 import { TileType } from '../world/TileSystem';
 import { HAZARDOUS_TILES, WATER_EFFECT_CONFIG, TILE_PARTICLE_COLORS } from '../config/environmentEffectsConfig';
+import { WATER_PARTICLE_CONFIG } from '../config/visualEffects/waterParticleConfig';
 import { gridToWorldCenter } from '../utils/helpers';
 import { TILE_SIZE } from '../world/TileSystem';
 import { Renderer } from '../rendering/Renderer';
+import { RenderLayer } from '../rendering/RenderLayer';
 import { WaterParticleComponent } from '../rendering/components/WaterParticleComponent';
 
 interface EntityHazardState {
@@ -76,19 +78,15 @@ export class EnvironmentEffectsManager extends BaseManager {
      */
     private checkEntityTile(entityId: string, gridX: number, gridY: number): void {
         if (!this.tileGrid) {
-            console.log('[EnvironmentEffects] No tile grid set');
             return;
         }
 
         const tileType = this.tileGrid.getTileType(gridX, gridY);
-        console.log(`[EnvironmentEffects] Entity ${entityId} at (${gridX}, ${gridY}), tile type: ${tileType}`);
         if (tileType === null) return;
 
         const hazardConfig = HAZARDOUS_TILES[tileType as keyof typeof HAZARDOUS_TILES];
         const wasInHazard = this.entityStates.get(entityId)?.inHazard || false;
         const isInHazard = hazardConfig !== undefined;
-
-        console.log(`[EnvironmentEffects] Tile type ${tileType}, hazard config: ${hazardConfig}, isInHazard: ${isInHazard}`);
 
         if (isInHazard) {
             // Entity entered or is still in hazard
@@ -125,7 +123,6 @@ export class EnvironmentEffectsManager extends BaseManager {
         if (this.entityStates.size === 0) return; // Skip if no entities in hazards
         
         const now = Date.now();
-        console.log(`[EnvironmentEffects] Updating ${this.entityStates.size} entities in hazards`);
 
         // Update each entity in hazardous tiles
         this.entityStates.forEach((state, entityId) => {
@@ -148,46 +145,65 @@ export class EnvironmentEffectsManager extends BaseManager {
             }
 
             // Spawn swimming particles
-            if (WATER_EFFECT_CONFIG.particles.enabled && this.renderer) {
-                const particleInterval = 1000 / WATER_EFFECT_CONFIG.particles.spawnRate;
+            if (WATER_PARTICLE_CONFIG.spawnRate > 0 && this.renderer) {
+                const particleInterval = 1000 / WATER_PARTICLE_CONFIG.spawnRate;
+                
                 if (now - state.lastParticleTime >= particleInterval) {
-                    this.spawnSwimmingParticles(entity.gridX, entity.gridY, state.tileType);
+                    this.spawnSwimmingParticles(entity, state.tileType);
                     state.lastParticleTime = now;
                 }
-            }
-        });
-
-        // Update particles
-        this.activeParticles.forEach(particle => {
-            if (particle.update()) {
-                this.activeParticles.delete(particle);
             }
         });
     }
 
     /**
      * Spawn swimming particles around entity
+     * Particles scale with entity sprite size
      */
-    private spawnSwimmingParticles(gridX: number, gridY: number, tileType: TileType): void {
-        if (!this.renderer) return;
+    private spawnSwimmingParticles(entity: GameObject, tileType: TileType): void {
+        if (!this.renderer) {
+            return;
+        }
 
-        const worldPos = gridToWorldCenter(gridX, gridY, TILE_SIZE);
-        const color = TILE_PARTICLE_COLORS[tileType] || '#3366CC';
+        const worldPos = gridToWorldCenter(entity.gridX, entity.gridY, TILE_SIZE);
+        const color = TILE_PARTICLE_COLORS[tileType] || WATER_PARTICLE_CONFIG.color;
 
-        // Spawn 2-3 particles
+        // Detect sprite size for scaling particles
+        // Try to get sprite component from entity's internal _cleanup or attached renderables
+        let spriteScale = 1.0;
+        const entityAny = entity as any;
+        
+        // Check if entity has a sprite reference (set by setupEntitySpriteBinding)
+        if (entityAny._spriteComponent) {
+            spriteScale = entityAny._spriteComponent.scale || 1.0;
+        }
+
+        // Calculate scaled spawn radius and particle size
+        const scaledSpawnRadius = WATER_PARTICLE_CONFIG.spawnRadius * spriteScale;
+        const particleSizeMin = WATER_PARTICLE_CONFIG.size.min * spriteScale;
+        const particleSizeMax = WATER_PARTICLE_CONFIG.size.max * spriteScale;
+
+        // Spawn 2-3 particles per interval
         const particleCount = 2 + Math.floor(Math.random() * 2);
         for (let i = 0; i < particleCount; i++) {
-            const offsetX = (Math.random() - 0.5) * 12;
-            const offsetY = (Math.random() - 0.5) * 12;
+            // Random offset within spawn radius
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * scaledSpawnRadius;
+            const offsetX = Math.cos(angle) * distance;
+            const offsetY = Math.sin(angle) * distance;
             
-            const particle = new WaterParticleComponent(
-                worldPos.x + offsetX,
-                worldPos.y + offsetY + WATER_EFFECT_CONFIG.sinkDepth,
-                color
-            );
-
+            const particleX = worldPos.x + offsetX;
+            const particleY = worldPos.y + offsetY + WATER_EFFECT_CONFIG.sinkDepth;
+            
+            // Create particle with scaled size
+            const particleSize = particleSizeMin + Math.random() * (particleSizeMax - particleSizeMin);
+            const particle = new WaterParticleComponent(particleX, particleY, color, particleSize);
+            
             const unregister = this.renderer.register(particle);
             this.activeParticles.add(particle);
+            
+            // Mark layer as dirty to force redraw
+            this.renderer.markLayerDirty(RenderLayer.VISUAL_EFFECTS);
 
             // Auto-cleanup when finished
             const checkInterval = setInterval(() => {

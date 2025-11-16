@@ -7,11 +7,17 @@
 import { GameObject } from './GameObject';
 import { EventBus } from '../utils/eventBus';
 import { ENTITY_CONFIG, ResourceType } from '../config/entityConfig';
+import { RESOURCE_EXTRACTION } from '../config/resourceGatheringConfig';
+import { randomInt } from '../utils/helpers';
 
 export class Resource extends GameObject {
     public readonly resourceType: ResourceType;
     public amount: number;
     public isCollectable: boolean;
+    public readonly maxYield: number;       // Total yield this resource started with
+    public currentYield: number;            // How much is left to extract
+    public isBeingHarvested: boolean;       // Is an ant currently extracting?
+    public harvesterAntId: string | null;   // Which ant is harvesting
 
     constructor(gridX: number, gridY: number, resourceType: ResourceType, amount?: number) {
         const config = ENTITY_CONFIG.RESOURCES[resourceType];
@@ -21,12 +27,71 @@ export class Resource extends GameObject {
         this.amount = amount !== undefined ? amount : config.stackAmount;
         this.isCollectable = true;
         
+        // Initialize yield tracking from gathering config
+        const extractionConfig = RESOURCE_EXTRACTION[resourceType];
+        this.maxYield = randomInt(extractionConfig.minYield, extractionConfig.maxYield);
+        this.currentYield = this.maxYield;
+        this.isBeingHarvested = false;
+        this.harvesterAntId = null;
+        
         // Emit creation event
         EventBus.emit('RESOURCE_CREATED', this.id, gridX, gridY, resourceType, this.amount);
     }
 
     /**
-     * Collect from this resource
+     * Extract one unit from this resource (called by ResourceGatheringComponent)
+     * @param harvesterAntId - ID of the ant harvesting
+     * @returns True if extraction successful, false if depleted
+     */
+    public extract(harvesterAntId: string): boolean {
+        if (!this.isCollectable || this.currentYield <= 0) {
+            return false;
+        }
+        
+        // Mark as being harvested
+        this.isBeingHarvested = true;
+        this.harvesterAntId = harvesterAntId;
+        
+        // Deplete one unit
+        this.currentYield -= 1;
+        
+        // Emit extraction event
+        EventBus.emit('RESOURCE_EXTRACTED', this.id, this.resourceType, this.currentYield, this.maxYield);
+        
+        // Check if fully depleted
+        if (this.currentYield <= 0) {
+            this.deplete();
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Mark resource as no longer being harvested
+     */
+    public releaseHarvester(): void {
+        this.isBeingHarvested = false;
+        this.harvesterAntId = null;
+    }
+
+    /**
+     * Get extraction progress (0-1, where 1 = fully depleted)
+     */
+    public getDepletionProgress(): number {
+        if (this.maxYield === 0) return 1;
+        return 1 - (this.currentYield / this.maxYield);
+    }
+
+    /**
+     * Check if resource is being harvested by specific ant
+     */
+    public isHarvestedBy(antId: string): boolean {
+        return this.isBeingHarvested && this.harvesterAntId === antId;
+    }
+
+    /**
+     * Collect from this resource (legacy method for non-gathering collection)
      * @param amount - Amount to collect
      * @returns Actual amount collected (capped by available amount)
      */

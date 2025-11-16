@@ -128,6 +128,7 @@ export class QueenPortraitComponent implements Renderable {
         // Draw queen sprite (if available)
         if (this.queenSprite) {
             graphics.imageMode('center' as any);
+            graphics.noSmooth(); // Disable smoothing for crisp pixel art
             graphics.image(this.queenSprite, this.x, this.y, this.size, this.size);
         } else {
             // Placeholder: Draw queen emoji if no sprite

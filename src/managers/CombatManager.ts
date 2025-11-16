@@ -69,36 +69,68 @@ export class CombatManager extends BaseManager {
      * Handle entity detection - check if enemy and initiate combat
      */
     private onEntityDetected(observerId: string, targetId: string): void {
+        console.log(`[CombatManager] Entity detected: ${observerId} sees ${targetId}`);
+        
         const observer = this.entityManager.getEntity(observerId);
         const target = this.entityManager.getEntity(targetId);
         
-        if (!observer || !target) return;
+        if (!observer || !target) {
+            console.log(`[CombatManager] Entity not found - observer:${!!observer} target:${!!target}`);
+            return;
+        }
         
-        // Only ants engage in auto-combat
-        if (observer.type !== 'ant' || target.type !== 'ant') return;
+        console.log(`[CombatManager] Entity types: observer=${observer.type} target=${target.type}`);
+        
+        // Ants and Queens engage in auto-combat
+        const validTypes = ['ant', 'queen'];
+        if (!validTypes.includes(observer.type) || !validTypes.includes(target.type)) {
+            console.log(`[CombatManager] Not ant/queen - skipping`);
+            return;
+        }
         
         // Check if entities are enemies
         const observerFaction = (observer as any).factionId;
         const targetFaction = (target as any).factionId;
         
-        if (!observerFaction || !targetFaction) return;
-        if (!this.factionManager.isEnemy(observerFaction, targetFaction)) return;
+        console.log(`[CombatManager] Factions: observer=${observerFaction} target=${targetFaction}`);
+        
+        if (!observerFaction || !targetFaction) {
+            console.log(`[CombatManager] Missing faction IDs`);
+            return;
+        }
+        if (!this.factionManager.isEnemy(observerFaction, targetFaction)) {
+            console.log(`[CombatManager] Not enemies - skipping`);
+            return;
+        }
+        
+        console.log(`[CombatManager] Enemies confirmed! Checking combat state...`);
         
         // Check if already engaged in combat with this target
         const combatKey = `${observerId}:${targetId}`;
-        if (this.activeCombats.has(combatKey)) return;
+        if (this.activeCombats.has(combatKey)) {
+            console.log(`[CombatManager] Already in combat`);
+            return;
+        }
         
         // Get combat component
         const combatComponent = observer.getComponent('Combat') as any;
-        if (!combatComponent) return;
+        if (!combatComponent) {
+            console.log(`[CombatManager] No combat component`);
+            return;
+        }
         
         // Check if in melee range (adjacent or 1-2 tiles away)
         const dist = distance(observer.gridX, observer.gridY, target.gridX, target.gridY);
         const attackRange = combatComponent.getAttackRange();
         
+        console.log(`[CombatManager] Distance: ${dist.toFixed(2)} | Attack range: ${attackRange}`);
+        
         if (dist <= attackRange) {
+            console.log(`[CombatManager] IN RANGE! Initiating melee attack...`);
             // Initiate melee attack sequence
             this.initiateMeleeAttack(observer, target, combatComponent);
+        } else {
+            console.log(`[CombatManager] Out of range`);
         }
     }
     

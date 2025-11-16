@@ -1,6 +1,6 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
-import { DAMAGE_NUMBER_CONFIG } from '../../config/visualEffectsConfig';
+import { DAMAGE_NUMBER_CONFIG } from '../../config/visualEffects';
 
 /**
  * DamageNumberComponent - Floating damage/healing numbers

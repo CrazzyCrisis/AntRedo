@@ -18,6 +18,7 @@ import {
 } from '../imports/factoryImports';
 import { Resource } from '../classes/Resource';
 import { ENTITY_CONFIG } from '../config/entityConfig';
+import { DepletionBarComponent } from '../rendering/components/DepletionBarComponent';
 
 /**
  * ResourceFactory creates Resource entities with automatic rendering and entity management.
@@ -89,18 +90,39 @@ export class ResourceFactory {
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         setupEntitySpriteBinding(resource, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS);
 
+        // Create depletion bar (initially hidden)
+        const depletionBar = new DepletionBarComponent(worldX, worldY);
+        depletionBar.hide();
+        const depletionBarUnregister = renderer.register(depletionBar);
+
+        // Listen to RESOURCE_EXTRACTED event to update depletion bar
+        const extractListener = EventBus.on('RESOURCE_EXTRACTED', (resourceId: string, _type: string, _current: number, _max: number) => {
+            if (resourceId === resource.id) {
+                // Show and update depletion bar
+                depletionBar.setProgress(resource.getDepletionProgress());
+                depletionBar.updatePosition(worldX, worldY);
+                depletionBar.show();
+            }
+        });
+
         // Additional cleanup: Listen to resource depletion (specific to resources)
         const originalCleanup = (resource as any)._cleanup;
         const depleteListener = EventBus.once('RESOURCE_DEPLETED', (resourceId: string) => {
-            if (resourceId === resource.id && originalCleanup) {
-                originalCleanup(); // Call helper's cleanup
+            if (resourceId === resource.id) {
+                depletionBarUnregister();
+                EventBus.off('RESOURCE_EXTRACTED', extractListener);
+                if (originalCleanup) {
+                    originalCleanup(); // Call helper's cleanup
+                }
             }
         });
 
         // Extend cleanup to include depletion listener
         (resource as any)._cleanup = () => {
-            originalCleanup();
+            if (originalCleanup) originalCleanup();
+            depletionBarUnregister();
             EventBus.off('RESOURCE_DEPLETED', depleteListener);
+            EventBus.off('RESOURCE_EXTRACTED', extractListener);
         };
 
         return resource;
