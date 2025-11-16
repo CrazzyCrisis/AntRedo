@@ -94,7 +94,12 @@ export class EntityShowcaseScene implements IScene {
         queen: any;
         boss: any;
         building: any;
-        resource: any;
+        resources: {
+            food: any;
+            wood: any;
+            stone: any;
+            magicCrystal: any;
+        };
     };
     private tileSprites: { [key: number]: any };
     private tileEdgeSprites: { [path: string]: any };
@@ -109,7 +114,12 @@ export class EntityShowcaseScene implements IScene {
             queen: any;
             boss: any;
             building: any;
-            resource: any;
+            resources: {
+                food: any;
+                wood: any;
+                stone: any;
+                magicCrystal: any;
+            };
         },
         tileSprites: { [key: number]: any },
         tileEdgeSprites: { [path: string]: any }
@@ -371,7 +381,7 @@ export class EntityShowcaseScene implements IScene {
                 
                 const resource = ResourceFactory.create(
                     this.renderer,
-                    this.sprites.resource,
+                    this.sprites.resources[resourceType], // Use sprite specific to this resource type
                     clusterX + offsetX,
                     clusterY + offsetY,
                     resourceType,

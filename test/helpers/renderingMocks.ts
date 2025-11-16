@@ -39,8 +39,14 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
     return {
         width,
         height,
+        drawingContext: {
+            imageSmoothingEnabled: true
+        },
         clear: function() { 
             this._cleared = true; 
+        },
+        remove: function() {
+            this._removed = true;
         },
         image: function() { 
             this._imageDrawn = true; 
@@ -90,6 +96,9 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
             // Mock text width calculation - roughly 8 pixels per character
             return text.length * 8;
         },
+        imageMode: function(_mode: any) {
+            this._imageModeSet = true;
+        },
         line: function(_x1: number, _y1: number, _x2: number, _y2: number) {
             this._lineDrawn = true;
         },
@@ -113,6 +122,7 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         },
         // Tracking flags
         _cleared: false,
+        _removed: false,
         _imageDrawn: false,
         _pushCalled: false,
         _popCalled: false,
@@ -129,6 +139,7 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         _textDrawn: false,
         _textSizeSet: false,
         _textAlignSet: false,
+        _imageModeSet: false,
         _lineDrawn: false,
         _ellipseDrawn: false,
         _triangleDrawn: false,

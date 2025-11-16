@@ -12,6 +12,10 @@ export class Camera {
     private canvasWidth: number;
     private canvasHeight: number;
     
+    // Deadzone (bounding box) - camera only moves when target leaves this area
+    private deadzoneWidth: number = 0;  // Pixels (0 = no deadzone by default)
+    private deadzoneHeight: number = 0; // Pixels
+    
     // Shake effect properties
     private shakeIntensity: number = 0;
     private shakeDuration: number = 0;
@@ -52,6 +56,16 @@ export class Camera {
     }
 
     /**
+     * Set deadzone size (bounding box where camera doesn't move)
+     * @param width - Width of deadzone in pixels (0 = no deadzone)
+     * @param height - Height of deadzone in pixels (0 = no deadzone)
+     */
+    setDeadzone(width: number, height: number): void {
+        this.deadzoneWidth = width;
+        this.deadzoneHeight = height;
+    }
+
+    /**
      * Update camera position (call every frame)
      * Returns true if camera moved this frame
      */
@@ -61,11 +75,34 @@ export class Camera {
         const prevShakeX = this.shakeOffsetX;
         const prevShakeY = this.shakeOffsetY;
         
-        // Update smooth following
+        // Update smooth following with deadzone
         if (this.targetX !== null && this.targetY !== null) {
-            const dx = this.targetX - this.x;
-            const dy = this.targetY - this.y;
+            let dx = this.targetX - this.x;
+            let dy = this.targetY - this.y;
             
+            // Apply deadzone - only move camera if target is outside deadzone box
+            const halfDeadzoneW = this.deadzoneWidth / 2;
+            const halfDeadzoneH = this.deadzoneHeight / 2;
+            
+            // Clamp dx to deadzone
+            if (Math.abs(dx) < halfDeadzoneW) {
+                dx = 0;
+            } else if (dx > 0) {
+                dx -= halfDeadzoneW;
+            } else {
+                dx += halfDeadzoneW;
+            }
+            
+            // Clamp dy to deadzone
+            if (Math.abs(dy) < halfDeadzoneH) {
+                dy = 0;
+            } else if (dy > 0) {
+                dy -= halfDeadzoneH;
+            } else {
+                dy += halfDeadzoneH;
+            }
+            
+            // Apply eased movement
             this.x += dx * (1 - this.smoothing);
             this.y += dy * (1 - this.smoothing);
         }

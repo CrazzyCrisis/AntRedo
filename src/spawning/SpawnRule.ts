@@ -116,7 +116,7 @@ export class SpawnRuleValidator {
         }
 
         const tile = tileGrid[gridY][gridX];
-        const tileType = tile.type || tile;
+        const tileType = tile.type !== undefined ? tile.type : tile;
 
         // Check if tile type is allowed
         if (!constraints.allowedTileTypes.includes(tileType)) {

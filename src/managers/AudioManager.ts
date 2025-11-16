@@ -507,8 +507,14 @@ export class AudioManager extends BaseManager {
 
     /**
      * Setup listener for first user interaction to start audio context
+     * Safe for Node.js test environment (document check)
      */
     private setupUserInteractionListener(): void {
+        // Skip if document is not available (Node.js test environment)
+        if (typeof document === 'undefined') {
+            return;
+        }
+
         const startAudio = () => {
             if (this.audioContextStarted) return;
             

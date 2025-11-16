@@ -7,7 +7,7 @@
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { IComponent } from './components/IComponent';
 import { rectIntersect } from '../utils/helpers';
-import { TILE_SIZE } from '../world/TileSystem';
+import { TILE_CONFIG } from '../config/tileConfig';
 
 export class GameObject {
     // Unique identifier
@@ -33,6 +33,19 @@ export class GameObject {
     private targetMoveX: number = 0; // Pending movement direction
     private targetMoveY: number = 0;
     
+    // Smooth movement interpolation
+    private smoothWorldX: number = 0; // Interpolated world position for rendering
+    private smoothWorldY: number = 0;
+    private isMoving: boolean = false;
+    
+    // Smart snapping system
+    private lastMoveDirectionX: number = 0; // Last non-zero movement direction
+    private lastMoveDirectionY: number = 0;
+    private isSnapping: boolean = false; // Currently snapping to tile center
+    private snapTargetX: number = 0; // Target position for snapping
+    private snapTargetY: number = 0;
+    private snapSpeed: number = 8.0; // Tiles per second for snapping (faster than normal movement)
+    
     // Collision box
     public collisionWidth: number;
     public collisionHeight: number;
@@ -48,9 +61,9 @@ export class GameObject {
      * @param type - Entity type identifier
      * @param gridX - Grid column position
      * @param gridY - Grid row position
-     * @param collisionSize - Size of collision box (default: TILE_SIZE from config)
+     * @param collisionSize - Size of collision box (default: TILE_CONFIG.SIZE)
      */
-    constructor(type: string, gridX: number, gridY: number, collisionSize: number = TILE_SIZE) {
+    constructor(type: string, gridX: number, gridY: number, collisionSize: number = TILE_CONFIG.SIZE) {
         this.id = this.generateId(type);
         this.type = type;
         this.gridX = gridX;
@@ -62,6 +75,13 @@ export class GameObject {
         
         // Calculate world position from grid position
         this.updateWorldPosition();
+        
+        // Initialize smooth position to match grid position
+        this.smoothWorldX = this.worldX;
+        this.smoothWorldY = this.worldY;
+        
+        // Emit initial smooth position update so sprites position correctly on spawn
+        EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
         
         // Listen for cleanup signal - all entities self-destruct on this event
         this.cleanupListener = EventBus.once(GameEvents.CLEANUP_ALL_ENTITIES, () => {
@@ -82,8 +102,8 @@ export class GameObject {
      * Update world position based on grid position
      */
     private updateWorldPosition(): void {
-        this.worldX = this.gridX * TILE_SIZE;
-        this.worldY = this.gridY * TILE_SIZE;
+        this.worldX = this.gridX * TILE_CONFIG.SIZE;
+        this.worldY = this.gridY * TILE_CONFIG.SIZE;
     }
 
     /**
@@ -95,6 +115,11 @@ export class GameObject {
     public requestMove(dirX: number, dirY: number): void {
         this.targetMoveX = dirX;
         this.targetMoveY = dirY;
+        
+        // If player presses a key while snapping, cancel snap and start moving immediately
+        if (this.isSnapping && (dirX !== 0 || dirY !== 0)) {
+            this.isSnapping = false;
+        }
     }
 
     /**
@@ -103,18 +128,85 @@ export class GameObject {
      * @param deltaTime - Time since last frame in milliseconds
      */
     private processMovement(deltaTime: number): void {
-        if (this.targetMoveX === 0 && this.targetMoveY === 0) {
-            this.moveAccumulator = 0; // Reset accumulator when not moving
+        const wasMoving = this.isMoving;
+        this.isMoving = this.targetMoveX !== 0 || this.targetMoveY !== 0;
+        
+        // Store last movement direction when moving
+        if (this.isMoving) {
+            if (this.targetMoveX !== 0) this.lastMoveDirectionX = this.targetMoveX;
+            if (this.targetMoveY !== 0) this.lastMoveDirectionY = this.targetMoveY;
+        }
+        
+        // If we just stopped moving, calculate snap target
+        if (wasMoving && !this.isMoving && !this.isSnapping) {
+            this.calculateSnapTarget();
+            this.isSnapping = true;
+        }
+        
+        // Handle snapping animation
+        if (this.isSnapping) {
+            const deltaSeconds = deltaTime / 1000;
+            const snapDistance = deltaSeconds * this.snapSpeed * TILE_CONFIG.SIZE;
+            
+            // Calculate direction to snap target
+            const dx = this.snapTargetX - this.smoothWorldX;
+            const dy = this.snapTargetY - this.smoothWorldY;
+            const distanceToTarget = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distanceToTarget < snapDistance) {
+                // Reached target - snap exactly
+                this.smoothWorldX = this.snapTargetX;
+                this.smoothWorldY = this.snapTargetY;
+                this.isSnapping = false;
+                
+                // Update grid position to match snap target
+                const snapGridX = Math.round(this.snapTargetX / TILE_CONFIG.SIZE);
+                const snapGridY = Math.round(this.snapTargetY / TILE_CONFIG.SIZE);
+                this.moveTo(snapGridX, snapGridY);
+            } else {
+                // Move towards snap target
+                const dirX = dx / distanceToTarget;
+                const dirY = dy / distanceToTarget;
+                this.smoothWorldX += dirX * snapDistance;
+                this.smoothWorldY += dirY * snapDistance;
+            }
+            
+            // Emit smooth position update
+            EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
+            
+            // Reset movement accumulator while snapping
+            this.moveAccumulator = 0;
+            this.targetMoveX = 0;
+            this.targetMoveY = 0;
+            return;
+        }
+        
+        if (!this.isMoving) {
+            // Not moving and not snapping - idle
+            this.moveAccumulator = 0;
+            this.targetMoveX = 0;
+            this.targetMoveY = 0;
             return;
         }
 
+        // Normal movement
         // Convert deltaTime from ms to seconds
         const deltaSeconds = deltaTime / 1000;
         
-        // Accumulate movement time
+        // Calculate instant movement per frame (pixels per frame)
+        const moveDistance = deltaSeconds * this.moveSpeed * TILE_CONFIG.SIZE;
+        
+        // Move smoothWorldX/Y directly (instant response)
+        this.smoothWorldX += this.targetMoveX * moveDistance;
+        this.smoothWorldY += this.targetMoveY * moveDistance;
+        
+        // Emit smooth position update for rendering
+        EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
+        
+        // Accumulate movement time for grid position updates
         this.moveAccumulator += deltaSeconds * this.moveSpeed;
 
-        // Move one tile when accumulator reaches 1.0
+        // Update grid position when accumulator reaches 1.0
         if (this.moveAccumulator >= 1.0) {
             const newGridX = this.gridX + this.targetMoveX;
             const newGridY = this.gridY + this.targetMoveY;
@@ -126,6 +218,55 @@ export class GameObject {
         // Reset target for next frame (must be set again each frame)
         this.targetMoveX = 0;
         this.targetMoveY = 0;
+    }
+    
+    /**
+     * Calculate which tile center to snap to based on current position and last movement direction
+     */
+    private calculateSnapTarget(): void {
+        // Get current position in tile coordinates (fractional)
+        const currentTileX = this.smoothWorldX / TILE_CONFIG.SIZE;
+        const currentTileY = this.smoothWorldY / TILE_CONFIG.SIZE;
+        
+        // Get the tile we're currently "on" (floor)
+        const baseTileX = Math.floor(currentTileX);
+        const baseTileY = Math.floor(currentTileY);
+        
+        // Calculate how far we are into the current tile (0 to 1)
+        const progressX = currentTileX - baseTileX;
+        const progressY = currentTileY - baseTileY;
+        
+        // Determine target tile based on last movement direction and progress
+        let targetTileX = baseTileX;
+        let targetTileY = baseTileY;
+        
+        // Horizontal snapping
+        if (this.lastMoveDirectionX !== 0) {
+            if (this.lastMoveDirectionX > 0 && progressX > 0.5) {
+                // Moving right and more than halfway - snap to next tile
+                targetTileX = baseTileX + 1;
+            } else if (this.lastMoveDirectionX < 0 && progressX < 0.5) {
+                // Moving left and less than halfway - snap to previous tile
+                targetTileX = baseTileX - 1;
+            }
+            // Otherwise snap to current tile (baseTileX)
+        }
+        
+        // Vertical snapping
+        if (this.lastMoveDirectionY !== 0) {
+            if (this.lastMoveDirectionY > 0 && progressY > 0.5) {
+                // Moving down and more than halfway - snap to next tile
+                targetTileY = baseTileY + 1;
+            } else if (this.lastMoveDirectionY < 0 && progressY < 0.5) {
+                // Moving up and less than halfway - snap to previous tile
+                targetTileY = baseTileY - 1;
+            }
+            // Otherwise snap to current tile (baseTileY)
+        }
+        
+        // Set snap target to CENTER of target tile (add half tile size)
+        this.snapTargetX = (targetTileX * TILE_CONFIG.SIZE) + (TILE_CONFIG.SIZE / 2);
+        this.snapTargetY = (targetTileY * TILE_CONFIG.SIZE) + (TILE_CONFIG.SIZE / 2);
     }
 
     /**
@@ -143,8 +284,25 @@ export class GameObject {
         this.gridY = gridY;
         this.updateWorldPosition();
 
+        
+        
+        // Only reset smooth position if not currently moving (teleport case)
+        // During smooth movement, let smoothWorldX/Y continue moving naturally
+        if (!this.isMoving) {
+            this.smoothWorldX = this.worldX;
+            this.smoothWorldY = this.worldY;
+        }
+
         // Emit movement event
         EventBus.emit(GameEvents.ENTITY_MOVED, this.id, gridX, gridY);
+    }
+
+    /**
+     * Get the interpolated world position for smooth rendering
+     * @returns Object with x and y pixel coordinates
+     */
+    public getSmoothPosition(): { x: number; y: number } {
+        return { x: this.smoothWorldX, y: this.smoothWorldY };
     }
 
     /**

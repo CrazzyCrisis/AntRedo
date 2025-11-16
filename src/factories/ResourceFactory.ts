@@ -82,12 +82,8 @@ export class ResourceFactory {
         EntityManager.getInstance().addEntity(resource);
 
         // Calculate the offset from base tile position for this position slot
-        const positionOffset = gridToWorldPosition(0, 0, TILE_SIZE, position);
-        
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
-        // Grid coordinates → world coordinates with position offset
-        setupEntitySpriteBinding(resource, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, 
-            (coord) => coord * TILE_SIZE + positionOffset.x);
+        setupEntitySpriteBinding(resource, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS);
 
         // Additional cleanup: Listen to resource depletion (specific to resources)
         const originalCleanup = (resource as any)._cleanup;

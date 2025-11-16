@@ -566,8 +566,7 @@ export function setupEntitySpriteBinding(
     entity: any,
     sprite: any,
     renderer: any,
-    layer: any,
-    gridToWorldFn: (coord: number) => number
+    layer: any
 ): void {
     // Import dynamically to avoid circular dependencies
     const { EventBus, GameEvents } = require('./eventBus');
@@ -575,10 +574,17 @@ export function setupEntitySpriteBinding(
     // Register sprite with renderer
     const unregister = renderer.register(sprite);
     
-    // Listen for entity movement - update sprite position/depth
-    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, gridX: number, gridY: number) => {
+    // Listen for smooth position updates - update sprite position for smooth rendering
+    const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
         if (entityId === entity.id) {
-            sprite.setPosition(gridToWorldFn(gridX), gridToWorldFn(gridY));
+            sprite.setPosition(smoothX, smoothY);
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for grid position updates - update depth sorting only (not visual position)
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, _gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
             sprite.setDepth(gridY);
             renderer.markLayerDirty(layer);
         }
@@ -590,6 +596,7 @@ export function setupEntitySpriteBinding(
     const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
         if (entityId === entity.id) {
             unregister();
+            EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
             EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
             EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
         }
@@ -598,6 +605,7 @@ export function setupEntitySpriteBinding(
     // Store cleanup function on entity for manual cleanup
     entity._cleanup = () => {
         unregister();
+        EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
         EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
         EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
     };

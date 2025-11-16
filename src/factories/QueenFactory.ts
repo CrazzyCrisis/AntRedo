@@ -71,7 +71,7 @@ export class QueenFactory {
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)
-        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
+        setupEntitySpriteBinding(queen, spriteComponent, renderer, RenderLayer.ENTITIES);
 
         // 4. Register with EntityManager for update() lifecycle
         EntityManager.getInstance().addEntity(queen);

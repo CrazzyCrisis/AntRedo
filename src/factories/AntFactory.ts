@@ -70,7 +70,7 @@ export class AntFactory {
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)
-        setupEntitySpriteBinding(ant, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
+        setupEntitySpriteBinding(ant, spriteComponent, renderer, RenderLayer.ENTITIES);
 
         // Register with EntityManager for update() lifecycle
         EntityManager.getInstance().addEntity(ant);

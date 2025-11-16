@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { GameObject } from '../../src/classes/GameObject';
-import { EventBus } from '../../src/utils/eventBus';
+import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { IComponent } from '../../src/classes/components/IComponent';
 import { TILE_SIZE } from '../../src/world/TileSystem';
 
@@ -71,7 +71,7 @@ describe('GameObject (Base Entity Model)', () => {
             let emittedGridX: number = 0;
             let emittedGridY: number = 0;
 
-            EventBus.on('ENTITY_MOVED', (id: string, gridX: number, gridY: number) => {
+            EventBus.on(GameEvents.ENTITY_MOVED, (id: string, gridX: number, gridY: number) => {
                 eventEmitted = true;
                 emittedId = id;
                 emittedGridX = gridX;
@@ -90,7 +90,7 @@ describe('GameObject (Base Entity Model)', () => {
             const obj = new GameObject('test', 5, 5, 16);
             let eventCount = 0;
 
-            EventBus.on('ENTITY_MOVED', () => {
+            EventBus.on(GameEvents.ENTITY_MOVED, () => {
                 eventCount++;
             });
 
@@ -277,7 +277,7 @@ describe('GameObject (Base Entity Model)', () => {
             let emittedId: string = '';
             let emittedType: string = '';
 
-            EventBus.on('ENTITY_DESTROYED', (id: string, type: string) => {
+            EventBus.on(GameEvents.ENTITY_DESTROYED, (id: string, type: string) => {
                 eventEmitted = true;
                 emittedId = id;
                 emittedType = type;
@@ -321,7 +321,7 @@ describe('GameObject (Base Entity Model)', () => {
             const obj = new GameObject('test', 0, 0, 16);
             let eventCount = 0;
 
-            EventBus.on('ENTITY_DESTROYED', () => {
+            EventBus.on(GameEvents.ENTITY_DESTROYED, () => {
                 eventCount++;
             });
 

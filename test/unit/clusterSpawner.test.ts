@@ -41,9 +41,10 @@ describe('ClusterSpawner Position Generation', () => {
                 radius,
                 constraints,
                 mockTileGrid,
-                null
+                null, // entityManager
+                undefined // noiseGen
             );
-
+            
             expect(positions.length).to.be.greaterThan(0);
             expect(positions.length).to.be.lessThanOrEqual(count);
 
@@ -71,7 +72,8 @@ describe('ClusterSpawner Position Generation', () => {
                 radius,
                 constraints,
                 mockTileGrid,
-                null
+                null, // entityManager
+                undefined // noiseGen
             );
 
             positions.forEach(pos => {
@@ -98,7 +100,8 @@ describe('ClusterSpawner Position Generation', () => {
                 radius,
                 constraints,
                 mockTileGrid,
-                null
+                null, // entityManager
+                undefined // noiseGen
             );
 
             // Calculate average position
@@ -134,7 +137,8 @@ describe('ClusterSpawner Position Generation', () => {
                 minDistance,
                 constraints,
                 mockTileGrid,
-                null
+                null, // entityManager
+                undefined // noiseGen
             );
             expect(positions.length).to.be.greaterThan(0);
 
@@ -174,7 +178,8 @@ describe('ClusterSpawner Position Generation', () => {
                 radius,
                 constraints,
                 mockTileGrid,
-                null
+                null, // entityManager
+                undefined // noiseGen
             );
             expect(positions.length).to.be.greaterThan(0);
         });
@@ -193,7 +198,8 @@ describe('ClusterSpawner Position Generation', () => {
                 radius,
                 constraints,
                 mockTileGrid,
-                null
+                null, // entityManager
+                undefined // noiseGen
             );
             
             expect(positions.length).to.be.greaterThan(0);

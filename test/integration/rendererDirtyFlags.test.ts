@@ -7,6 +7,7 @@ import { Renderer } from '../../src/rendering/Renderer';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 import { FramebufferManager } from '../../src/rendering/FramebufferManager';
 import { Camera } from '../../src/rendering/Camera';
+import { createMockP5 } from '../helpers/renderingMocks';
 
 describe('Renderer Layer Dirty Flag Integration Tests', () => {
     let renderer: Renderer;
@@ -14,24 +15,17 @@ describe('Renderer Layer Dirty Flag Integration Tests', () => {
     let camera: Camera;
 
     beforeEach(() => {
-        // Mock p5.Graphics for framebuffers
-        const mockGraphics = {
-            clear: () => {},
-            push: () => {},
-            pop: () => {},
-            translate: () => {},
-            image: () => {},
-            background: () => {}
-        };
+        // Use mock p5 instance with createGraphics
+        const mockP5 = createMockP5(800, 600);
 
         // Create framebuffer manager
         framebufferManager = new FramebufferManager(
-            () => mockGraphics as any,800, 600,
+            mockP5 as any, 800, 600
         );
 
         camera = new Camera(0, 0, 800, 600);
-        renderer = new Renderer(() => mockGraphics as any, 800, 600);
-        renderer.setCamera(camera)
+        renderer = new Renderer(mockP5 as any, 800, 600);
+        renderer.setCamera(camera);
     });
 
     describe('Layer Marking', () => {

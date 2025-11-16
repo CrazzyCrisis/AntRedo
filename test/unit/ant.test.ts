@@ -196,7 +196,7 @@ describe('Ant', () => {
         });
 
         it('should emit ENTITY_DESTROYED on destroy', (done) => {
-            EventBus.once('ENTITY_DESTROYED', (entityId: string) => {
+            EventBus.once(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
                 expect(entityId).to.equal(ant.id);
                 done();
             });

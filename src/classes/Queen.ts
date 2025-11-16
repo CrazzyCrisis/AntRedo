@@ -4,6 +4,7 @@ import { HealthComponent } from './components/HealthComponent';
 import { CombatComponent } from './components/CombatComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { InputManager } from '../managers/InputManager';
+import { ENTITY_CONFIG } from '../config/entityConfig';
 
 /**
  * QueenPower interface for power system
@@ -43,12 +44,15 @@ export class Queen extends GameObject {
         this.factionId = factionId;
         
         // Set movement speed (tiles per second)
-        this.moveSpeed = 4.0; // Queen moves at 4 tiles/second
+        this.moveSpeed = ENTITY_CONFIG.QUEEN.speed; // Queen moves at 4 tiles/second
 
         // Initialize components
         this.addComponent('Pathfinding', new PathfindingComponent(1.5)); // Slower than ants
-        this.addComponent('Health', new HealthComponent(200)); // Higher health than ants
-        this.addComponent('Combat', new CombatComponent(15, 3.0, 800)); // Stronger combat
+        this.addComponent('Health', new HealthComponent(ENTITY_CONFIG.QUEEN.health)); // Higher health than ants
+        this.addComponent('Combat', new CombatComponent(
+            ENTITY_CONFIG.QUEEN.attackDamage,
+            ENTITY_CONFIG.QUEEN.attackRange, 
+            ENTITY_CONFIG.QUEEN.attackGCD)); // Stronger combat
 
         // Initialize power system
         this.initializePowers();
@@ -63,34 +67,28 @@ export class Queen extends GameObject {
     }
 
     /**
-     * Initialize default powers
+     * Initialize default powers from config
      */
     private initializePowers(): void {
-        const defaultPowers = [
-            { name: 'fireball', cooldown: 3000, maxLevel: 5 },
-            { name: 'lightning', cooldown: 4000, maxLevel: 5 },
-            { name: 'heal', cooldown: 5000, maxLevel: 5 },
-            { name: 'summon', cooldown: 10000, maxLevel: 3 },
-            { name: 'boost', cooldown: 8000, maxLevel: 5 }
-        ];
+        const powersConfig = ENTITY_CONFIG.QUEEN.POWERS;
+        const keybindsConfig = ENTITY_CONFIG.QUEEN.KEYBINDS;
 
-        defaultPowers.forEach(power => {
-            this.powers.set(power.name, {
-                name: power.name,
+        // Iterate over powers Record object
+        Object.entries(powersConfig).forEach(([powerName, powerConfig]) => {
+            this.powers.set(powerName, {
+                name: powerName,
                 isUnlocked: false,
                 level: 1,
-                maxLevel: power.maxLevel,
-                cooldown: power.cooldown,
+                maxLevel: 3, // All powers have 3 levels in config
+                cooldown: powerConfig.cooldown * 1000, // Convert seconds to ms
                 lastUsedTime: 0
             });
         });
 
-        // Map keybinds to powers
-        this.keybindMap.set('1', 'fireball');
-        this.keybindMap.set('2', 'lightning');
-        this.keybindMap.set('3', 'heal');
-        this.keybindMap.set('4', 'summon');
-        this.keybindMap.set('5', 'boost');
+        // Map keybinds to powers from config
+        Object.entries(keybindsConfig).forEach(([powerName, key]) => {
+            this.keybindMap.set(key, powerName);
+        });
     }
 
     /**
@@ -262,6 +260,13 @@ export class Queen extends GameObject {
     }
 
     /**
+     * Get speed
+     */
+    getSpeed(): number {
+        return this.moveSpeed;
+    }
+
+    /**
      * Update queen (components update automatically via GameObject)
      * Handles continuous movement when keys are held
      * @param deltaTime Time since last update in ms
@@ -276,16 +281,16 @@ export class Queen extends GameObject {
 
         // Check for held movement keys
         if (inputManager.isActionPressed('moveUp')) {
-            moveY = -1;
+            moveY = -1 * this.getSpeed();
         }
         if (inputManager.isActionPressed('moveDown')) {
-            moveY = 1;
+            moveY = 1 * this.getSpeed();
         }
         if (inputManager.isActionPressed('moveLeft')) {
-            moveX = -1;
+            moveX = -1 * this.getSpeed();
         }
         if (inputManager.isActionPressed('moveRight')) {
-            moveX = 1;
+            moveX = 1 * this.getSpeed();
         }
 
         // Request movement (processed by GameObject with speed/deltaTime)

@@ -22,7 +22,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
 import { AudioSettingsScene } from './scenes/AudioSettingsScene';
 import { EntityShowcaseScene } from './scenes/EntityShowcaseScene';
-import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH } from './config/spriteMapping';
+import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH, ENTITY_SPRITES, getEntitySpritePath } from './config/spriteMapping';
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
 import { AUDIO_SOUNDS, SoundKey } from './config/audioConfig';
@@ -77,7 +77,12 @@ let entitySprites: {
     queen: any;
     boss: any;
     building: any;
-    resource: any;
+    resources: {
+        food: any;
+        wood: any;
+        stone: any;
+        magicCrystal: any;
+    };
 } | null = null;
 
 function preload() {
@@ -106,11 +111,16 @@ function preload() {
     
     // Load entity sprites for showcase scene
     entitySprites = {
-        ant: loadImage('assets/images/creatures/ants/gray_ant.png'),
-        queen: loadImage('assets/images/creatures/ants/gray_ant_queen.png'),
-        boss: loadImage('assets/images/creatures/spider/spider.png'),
-        building: loadImage('assets/images/16x16 Tiles/anthill.png'),
-        resource: loadImage('assets/images/16x16 Tiles/pebble_1.png')
+        ant: loadImage(getEntitySpritePath(ENTITY_SPRITES.ant)),
+        queen: loadImage(getEntitySpritePath(ENTITY_SPRITES.queen)),
+        boss: loadImage(getEntitySpritePath(ENTITY_SPRITES.boss)),
+        building: loadImage(getEntitySpritePath(ENTITY_SPRITES.building)),
+        resources: {
+            food: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.food)),
+            wood: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.wood)),
+            stone: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.stone)),
+            magicCrystal: loadImage(getEntitySpritePath(ENTITY_SPRITES.resources.magicCrystal))
+        }
     };
     
     // Load tile edge sprites (frills)
@@ -156,6 +166,9 @@ function setup() {
     
     // Initialize camera
     camera = new Camera(0, 0, window.innerWidth, window.innerHeight);
+    
+    // Set camera deadzone (bounding box) - 200x150 pixels
+    camera.setDeadzone(200, 150);
     
     // Initialize FPS counter
     fpsCounter = new FPSCounter();

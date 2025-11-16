@@ -82,7 +82,7 @@ export class BuildingFactory {
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)
-        setupEntitySpriteBinding(building, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
+        setupEntitySpriteBinding(building, spriteComponent, renderer, RenderLayer.GROUND_DECORATIONS);
 
         // Additional listeners specific to buildings
         const originalCleanup = (building as any)._cleanup;

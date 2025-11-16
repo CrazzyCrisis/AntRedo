@@ -111,14 +111,20 @@ interface QueenConfig {
     health: number;
     speed: number;
     commandRadius: number;    // How far queen commands reach
+    attackDamage: number;
+    attackRange: number;
+    attackGCD: number;       // Global cooldown for attacks (ms)
     POWERS: Record<QueenPowerType, QueenPowerConfig>;
     KEYBINDS: Record<QueenPowerType, string>;
 }
 
 const QUEEN: QueenConfig = {
     health: 500,
-    speed: 3.5,
+    speed: 2.0,                // Tiles per second
     commandRadius: 15,        // Grid tiles
+    attackDamage: 15,
+    attackRange: 3,         // Melee range
+    attackGCD: 800,      // 0.8 second global cooldown for attacks
 
     POWERS: {
         lightning: {

@@ -10,7 +10,7 @@
  * const decoration = DecorationFactory.create(renderer, sprite, gridX, gridY, 'flower');
  */
 
-import { Renderer, RenderLayer, SpriteComponent, setupEntitySpriteBinding, TILE_SIZE } from '../imports/factoryImports';
+import { Renderer, RenderLayer, SpriteComponent, setupEntitySpriteBinding } from '../imports/factoryImports';
 import { Decoration } from '../classes/Decoration';
 
 export class DecorationFactory {
@@ -51,8 +51,7 @@ export class DecorationFactory {
             decoration,
             spriteComponent,
             renderer,
-            RenderLayer.GROUND_DECORATIONS,
-            (coord) => coord * TILE_SIZE // Grid to world coordinate conversion
+            RenderLayer.GROUND_DECORATIONS
         );
         
         // Return model to calling code (view is abstracted away)

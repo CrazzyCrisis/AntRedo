@@ -102,7 +102,7 @@ export class SpriteComponent implements Renderable {
      * Render sprite to graphics context
      */
     render(graphics: any): void {
-        // Set image mode to CENTER so sprites are drawn centered on their position
+        // Set image mode to CENTER so sprites are drawn from their center
         graphics.imageMode((window as any).CENTER);
         
         // If no sprite, render bright magenta placeholder

@@ -8,6 +8,7 @@ import { BaseManager } from './BaseManager';
 import {
     GameObject,
     EventBus,
+    GameEvents,
     distance,
     pointInRect
 } from '../imports/managerImports';
@@ -41,7 +42,7 @@ export class EntityManager extends BaseManager {
      */
     private setupEventListeners(): void {
         // Auto-remove entities when they're destroyed
-        EventBus.on('ENTITY_DESTROYED', (id: string) => {
+        EventBus.on(GameEvents.ENTITY_DESTROYED, (id: string) => {
             this.removeEntity(id);
         });
     }

@@ -89,7 +89,7 @@ export class ProjectileFactory {
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (multiply by TILE_SIZE)
-        setupEntitySpriteBinding(projectile, spriteComponent, renderer, RenderLayer.ABOVE_ENTITIES, (coord) => coord * TILE_SIZE);
+        setupEntitySpriteBinding(projectile, spriteComponent, renderer, RenderLayer.ABOVE_ENTITIES);
 
         // Additional cleanup: Listen to projectile-specific events (hit, expire)
         const originalCleanup = (projectile as any)._cleanup;

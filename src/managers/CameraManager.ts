@@ -106,8 +106,9 @@ export class CameraManager {
         if (this.isFollowing && this.followEntityId) {
             const entity = EntityManager.getInstance().getEntity(this.followEntityId);
             if (entity) {
-                // Follow entity's world position
-                this.camera.follow(entity.worldX, entity.worldY);
+                // Follow entity's smooth position for smooth camera movement
+                const smoothPos = entity.getSmoothPosition();
+                this.camera.follow(smoothPos.x, smoothPos.y);
             }
         }
         
@@ -138,6 +139,17 @@ export class CameraManager {
     setSmoothing(smoothing: number): void {
         if (this.camera) {
             this.camera.setSmoothing(smoothing);
+        }
+    }
+    
+    /**
+     * Set camera deadzone (bounding box where camera doesn't move)
+     * @param width - Width of deadzone in pixels (0 = no deadzone)
+     * @param height - Height of deadzone in pixels (0 = no deadzone)
+     */
+    setDeadzone(width: number, height: number): void {
+        if (this.camera) {
+            this.camera.setDeadzone(width, height);
         }
     }
     

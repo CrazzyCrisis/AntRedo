@@ -56,7 +56,12 @@ export class DevRoomScene implements IScene {
         ant: any;
         queen: any;
         boss: any;
-        resource: any;
+        resources: {
+            food: any;
+            wood: any;
+            stone: any;
+            magicCrystal: any;
+        };
     } | null = null;
     
     // Tile colors from config (fallback)
@@ -69,7 +74,17 @@ export class DevRoomScene implements IScene {
         backButtonImg: any, 
         tileSprites: { [key: number]: any }, 
         tileEdgeSprites: { [path: string]: any },
-        entitySprites: { ant: any; queen: any; boss: any; resource: any } | null = null
+        entitySprites: { 
+            ant: any; 
+            queen: any; 
+            boss: any; 
+            resources: {
+                food: any;
+                wood: any;
+                stone: any;
+                magicCrystal: any;
+            };
+        } | null = null
     ) {
         this.renderer = renderer;
         this.canvasWidth = canvasWidth;
@@ -555,10 +570,10 @@ export class DevRoomScene implements IScene {
                 [3, this.entitySprites.ant]  // Scout
             ]),
             resources: new Map([
-                ['food', this.entitySprites.resource],
-                ['wood', this.entitySprites.resource],
-                ['stone', this.entitySprites.resource],
-                ['magicCrystal', this.entitySprites.resource]
+                ['food', this.entitySprites.resources.food],
+                ['wood', this.entitySprites.resources.wood],
+                ['stone', this.entitySprites.resources.stone],
+                ['magicCrystal', this.entitySprites.resources.magicCrystal]
             ]),
             boss: this.entitySprites.boss,
             queen: this.entitySprites.queen

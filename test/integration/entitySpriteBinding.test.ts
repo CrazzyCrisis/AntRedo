@@ -17,7 +17,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
     let layerDirtyMarks: RenderLayer[] = [];
     
     // Grid to world conversion function
-    const gridToWorld = (coord: number) => coord * TILE_SIZE;
 
     beforeEach(() => {
         EventBus.clear();
@@ -63,7 +62,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             expect(registered).to.be.true;
@@ -77,7 +75,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             entity.moveTo(15, 20);
@@ -92,7 +89,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             entity.moveTo(12, 13);
@@ -106,7 +102,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             entity.moveTo(11, 11);
@@ -128,7 +123,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             entity.moveTo(10, 25);
@@ -145,7 +139,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             // Trigger cleanup
@@ -169,7 +162,6 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
                 mockSprite,
                 mockRenderer,
                 RenderLayer.ENTITIES,
-                gridToWorld
             );
             
             EventBus.emit(GameEvents.ENTITY_DESTROYED, entity.id);
@@ -186,8 +178,8 @@ describe('setupEntitySpriteBinding Integration Tests', () => {
             const sprite1 = { ...mockSprite, x: 0, y: 0 };
             const sprite2 = { ...mockSprite, x: 0, y: 0 };
             
-            setupEntitySpriteBinding(entity1, sprite1, mockRenderer, RenderLayer.ENTITIES, gridToWorld);
-            setupEntitySpriteBinding(entity2, sprite2, mockRenderer, RenderLayer.ENTITIES, gridToWorld);
+            setupEntitySpriteBinding(entity1, sprite1, mockRenderer, RenderLayer.ENTITIES);
+            setupEntitySpriteBinding(entity2, sprite2, mockRenderer, RenderLayer.ENTITIES);
             
             entity1.moveTo(6, 6);
             entity2.moveTo(11, 11);

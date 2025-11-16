@@ -1,6 +1,7 @@
 /**
  * Sprite Mapping Configuration
- * Maps TileType enum values to sprite file paths
+ * Maps TileType enum values and entity types to sprite file paths
+ * SINGLE SOURCE OF TRUTH for all sprite paths
  */
 
 import { TileType } from '../world/TileSystem';
@@ -74,3 +75,44 @@ export const CAVE_VARIANTS = {
     FLOOR: ['cave_1.png', 'cave_2.png'],
     WALL: ['cave_extraDark.png', 'cave_3.png']
 } as const;
+
+// ============================================================================
+// ENTITY SPRITE CONFIGURATION
+// ============================================================================
+
+/**
+ * Base paths for entity sprites
+ */
+export const ENTITY_SPRITE_PATHS = {
+    CREATURES_BASE: 'assets/images/creatures/',
+    TILES_BASE: 'assets/images/16x16 Tiles/'
+} as const;
+
+/**
+ * Entity sprite mappings
+ * SINGLE SOURCE OF TRUTH for entity sprite paths
+ */
+export const ENTITY_SPRITES = {
+    // Creatures
+    ant: 'creatures/ants/gray_ant.png',
+    queen: 'creatures/ants/gray_ant_queen.png',
+    boss: 'creatures/spider/spider.png',
+    
+    // Buildings
+    building: '16x16 Tiles/anthill.png',
+    
+    // Resources
+    resources: {
+        food: 'resources/mapleLeaf.png',
+        wood: 'resources/twig_1.png',
+        stone: 'resources/stone.png',
+        magicCrystal: 'resources/leaf.png'
+    }
+} as const;
+
+/**
+ * Get full sprite path for entity
+ */
+export function getEntitySpritePath(spritePath: string): string {
+    return 'assets/images/' + spritePath;
+}

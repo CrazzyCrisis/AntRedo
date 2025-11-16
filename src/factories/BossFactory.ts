@@ -72,7 +72,7 @@ export class BossFactory {
 
         // Setup automatic sprite binding with helper (handles registration, movement, destruction)
         // Grid coordinates → world coordinates (centered in tile)
-        setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES, (coord) => coord * TILE_SIZE + TILE_SIZE / 2);
+        setupEntitySpriteBinding(boss, spriteComponent, renderer, RenderLayer.ENTITIES);
 
         return boss;
     }

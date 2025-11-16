@@ -234,6 +234,7 @@ export const GameEvents = {
     ENTITY_ADDED: 'entity:added',
     ENTITY_REMOVED: 'entity:removed',
     ENTITY_MOVED: 'entity:moved',
+    ENTITY_SMOOTH_POSITION_UPDATE: 'entity:smooth:position:update', // For smooth rendering
     ENTITY_DESTROYED: 'entity:destroyed',
     ENTITY_UPDATED: 'entity:updated',
     CLEANUP_ALL_ENTITIES: 'cleanup:all:entities', // Broadcast to destroy all entities
