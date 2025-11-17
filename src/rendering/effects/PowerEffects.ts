@@ -57,16 +57,44 @@ abstract class TemporaryEffect implements Renderable {
 }
 
 /**
- * Lightning bolt effect
+ * Cast Flash Effect - Brief flash at cast location
+ */
+export class CastFlashEffect extends TemporaryEffect {
+    private radius: number;
+
+    constructor(x: number, y: number, radius: number = 30) {
+        super(x, y, RenderLayer.ABOVE_ENTITIES, y, 0.2); // 200ms duration
+        this.radius = radius;
+    }
+
+    render(graphics: any): void {
+        const progress = this.getProgress();
+        const alpha = fadeOutAlpha(progress);
+        
+        // Bright white/yellow flash
+        graphics.fill(255, 255, 200, alpha);
+        graphics.noStroke();
+        graphics.circle(this.x, this.y, this.radius * 2);
+        
+        // Inner bright core
+        graphics.fill(255, 255, 255, alpha * 1.5);
+        graphics.circle(this.x, this.y, this.radius * 1.2);
+    }
+}
+
+/**
+ * Lightning bolt effect - draws from sky to target
  */
 export class LightningEffect extends TemporaryEffect {
     private segments: { x: number; y: number }[];
 
-    constructor(fromX: number, fromY: number, toX: number, toY: number) {
-        super(toX, toY, RenderLayer.ABOVE_ENTITIES, toY, 0.3); // 300ms duration
+    constructor(targetX: number, targetY: number, skyHeight: number, boltOffsetX: number = 0) {
+        super(targetX, targetY, RenderLayer.ABOVE_ENTITIES, targetY, 0.3); // 300ms duration
         
-        // Generate jagged lightning path
-        this.segments = this.generateLightningPath(fromX, fromY, toX, toY);
+        // Generate jagged lightning path from sky to target
+        const startX = targetX + boltOffsetX;
+        const startY = targetY - skyHeight; // Start above target
+        this.segments = this.generateLightningPath(startX, startY, targetX, targetY);
     }
 
     private generateLightningPath(x1: number, y1: number, x2: number, y2: number): { x: number; y: number }[] {
@@ -309,9 +337,9 @@ export class EffectManager {
 
     private setupEventListeners(): void {
         // Lightning strike
-        EventBus.on(GameEvents.LIGHTNING_STRIKE, (targetX: number, targetY: number, queenX: number, queenY: number, radius: number) => {
-            this.createLightning(queenX, queenY, targetX, targetY);
-            this.createSootStain(targetX, targetY, radius * 0.5, 10); // 10 seconds
+        EventBus.on(GameEvents.LIGHTNING_STRIKE, (strikeX: number, strikeY: number, _damage: number, radius: number, _hitCount: number, boltCount: number, queenX: number, queenY: number) => {
+            this.createLightning(queenX, queenY, strikeX, strikeY, boltCount || 3);
+            this.createSootStain(strikeX, strikeY, radius * 0.5, 10); // 10 seconds
         });
 
         // Fireball explosion
@@ -336,9 +364,19 @@ export class EffectManager {
         });
     }
 
-    createLightning(fromX: number, fromY: number, toX: number, toY: number): void {
-        const effect = new LightningEffect(fromX, fromY, toX, toY);
-        this.addEffect(effect);
+    createLightning(queenX: number, queenY: number, targetX: number, targetY: number, boltCount: number = 3): void {
+        // Create flash at queen's position
+        const flash = new CastFlashEffect(queenX, queenY, 40);
+        this.addEffect(flash);
+        
+        // Create multiple lightning bolts from sky
+        const skyHeight = 500; // Distance above target
+        for (let i = 0; i < boltCount; i++) {
+            // Spread bolts slightly horizontally
+            const offsetX = (i - boltCount / 2) * 8; // 8 pixels apart
+            const bolt = new LightningEffect(targetX, targetY, skyHeight, offsetX);
+            this.addEffect(bolt);
+        }
     }
 
     createExplosion(x: number, y: number, radius: number): void {

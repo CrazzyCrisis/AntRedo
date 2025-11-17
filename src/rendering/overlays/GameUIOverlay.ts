@@ -347,22 +347,45 @@ export class GameUIOverlay {
     /**
      * Handle mouse clicks on UI elements
      */
-    handleMouseClick(x: number, y: number): void {
-        if (this.commandsUI) {
-            this.commandsUI.handleClick(x, y);
-        }
-        
+    handleMouseClick(x: number, y: number): boolean {
+        // Building menu clicks should be handled and consumed
         if (this.buildingMenu && this.buildingMenu.visible) {
-            this.buildingMenu.handleClick(x, y);
+            // Check if click is on the building menu
+            const menuHandled = this.buildingMenu.handleClick(x, y);
+            if (menuHandled) {
+                console.log(`[GameUIOverlay] Building menu consumed click`);
+                return true; // Click was on UI, don't forward to world
+            }
         }
         
+        // Check commands UI
+        if (this.commandsUI) {
+            const commandsHandled = this.commandsUI.handleClick(x, y);
+            if (commandsHandled) {
+                console.log(`[GameUIOverlay] Commands UI consumed click`);
+                return true;
+            }
+        }
+        
+        // Check minimap
         if (this.minimap) {
-            this.minimap.handleClick(x, y);
+            const minimapHandled = this.minimap.handleClick(x, y);
+            if (minimapHandled) {
+                console.log(`[GameUIOverlay] Minimap consumed click`);
+                return true;
+            }
         }
         
+        // Check population display
         if (this.populationDisplay) {
-            this.populationDisplay.handleClick(x, y);
+            const popHandled = this.populationDisplay.handleClick(x, y);
+            if (popHandled) {
+                console.log(`[GameUIOverlay] Population display consumed click`);
+                return true;
+            }
         }
+        
+        return false; // Click not consumed by UI
     }
 
     /**

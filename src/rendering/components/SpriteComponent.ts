@@ -22,8 +22,9 @@ export class SpriteComponent implements Renderable {
     private combatOffsetY: number = 0; // Combat animation offset (in tiles)
     private entityId: string | null = null; // For combat animation tracking
     private tintColor: { r: number; g: number; b: number; a?: number } | null = null;
-    private outlineColor: { r: number; g: number; b: number } | null = null; // Outline color
-    private outlineThickness: number = 2; // Outline thickness in pixels
+    // DISABLED: Outline rendering
+    // private outlineColor: { r: number; g: number; b: number } | null = null; // Outline color
+    // private outlineThickness: number = 2; // Outline thickness in pixels
     public scale: number = 1;
     public rotation: number = 0; // Radians
     private unsubscribeOffset: (() => void) | null = null; // Cleanup function
@@ -74,11 +75,12 @@ export class SpriteComponent implements Renderable {
     }
 
     /**
-     * Update sprite image
+     * Update sprite image (preserves custom width/height if already set)
      */
-    setSprite(sprite: any): void {
+    setSprite(sprite: any, resetDimensions: boolean = false): void {
         this.sprite = sprite;
-        if (sprite) {
+        // Only reset dimensions if explicitly requested
+        if (sprite && resetDimensions) {
             this.width = sprite.width;
             this.height = sprite.height;
         }
@@ -100,14 +102,14 @@ export class SpriteComponent implements Renderable {
     }
 
     /**
-     * Set outline effect
+     * Set outline effect - DISABLED
      * @param color RGB color object {r, g, b} (0-255) or null to disable outline
      * @param thickness Outline thickness in pixels (default: 2)
      */
-    setOutline(color: { r: number; g: number; b: number } | null, thickness: number = 2): void {
+    /* setOutline(color: { r: number; g: number; b: number } | null, thickness: number = 2): void {
         this.outlineColor = color;
         this.outlineThickness = thickness;
-    }
+    } */
 
     /**
      * Set scale (multiplier for width/height)
@@ -139,16 +141,16 @@ export class SpriteComponent implements Renderable {
             }
         );
         
-        // Subscribe to hover events for outline
+        // Subscribe to hover events for outline - DISABLED
         const hoverStartListener = EventBus.on('ENTITY_HOVER_START', (id: string) => {
             if (id === this.entityId) {
-                this.setOutline({ r: 255, g: 255, b: 0 }, 2); // Yellow outline on hover
+                // DISABLED: this.setOutline({ r: 255, g: 255, b: 0 }, 2); // Yellow outline on hover
             }
         });
         
         const hoverEndListener = EventBus.on('ENTITY_HOVER_END', (id: string) => {
             if (id === this.entityId) {
-                this.setOutline(null); // Remove outline
+                // DISABLED: this.setOutline(null); // Remove outline
             }
         });
         
@@ -244,9 +246,10 @@ export class SpriteComponent implements Renderable {
         const finalOffsetY = this.combatOffsetY * TILE_CONFIG.SIZE;
         
         // Draw outline first if enabled
-        if (this.outlineColor) {
-            this.drawOutline(graphics, finalOffsetX, finalOffsetY);
-        }
+        // DISABLED: Outline rendering
+        // if (this.outlineColor) {
+        //     this.drawOutline(graphics, finalOffsetX, finalOffsetY);
+        // }
         
         // Draw sprite (always centered at position due to CENTER imageMode)
         if (this.rotation !== 0 || this.scale !== 1) {
@@ -283,8 +286,9 @@ export class SpriteComponent implements Renderable {
     /**
      * Draw outline by sampling sprite pixels and detecting edges
      * CPU-based method - samples sprite pixels and draws outline manually
+     * DISABLED - not currently in use
      */
-    private drawOutline(graphics: any, finalOffsetX: number, finalOffsetY: number): void {
+    /* private drawOutline(graphics: any, finalOffsetX: number, finalOffsetY: number): void {
         if (!this.outlineColor || !this.sprite) return;
 
         // Sample sprite pixels to find edges
@@ -355,5 +359,5 @@ export class SpriteComponent implements Renderable {
                 }
             }
         }
-    }
+    } */
 }

@@ -186,10 +186,12 @@ export class PopulationDisplayComponent implements Renderable {
     /**
      * Handle mouse click
      */
-    public handleClick(mouseX: number, mouseY: number): void {
+    public handleClick(mouseX: number, mouseY: number): boolean {
         if (this.isMouseOver(mouseX, mouseY)) {
             this.toggleExpanded();
+            return true; // Click was on population display
         }
+        return false; // Click not on population display
     }
     
     /**

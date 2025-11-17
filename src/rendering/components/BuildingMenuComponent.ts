@@ -98,7 +98,7 @@ export class BuildingMenuComponent implements Renderable {
             // Calculate X position for this button (horizontal layout)
             const buttonX = startX + index * (this.buttonWidth + this.spacing);
             
-            this.buttons.push({
+            const button = {
                 buildingType: type,
                 name: type.charAt(0).toUpperCase() + type.slice(1), // Capitalize first letter
                 x: buttonX,
@@ -107,7 +107,11 @@ export class BuildingMenuComponent implements Renderable {
                 height: this.buttonHeight,
                 unlocked,
                 canAfford
-            });
+            };
+            
+            console.log(`[BuildingMenu] Button '${type}' bounds: x=${buttonX}, y=${buttonY}, width=${this.buttonWidth}, height=${this.buttonHeight}, unlocked=${unlocked}`);
+            
+            this.buttons.push(button);
         });
     }
 
@@ -146,27 +150,31 @@ export class BuildingMenuComponent implements Renderable {
      * @param x - Mouse X position
      * @param y - Mouse Y position
      */
-    public handleClick(x: number, y: number): void {
+    public handleClick(x: number, y: number): boolean {
         if (!this.visible) {
-            console.log('[BuildingMenu] Click ignored - menu not visible');
-            return;
+            return false; // Menu not visible, didn't handle click
         }
         
         console.log(`[BuildingMenu] Click at (${x}, ${y})`);
         
         for (const btn of this.buttons) {
-            // Button coordinates are top-left corner, not center!
-            if (isPointInRect(x, y, btn.x, btn.y, btn.width, btn.height, false)) {
+            const inBounds = isPointInRect(x, y, btn.x, btn.y, btn.width, btn.height, false);
+            
+            if (inBounds) {
                 console.log(`[BuildingMenu] Button clicked: ${btn.buildingType}, unlocked: ${btn.unlocked}`);
                 if (btn.unlocked) {
                     console.log(`[BuildingMenu] Emitting BUILDING_SELECTED: ${btn.buildingType}`);
                     EventBus.emit(GameEvents.BUILDING_SELECTED, btn.buildingType);
                     this.hide(); // Hide menu after selection
+                } else {
+                    console.log(`[BuildingMenu] Button '${btn.buildingType}' is locked`);
                 }
-                return;
+                return true; // Click was on a button (consumed)
             }
         }
-        console.log('[BuildingMenu] Click missed all buttons');
+        
+        // Click was inside menu area but missed buttons - still consume it
+        return false; // Let click through for now
     }
 
     /**

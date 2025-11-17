@@ -24,11 +24,23 @@ interface PowerUpgradeCost {
 }
 
 /**
+ * Power key mapping (1-5 keys)
+ */
+const POWER_KEY_MAP: Record<string, number> = {
+    'lightning': 1,
+    'fireball': 2,
+    'blackhole': 3,
+    'tidalwave': 4,
+    'finalFlash': 5
+};
+
+/**
  * PowerManager manages all queen powers
  */
 export class PowerManager extends BaseManager {
     private static instance: PowerManager;
-    private powers: Map<string, Map<string, IPower>>; // queenId â†’ (powerName â†’ IPower)
+    private powers: Map<string, Map<string, IPower>>; // queenId → (powerName → IPower)
+    private lastTickTime: number = Date.now();
 
     // Upgrade costs per level
     private upgradeCosts: Record<number, PowerUpgradeCost> = {
@@ -65,7 +77,33 @@ export class PowerManager extends BaseManager {
         // Listen for blackhole updates (needs to be called each frame)
         this.subscribe('GAME_UPDATE', (deltaTime: number) => {
             this.updateActivePowers(deltaTime);
+            this.updateCooldownTicks();
         });
+    }
+    
+    /**
+     * Emit cooldown tick events for UI updates
+     */
+    private updateCooldownTicks(): void {
+        const currentTime = Date.now();
+        const deltaMs = currentTime - this.lastTickTime;
+        
+        // Only update every 100ms to reduce event spam
+        if (deltaMs < 100) return;
+        
+        this.lastTickTime = currentTime;
+        const currentTimeSec = currentTime / 1000;
+        
+        // Emit cooldown remaining for each power
+        for (const [_queenId, powerMap] of this.powers.entries()) {
+            for (const [powerName, power] of powerMap.entries()) {
+                const powerKey = POWER_KEY_MAP[powerName];
+                if (powerKey) {
+                    const remaining = power.getCooldownRemaining(currentTimeSec);
+                    this.emit('POWER_COOLDOWN_TICK', powerKey, remaining);
+                }
+            }
+        }
     }
 
     /**
@@ -136,7 +174,17 @@ export class PowerManager extends BaseManager {
         const power = this.getPower(queenId, powerName);
         if (!power) return false;
 
-        return power.use(queenX, queenY, targetX, targetY, targetId);
+        const success = power.use(queenX, queenY, targetX, targetY, targetId);
+        
+        if (success) {
+            // Emit POWER_USED event for UI updates
+            const powerKey = POWER_KEY_MAP[powerName];
+            if (powerKey) {
+                this.emit('POWER_USED', powerKey, power.cooldown);
+            }
+        }
+        
+        return success;
     }
 
     /**

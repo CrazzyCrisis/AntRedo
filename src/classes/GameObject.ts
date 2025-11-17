@@ -58,6 +58,13 @@ export class GameObject {
     
     // Cleanup event listener (store reference for manual unsubscription)
     private cleanupListener: (() => void) | null = null;
+    private knockbackListener: (() => void) | null = null;
+    
+    // Knockback state
+    private knockbackVelocityX: number = 0;
+    private knockbackVelocityY: number = 0;
+    private isKnockedBack: boolean = false;
+    public knockbackImmune: boolean = false; // Set true for bosses
 
     /**
      * Create a new GameObject
@@ -91,6 +98,13 @@ export class GameObject {
         this.cleanupListener = EventBus.once(GameEvents.CLEANUP_ALL_ENTITIES, () => {
             if (!this.isActive) return; // Already destroyed by other means
             this.destroy();
+        });
+        
+        // Listen for knockback events targeting this entity
+        this.knockbackListener = EventBus.on('ENTITY_KNOCKBACK', (entityId: string, knockbackX: number, knockbackY: number) => {
+            if (entityId === this.id && !this.knockbackImmune) {
+                this.applyKnockback(knockbackX, knockbackY);
+            }
         });
     }
 
@@ -411,6 +425,62 @@ export class GameObject {
     }
 
     /**
+     * Apply knockback force to this entity
+     * @param knockbackX - X force (in tiles)
+     * @param knockbackY - Y force (in tiles)
+     */
+    private applyKnockback(knockbackX: number, knockbackY: number): void {
+        if (this.knockbackImmune) return;
+        
+        // Set knockback velocity
+        this.knockbackVelocityX = knockbackX;
+        this.knockbackVelocityY = knockbackY;
+        this.isKnockedBack = true;
+        
+        // Cancel snapping during knockback
+        this.isSnapping = false;
+    }
+
+    /**
+     * Process knockback physics
+     * @param deltaTime - Time elapsed in milliseconds
+     */
+    private processKnockback(deltaTime: number): void {
+        if (!this.isKnockedBack) return;
+        
+        const deltaSeconds = deltaTime / 1000;
+        const friction = 0.92; // Friction decay per frame at 60fps
+        const adjustedFriction = Math.pow(friction, deltaTime / 16.67); // Adjust for actual deltaTime
+        
+        // Apply knockback velocity to position
+        const knockbackDistance = TILE_CONFIG.SIZE * deltaSeconds;
+        this.smoothWorldX += this.knockbackVelocityX * knockbackDistance;
+        this.smoothWorldY += this.knockbackVelocityY * knockbackDistance;
+        
+        // Apply friction to slow down
+        this.knockbackVelocityX *= adjustedFriction;
+        this.knockbackVelocityY *= adjustedFriction;
+        
+        // Stop knockback when velocity is very small
+        const speed = Math.sqrt(this.knockbackVelocityX * this.knockbackVelocityX + 
+                                this.knockbackVelocityY * this.knockbackVelocityY);
+        if (speed < 0.05) {
+            this.isKnockedBack = false;
+            this.knockbackVelocityX = 0;
+            this.knockbackVelocityY = 0;
+            
+            // Update grid position to match final knockback position
+            const centerOffset = TILE_CONFIG.SIZE / 2;
+            const finalGridX = Math.floor((this.smoothWorldX + centerOffset) / TILE_CONFIG.SIZE);
+            const finalGridY = Math.floor((this.smoothWorldY + centerOffset) / TILE_CONFIG.SIZE);
+            this.moveTo(finalGridX, finalGridY);
+        }
+        
+        // Emit position update
+        EventBus.emit(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, this.id, this.smoothWorldX, this.smoothWorldY);
+    }
+
+    /**
      * Update this entity and all its components
      * @param deltaTime - Time elapsed since last update (milliseconds)
      */
@@ -419,8 +489,13 @@ export class GameObject {
             return;
         }
 
-        // Process movement accumulation
-        this.processMovement(deltaTime);
+        // Process knockback first (overrides normal movement)
+        if (this.isKnockedBack) {
+            this.processKnockback(deltaTime);
+        } else {
+            // Process normal movement
+            this.processMovement(deltaTime);
+        }
 
         // Update all components
         this.components.forEach(component => {
@@ -444,6 +519,12 @@ export class GameObject {
         if (this.cleanupListener) {
             this.cleanupListener();
             this.cleanupListener = null;
+        }
+        
+        // Unsubscribe from knockback event
+        if (this.knockbackListener) {
+            this.knockbackListener();
+            this.knockbackListener = null;
         }
 
         // Remove all components

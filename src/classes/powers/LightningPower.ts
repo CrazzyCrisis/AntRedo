@@ -83,7 +83,8 @@ export class LightningPower implements IPower {
         this.lastUsedTime = Date.now() / 1000; // Convert to seconds
 
         // Emit event with bolt count for visual effects
-        EventBus.emit('LIGHTNING_STRIKE', strikeX, strikeY, levelConfig.damage, levelConfig.radius, entitiesInRange.length, levelConfig.boltCount || 3);
+        // Parameters: strikeX, strikeY, damage, radius, hitCount, boltCount, queenX, queenY
+        EventBus.emit('LIGHTNING_STRIKE', strikeX, strikeY, levelConfig.damage, levelConfig.radius, entitiesInRange.length, levelConfig.boltCount || 3, _queenX, _queenY);
 
         return true;
     }

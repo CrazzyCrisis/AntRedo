@@ -31,11 +31,15 @@ class GhostSpriteComponent implements Renderable {
     public sprite: any = null;
     public tintColor: string = '#FFFFFF';
     public alpha: number = 128; // Semi-transparent
+    public width: number = 128; // Default size (2x2 tiles)
+    public height: number = 128;
     
-    constructor(sprite: any, x: number, y: number) {
+    constructor(sprite: any, x: number, y: number, width: number = 128, height: number = 128) {
         this.sprite = sprite;
         this.x = x;
         this.y = y;
+        this.width = width;
+        this.height = height;
     }
     
     render(graphics: any): void {
@@ -44,7 +48,7 @@ class GhostSpriteComponent implements Renderable {
         graphics.push();
         graphics.tint(this.tintColor);
         graphics.imageMode((window as any).CENTER);
-        graphics.image(this.sprite, this.x, this.y);
+        graphics.image(this.sprite, this.x, this.y, this.width, this.height);
         graphics.pop();
     }
 }
@@ -128,8 +132,13 @@ export class BuildingPlacementManager extends BaseManager {
         // Get sprite for this building type
         const sprite = this.buildingSprites.get(buildingType);
         
-        // Create ghost sprite
-        this.ghostSprite = new GhostSpriteComponent(sprite, 0, 0);
+        // Get building config for size
+        const config = getBuildingConfig(buildingType);
+        const width = config.size.width * TILE_SIZE;
+        const height = config.size.height * TILE_SIZE;
+        
+        // Create ghost sprite with correct dimensions
+        this.ghostSprite = new GhostSpriteComponent(sprite, 0, 0, width, height);
         
         // Register ghost sprite with renderer
         if (this.renderer) {
@@ -137,6 +146,7 @@ export class BuildingPlacementManager extends BaseManager {
         }
         
         this.emit(GameEvents.BUILDING_PLACEMENT_STARTED, buildingType);
+        console.log(`[BuildingPlacement] ✅ Placement mode activated for ${buildingType}`);
     }
     
     /**
@@ -145,7 +155,7 @@ export class BuildingPlacementManager extends BaseManager {
      * @param screenY - Mouse Y in screen coordinates
      */
     public updateGhostPosition(screenX: number, screenY: number): void {
-        if (!this.isPlacementActive || !this.ghostSprite || !this.camera) return;
+        if (!this.isPlacementActive || !this.ghostSprite || !this.camera || !this.currentBuildingType) return;
         
         // Convert screen to world coordinates
         const worldPos = this.camera.screenToWorld(screenX, screenY);
@@ -155,8 +165,15 @@ export class BuildingPlacementManager extends BaseManager {
         this.currentGridX = gridPos.col;
         this.currentGridY = gridPos.row;
         
-        // Snap ghost to grid center
-        const snappedPos = gridToWorldCenter(this.currentGridX, this.currentGridY, TILE_SIZE);
+        // Get building size for multi-tile positioning
+        const config = getBuildingConfig(this.currentBuildingType);
+        const centerOffsetX = (config.size.width - 1) * 0.5;
+        const centerOffsetY = (config.size.height - 1) * 0.5;
+        const centerGridX = this.currentGridX + centerOffsetX;
+        const centerGridY = this.currentGridY + centerOffsetY;
+        
+        // Snap ghost to grid center (accounting for building size)
+        const snappedPos = gridToWorldCenter(centerGridX, centerGridY, TILE_SIZE);
         this.ghostSprite.x = snappedPos.x;
         this.ghostSprite.y = snappedPos.y;
         
@@ -187,15 +204,41 @@ export class BuildingPlacementManager extends BaseManager {
         const footprint = this.getBuildingFootprint(this.currentGridX, this.currentGridY, config.size.width, config.size.height);
         
         for (const tile of footprint) {
-            const tileData = this.tileGrid.getTile(tile.x, tile.y);
+            const tileData = this.tileGrid.getTileDataAt(tile.x, tile.y);
             if (!tileData || !this.isTerrainValid(tileData.type, config.allowedTerrain)) {
                 this.validationState = 'invalid_terrain';
                 return;
             }
         }
         
-        // Check resources (requires ResourceManager integration)
-        // For now, assume valid if terrain passes
+        // Check collision with existing buildings
+        const { EntityManager } = require('./EntityManager');
+        const allEntities = EntityManager.getInstance().getAllEntities();
+        
+        for (const entity of allEntities) {
+            if (entity.type === 'building' && entity.isActive) {
+                const building = entity as any; // Building instance
+                const occupiedTiles = building.getOccupiedTiles();
+                
+                // Check if any footprint tile overlaps with occupied tiles
+                for (const footprintTile of footprint) {
+                    for (const occupiedTile of occupiedTiles) {
+                        if (footprintTile.x === occupiedTile.gridX && footprintTile.y === occupiedTile.gridY) {
+                            this.validationState = 'collision';
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Check resources
+        const { ResourceManager } = require('./ResourceManager');
+        if (!ResourceManager.getInstance().canAfford(this.factionId, config.costs)) {
+            this.validationState = 'insufficient_resources';
+            return;
+        }
+        
         this.validationState = 'valid';
     }
     
@@ -252,9 +295,19 @@ export class BuildingPlacementManager extends BaseManager {
      * Emits success or failure events
      */
     public attemptPlacement(): void {
-        if (!this.isPlacementActive || !this.currentBuildingType) return;
+        console.log(`[BuildingPlacement] attemptPlacement called`);
+        console.log(`[BuildingPlacement] - isPlacementActive: ${this.isPlacementActive}`);
+        console.log(`[BuildingPlacement] - currentBuildingType: ${this.currentBuildingType}`);
+        console.log(`[BuildingPlacement] - validationState: ${this.validationState}`);
+        console.log(`[BuildingPlacement] - currentGridX: ${this.currentGridX}, currentGridY: ${this.currentGridY}`);
+        
+        if (!this.isPlacementActive || !this.currentBuildingType) {
+            console.warn(`[BuildingPlacement] Cannot place - placement not active or no building type`);
+            return;
+        }
         
         if (this.validationState === 'valid') {
+            console.log(`[BuildingPlacement] ✅ Validation passed - emitting BUILDING_CONSTRUCTION_STARTED`);
             // Emit construction started event
             const config = getBuildingConfig(this.currentBuildingType);
             
@@ -269,6 +322,8 @@ export class BuildingPlacementManager extends BaseManager {
             // Cancel placement after successful placement
             this.cancelPlacement();
         } else {
+            console.warn(`[BuildingPlacement] ❌ Validation failed: ${this.validationState}`);
+            
             // Emit invalid placement event
             const config = getBuildingConfig(this.currentBuildingType);
             

@@ -168,7 +168,7 @@ export class QueenCommandsComponent implements Renderable {
     /**
      * Handle mouse click
      */
-    public handleClick(mouseX: number, mouseY: number): void {
+    public handleClick(mouseX: number, mouseY: number): boolean {
         const command = this.isMouseOver(mouseX, mouseY);
         if (command) {
             const btn = this.commands.find(c => c.command === command);
@@ -185,7 +185,9 @@ export class QueenCommandsComponent implements Renderable {
                     }
                 }
             }
+            return true; // Click was on a command button
         }
+        return false; // Click not on any button
     }
     
     /**

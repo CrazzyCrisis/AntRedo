@@ -39,6 +39,9 @@ export class Boss extends GameObject {
         // Disable snapping for AI-controlled boss (uses pathfinding)
         this.enableSnapping = false;
         
+        // Bosses are immune to knockback
+        this.knockbackImmune = true;
+        
         // Initialize boss properties
         this.patrolPath = patrolPath;
         this.patrolIndex = 0;

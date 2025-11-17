@@ -4,7 +4,6 @@
  */
 
 import {
-    IScene,
     Renderer,
     EventBus,
     GameEvents,
@@ -29,11 +28,12 @@ import {
     CameraManager,
     Building,
     BuildingFactory,
-    AntFactory
+    AntFactory,
+    PathfindingManager
 } from '../imports/sceneImports';
+import { BaseScene } from './BaseScene';
 import { ENTITY_CONFIG } from '../config/entityConfig';
 import { ResourceManager } from '../managers/ResourceManager';
-import { Camera } from '../rendering/Camera';
 import { CombatVisualHandler } from '../managers/CombatVisualHandler';
 import { CombatManager } from '../managers/CombatManager';
 import { ParticleSystem } from '../managers/ParticleSystem';
@@ -44,15 +44,11 @@ import { PathfindingComponent } from '../classes/components/PathfindingComponent
 import { TileHighlightComponent } from '../rendering/components/TileHighlightComponent';
 import { DEV_ROOM_SPAWN_CONFIG } from '../config/devRoomSpawnConfig';
 import { TILE_SIZE } from '../world/TileSystem';
-import { BuildingPlacementManager } from '../managers/BuildingPlacementManager';
 import { ConstructionManager } from '../managers/ConstructionManager';
 import { QuestManager } from '../managers/QuestManager';
 import { BuildingManager } from '../managers/BuildingManager';
 
-export class DevRoomScene implements IScene {
-    private renderer: Renderer;
-    private canvasWidth: number;
-    private canvasHeight: number;
+export class DevRoomScene extends BaseScene {
     private backButton: ButtonComponent | null = null;
     private unregisterFunctions: Array<() => void> = [];
     private gameState: GameStateManager;
@@ -69,7 +65,6 @@ export class DevRoomScene implements IScene {
     private tileRendererUnregister: (() => void)[] = [];
     private uiOverlay: GameUIOverlay | null = null;
     private playerQueen: any | null = null; // Reference to player's queen for click commands
-    private camera: Camera | null = null; // Camera reference for coordinate conversion
     private tileHighlight: TileHighlightComponent | null = null; // Visual tile highlight for debugging
     private hoveredEntityId: string | null = null; // Track currently hovered entity for outline
     
@@ -77,7 +72,6 @@ export class DevRoomScene implements IScene {
     private spawnManager: SpawnManager | null = null;
     
     // Building system
-    private buildingPlacementManager: BuildingPlacementManager | null = null;
     private constructionManager: ConstructionManager | null = null;
     private isBuildingPlacementActive: boolean = false;
     private levelLoader: LevelLoader | null = null;
@@ -146,9 +140,8 @@ export class DevRoomScene implements IScene {
             farmer?: any;
         } | null
     ) {
-        this.renderer = renderer;
-        this.canvasWidth = canvasWidth;
-        this.canvasHeight = canvasHeight;
+        super(renderer, canvasWidth, canvasHeight);
+        
         this.backButtonImg = backButtonImg;
         this.tileSprites = tileSprites;
         this.tileEdgeSprites = tileEdgeSprites;
@@ -160,9 +153,11 @@ export class DevRoomScene implements IScene {
         
         // Initialize building system managers (singletons - no need to store references)
         QuestManager.getInstance();
-        this.buildingPlacementManager = BuildingPlacementManager.getInstance();
         this.constructionManager = ConstructionManager.getInstance();
         BuildingManager.getInstance();
+        
+        // Initialize pathfinding manager (listens for WORLD_GENERATED and BUILDING_PATHFINDING_BLOCK events)
+        PathfindingManager.getInstance();
         
         // Initialize combat system for automatic melee attacks
         CombatManager.getInstance();
@@ -204,11 +199,7 @@ export class DevRoomScene implements IScene {
             EventBus.on(GameEvents.BUILDING_SELECTED, (buildingType: string) => {
                 console.log(`[DevRoom] Building selected: ${buildingType}`);
                 this.isBuildingPlacementActive = true;
-                
-                // Activate placement mode with ghost sprite
-                if (this.buildingPlacementManager) {
-                    this.buildingPlacementManager.activatePlacement(buildingType as any);
-                }
+                this.buildingPlacementManager.activatePlacement(buildingType as any);
             })
         );
         
@@ -230,8 +221,10 @@ export class DevRoomScene implements IScene {
         
         // Subscribe to mouse clicks for placement confirmation
         this.unregisterFunctions.push(
-            EventBus.on(GameEvents.INPUT_MOUSE_CLICK, (_x: number, _y: number, button: number) => {
-                if (this.isBuildingPlacementActive && button === 0 && this.buildingPlacementManager) {
+            EventBus.on(GameEvents.INPUT_MOUSE_CLICK, (x: number, y: number, button: number) => {
+                if (this.isBuildingPlacementActive && button === 0) {
+                    console.log(`[DevRoom] Mouse click detected at (${x}, ${y}), button: ${button}`);
+                    console.log(`[DevRoom] Calling attemptPlacement...`);
                     this.buildingPlacementManager.attemptPlacement();
                 }
             })
@@ -275,23 +268,35 @@ export class DevRoomScene implements IScene {
         // Store in game state
         this.gameState.setTileGrid(tileGrid);
         
-        // Initialize BuildingPlacementManager with dependencies
-        if (this.buildingPlacementManager && this.camera) {
-            this.buildingPlacementManager.initialize(
-                this.renderer,
-                this.camera,
-                tileGrid,
-                'player'
-            );
+        // Initialize PathfindingManager with the same grid
+        PathfindingManager.getInstance().initializeFromTileGrid(worldData);
+        console.log(`[DevRoom] ✅ PathfindingManager initialized with grid`);
+        
+        // Initialize BuildingPlacementManager using BaseScene helper
+        if (this.entitySprites?.hill1 && this.entitySprites?.hive1 && this.entitySprites?.cone1) {
+            this.initializeBuildingPlacement(tileGrid, 'player', {
+                warehouse: this.entitySprites.hill1,
+                barracks: this.entitySprites.hive1,
+                tower: this.entitySprites.cone1
+            });
             
-            // Register building sprites for ghost preview
-            if (this.entitySprites?.hill1 && this.entitySprites?.hive1 && this.entitySprites?.cone1) {
-                this.buildingPlacementManager.registerBuildingSprites({
-                    warehouse: this.entitySprites.hill1,
-                    barracks: this.entitySprites.hive1,
-                    tower: this.entitySprites.cone1
-                });
-            }
+            // Initialize BuildingManager with renderer and building sprites
+            const buildingManager = BuildingManager.getInstance();
+            buildingManager.initialize(this.renderer, {
+                construction: new Map([
+                    ['warehouse', this.entitySprites.hill1],
+                    ['barracks', this.entitySprites.hive1],
+                    ['tower', this.entitySprites.cone1]
+                ]) as Map<any, any>,
+                completed: new Map([
+                    ['warehouse', this.entitySprites.hill2 || this.entitySprites.hill1],
+                    ['barracks', this.entitySprites.hive2 || this.entitySprites.hive1],
+                    ['tower', this.entitySprites.cone2 || this.entitySprites.cone1]
+                ]) as Map<any, any>
+            });
+            console.log(`[DevRoom] ✅ BuildingManager initialized`);
+        } else {
+            console.warn(`[DevRoom] Building sprites not available - placement system disabled`);
         }
         
         // Listen for save preset event
@@ -581,6 +586,9 @@ export class DevRoomScene implements IScene {
     }
 
     handleMouseClick(x: number, y: number): void {
+        console.log(`[DevRoom] handleMouseClick called at (${x}, ${y})`);
+        console.log(`[DevRoom] - isBuildingPlacementActive: ${this.isBuildingPlacementActive}`);
+        
         // Forward to pause menu if paused
         if (this.isPaused && this.pauseMenu) {
             this.pauseMenu.handleMouseClick(x, y);
@@ -599,17 +607,20 @@ export class DevRoomScene implements IScene {
             return;
         }
 
-        // Delegate to UI overlay (check if click was on UI)
+        // Delegate to UI overlay FIRST (check if click was on UI)
         if (this.uiOverlay) {
-            this.uiOverlay.handleMouseClick(x, y);
-            // Note: UI overlay doesn't return whether it handled the click
-            // For now, any click goes through to world
+            const wasHandled = this.uiOverlay.handleMouseClick(x, y);
+            console.log(`[DevRoom] UI overlay handled click: ${wasHandled}`);
+            if (wasHandled) {
+                console.log(`[DevRoom] Click consumed by UI overlay - stopping here`);
+                return; // UI handled it, stop processing entirely
+            }
         }
         
-        // If building placement is active, forward to BuildingPlacementManager
+        // If building placement is active, attempt placement
         if (this.isBuildingPlacementActive && this.buildingPlacementManager) {
-            // BuildingPlacementManager listens to INPUT_MOUSE_CLICK event
-            // Event already emitted by sketch.ts, no need to forward manually
+            console.log(`[DevRoom] Building placement active - calling attemptPlacement()`);
+            this.buildingPlacementManager.attemptPlacement();
             return; // Don't process world clicks during placement
         }
         

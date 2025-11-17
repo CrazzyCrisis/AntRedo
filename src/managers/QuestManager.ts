@@ -86,5 +86,19 @@ export class QuestManager extends BaseManager {
      */
     public cleanup(): void {
         this.cleanupSubscriptions(); // BaseManager cleanup
+        // Reset unlocked buildings to default state
+        this.unlockedBuildings = new Set(
+            Object.keys(BUILDING_PLACEMENT_CONFIG) as BuildingType[]
+        );
+    }
+    
+    /**
+     * Reset singleton instance (for testing)
+     */
+    public static resetInstance(): void {
+        if (QuestManager.instance) {
+            QuestManager.instance.cleanup();
+            QuestManager.instance = undefined as any;
+        }
     }
 }

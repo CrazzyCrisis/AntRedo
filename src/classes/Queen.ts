@@ -111,6 +111,18 @@ export class Queen extends GameObject {
         Object.entries(keybindsConfig).forEach(([powerName, key]) => {
             this.keybindMap.set(key, powerName);
         });
+        
+        // Listen for PowerManager initialization and sync unlock status
+        EventBus.once('QUEEN_POWERS_INITIALIZED', (queenId: string) => {
+            if (queenId === this.id) {
+                // Unlock basic powers (lightning, fireball, blackhole, tidalwave)
+                this.unlockPower('lightning');
+                this.unlockPower('fireball');
+                this.unlockPower('blackhole');
+                this.unlockPower('tidalwave');
+                // finalFlash stays locked until all others are level 3
+            }
+        });
     }
 
     /**
@@ -157,11 +169,27 @@ export class Queen extends GameObject {
             return false;
         }
 
-        // Use power
-        power.lastUsedTime = currentTime;
-        EventBus.emit(GameEvents.QUEEN_POWER_USED, this.id, powerName, targetX, targetY);
+        // Trigger PowerManager to actually use the power
+        const { PowerManager } = require('../managers/PowerManager');
+        const powerManager = PowerManager.getInstance();
+        
+        // PowerManager handles the actual power logic and visual effects
+        const success = powerManager.usePower(
+            this.id,
+            powerName,
+            this.gridX,
+            this.gridY,
+            targetX,
+            targetY
+        );
+        
+        if (success) {
+            // Update local cooldown tracking
+            power.lastUsedTime = currentTime;
+            EventBus.emit(GameEvents.QUEEN_POWER_USED, this.id, powerName, targetX, targetY);
+        }
 
-        return true;
+        return success;
     }
 
     /**

@@ -226,9 +226,9 @@ export class MinimapComponent implements Renderable {
     /**
      * Handle mouse click on minimap
      */
-    handleClick(mouseX: number, mouseY: number): void {
+    handleClick(mouseX: number, mouseY: number): boolean {
         if (!isPointInRect(mouseX, mouseY, this.x, this.y, this.width, this.height)) {
-            return;
+            return false; // Click not on minimap
         }
         
         // Convert minimap coords to world coords
@@ -237,6 +237,7 @@ export class MinimapComponent implements Renderable {
         
         // Emit event to move camera/queen
         EventBus.emit(GameEvents.MINIMAP_CLICKED, worldX, worldY);
+        return true; // Click was on minimap
     }
 
     /**

@@ -76,8 +76,8 @@ export class BuildingFactory {
             worldY,
             RenderLayer.GROUND_DECORATIONS,
             0, // Static depth for buildings
-            building.size.width * 32, // Width in pixels (2x scale for larger sprites)
-            building.size.height * 32, // Height in pixels (2x scale for larger sprites)
+            building.size.width * TILE_SIZE, // Width in pixels (2 tiles * 64px = 128px)
+            building.size.height * TILE_SIZE, // Height in pixels (2 tiles * 64px = 128px)
             0, // No offset (aligned to grid)
             0
         );

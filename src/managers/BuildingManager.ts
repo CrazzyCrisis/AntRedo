@@ -102,6 +102,18 @@ export class BuildingManager extends BaseManager {
             return;
         }
 
+        // Check if faction can afford
+        const costs = ENTITY_CONFIG.BUILDINGS[buildingType].costs;
+        if (!ResourceManager.getInstance().canAfford(factionId, costs)) {
+            this.emit('BUILDING_PLACEMENT_FAILED', factionId, buildingType, 'insufficient_resources');
+            console.warn(`[BuildingManager] Cannot afford ${buildingType}: Need wood=${costs.wood}, stone=${costs.stone}`);
+            return;
+        }
+
+        // Deduct resources
+        ResourceManager.getInstance().spendResources(factionId, costs);
+        console.log(`[BuildingManager] Deducted resources for ${buildingType}: wood=${costs.wood}, stone=${costs.stone}`);
+
         const constructionSprite = this.constructionSprites.get(buildingType);
         const completedSprite = this.completedSprites.get(buildingType);
 
@@ -112,7 +124,7 @@ export class BuildingManager extends BaseManager {
 
         // Use BuildingFactory to create building
         const { BuildingFactory } = require('../factories/BuildingFactory');
-        BuildingFactory.create(
+        const building = BuildingFactory.create(
             this.renderer,
             constructionSprite,
             completedSprite,
@@ -121,6 +133,12 @@ export class BuildingManager extends BaseManager {
             buildingType,
             factionId
         );
+
+        // Emit ant spawning signal for barracks buildings
+        if (buildingType === 'barracks') {
+            console.log(`[BuildingManager] Barracks placed - emitting ant spawn signal`);
+            EventBus.emit('BARRACKS_PLACED', building.id, factionId, gridX, gridY);
+        }
     }
 
     /**
