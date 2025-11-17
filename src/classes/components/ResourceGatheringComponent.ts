@@ -17,7 +17,7 @@
 
 import { BaseComponent } from './BaseComponent';
 import { EventBus } from '../../utils/eventBus';
-import { RESOURCE_EXTRACTION, GATHERING_BEHAVIOR } from '../../config/resourceGatheringConfig';
+import { RESOURCE_EXTRACTION, GATHERING_BEHAVIOR } from '../../config/gameplay/resourceGatheringConfig';
 import { getEntitiesInRadius, distance } from '../../utils/helpers';
 import { Resource } from '../Resource';
 import { InventoryComponent } from './InventoryComponent';

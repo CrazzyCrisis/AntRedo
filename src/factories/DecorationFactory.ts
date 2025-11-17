@@ -12,7 +12,7 @@
 
 import { Renderer, RenderLayer, SpriteComponent, setupEntitySpriteBinding } from '../imports/factoryImports';
 import { Decoration } from '../classes/Decoration';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 
 export class DecorationFactory {
     /**

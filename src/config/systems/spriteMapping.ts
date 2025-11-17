@@ -4,7 +4,7 @@
  * SINGLE SOURCE OF TRUTH for all sprite paths
  */
 
-import { TileType } from '../world/TileSystem';
+import { TileType } from '../../world/TileSystem';
 
 /**
  * Base path for tile sprites
@@ -113,7 +113,7 @@ export const ENTITY_SPRITES = {
     attackBeacon: 'Buildings/Cone/Cone1.png',   // STAT_BOOST: Attack +3 (placeholder)
     attackSpeedBeacon: 'Buildings/Hive/Hive2.png', // STAT_BOOST: Attack speed +30% (placeholder)
     gatherSpeedBeacon: 'Buildings/Hill/Hill2.png', // STAT_BOOST: Gather speed +50% (placeholder)
-    terrainBeacon: 'Buildings/Cone/Cone2.png',  // STAT_BOOST: Terrain nullifier (placeholder)
+    terrainNullifierBeacon: 'Buildings/Cone/Cone2.png',  // STAT_BOOST: Terrain nullifier (placeholder)
     
     // Building sprite variants
     hill1: 'Buildings/Hill/Hill1.png',

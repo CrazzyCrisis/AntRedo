@@ -9,7 +9,7 @@
  * (e.g., bosses are faster on stone, fish would be faster in water)
  */
 
-import { TileType } from '../world/TileSystem';
+import { TileType } from '../../world/TileSystem';
 
 /**
  * Speed modifier for entity movement on specific tiles

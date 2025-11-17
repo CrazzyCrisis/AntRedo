@@ -74,10 +74,18 @@ export class SceneManager {
     /**
      * Update current scene (call every frame)
      * Also updates cross-scene systems like environment effects and visual effects
+     * NOTE: Cross-scene systems are paused when game is paused (only pause menu updates)
+     * @param deltaTime - Time elapsed since last frame in milliseconds
      */
-    public update(): void {
+    public update(deltaTime: number): void {
         if (this.currentScene) {
-            this.currentScene.update();
+            this.currentScene.update(deltaTime);
+        }
+        
+        // Check if game is paused - if so, only the pause menu updates (handled in scene.update())
+        const isPaused = GameStateManager.getInstance().isPaused();
+        if (isPaused) {
+            return; // Don't update game systems while paused
         }
         
         // Update environment effects (water damage, swimming particles, etc.)

@@ -19,7 +19,7 @@ import { AntJobComponent } from '../classes/components/AntJobComponent';
 import { Renderer } from '../rendering/Renderer';
 import { SpawnRuleValidator } from './SpawnRule';
 import { ClusterSpawner } from './ClusterSpawner';
-import { AntClusterConfig } from '../config/spawnConfig';
+import { AntClusterConfig } from '../config/gameplay/spawnConfig';
 
 /**
  * Job distribution for ant spawning

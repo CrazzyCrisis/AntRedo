@@ -1,7 +1,7 @@
-﻿import { BaseManager } from './BaseManager';
+import { BaseManager } from './BaseManager';
 import { GameEvents } from '../utils/eventBus';
 import { SettingsManager } from './SettingsManager';
-import { KeyBindings } from '../config/defaultSettings';
+import { KeyBindings } from '../config/systems/defaultSettings';
 
 /**
  * Result of a keybind operation

@@ -79,7 +79,7 @@ export class ControlsScene implements IScene {
         this.keybindComponents = [];
     }
 
-    update(): void {
+    update(_deltaTime: number): void {
         // Update button pulse animations
         if (this.backButton) {
             this.backButton.update();

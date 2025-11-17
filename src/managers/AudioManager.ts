@@ -8,10 +8,10 @@
 import { BaseManager } from './BaseManager';
 import { GameEvents } from '../utils/eventBus';
 import { SettingsManager } from './SettingsManager';
-import { AudioSettings } from '../config/defaultSettings';
+import { AudioSettings } from '../config/systems/defaultSettings';
 import { clamp } from '../utils/helpers';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { AUDIO_SOUNDS, AUDIO_EVENT_MAPPINGS, AUDIO_CATEGORIES, SoundKey } from '../config/audioConfig';
+import { AUDIO_SOUNDS, AUDIO_EVENT_MAPPINGS, AUDIO_CATEGORIES, SoundKey } from '../config/systems/audioConfig';
 
 export class AudioManager extends BaseManager {
     private static instance: AudioManager;

@@ -8,7 +8,7 @@
  * - Level validation
  */
 
-import { SpawnConfig, DEFAULT_SPAWN_CONFIG } from '../config/spawnConfig';
+import { SpawnConfig, DEFAULT_SPAWN_CONFIG } from '../config/gameplay/spawnConfig';
 import { EventBus, GameEvents } from '../utils/eventBus';
 
 /**

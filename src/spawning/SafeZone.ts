@@ -15,7 +15,7 @@
 
 import { EventBus } from '../utils/eventBus';
 import { GameEvents } from '../utils/eventBus';
-import { SafeZoneConfig } from '../config/spawnConfig';
+import { SafeZoneConfig } from '../config/gameplay/spawnConfig';
 
 /**
  * Safe zone state for serialization/debugging

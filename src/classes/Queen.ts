@@ -8,7 +8,7 @@ import { ResourceGatheringComponent } from './components/ResourceGatheringCompon
 import { StateMachineComponent, EntityState } from './components/StateMachineComponent';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { InputManager } from '../managers/InputManager';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 import { distance } from '../utils/helpers';
 
 /**

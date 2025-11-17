@@ -15,7 +15,7 @@ import {
     gridToWorldCenter
 } from '../imports/factoryImports';
 import { Boss } from '../classes/Boss';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 
 /**
  * BossFactory creates Boss entities with automatic rendering and entity management.

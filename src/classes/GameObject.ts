@@ -7,8 +7,8 @@
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { IComponent } from './components/IComponent';
 import { rectIntersect } from '../utils/helpers';
-import { TILE_CONFIG } from '../config/tileConfig';
-import { getTileSpeedModifier } from '../config/tileMovementConfig';
+import { TILE_CONFIG } from '../config/world/tileConfig';
+import { getTileSpeedModifier } from '../config/world/tileMovementConfig';
 
 export class GameObject {
     // Unique identifier

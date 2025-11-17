@@ -1,4 +1,4 @@
-﻿import { BaseManager } from './BaseManager';
+import { BaseManager } from './BaseManager';
 /**
  * GameStateManager - Central game state authority
  * Single source of truth for game state, emits EventBus notifications on changes

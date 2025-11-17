@@ -12,7 +12,7 @@ import { CombatComponent } from './components/CombatComponent';
 import { VisionComponent } from './components/VisionComponent';
 import { AIBehaviorComponent } from './components/AIBehaviorComponent';
 import { EventBus } from '../utils/eventBus';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 
 export class Boss extends GameObject {
     // Patrol system

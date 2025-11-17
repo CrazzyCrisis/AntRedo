@@ -9,7 +9,7 @@ import { EventBus, GameEvents } from '../../src/utils/eventBus';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 import { QuestManager } from '../../src/managers/QuestManager';
 import { ResourceManager } from '../../src/managers/ResourceManager';
-import { BuildingType } from '../../src/config/entityConfig';
+import { BuildingType } from '../../src/config/gameplay/entityConfig';
 
 describe('BuildingMenuComponent', () => {
     let menu: BuildingMenuComponent;
@@ -34,8 +34,8 @@ describe('BuildingMenuComponent', () => {
         resourceManager.addResource(factionId, 'wood', 100);
         resourceManager.addResource(factionId, 'stone', 100);
         
-        // Create menu component at position (400, 300)
-        menu = new BuildingMenuComponent(400, 300, factionId, mockResourceSprites);
+        // Create menu component with canvas dimensions (800x600)
+        menu = new BuildingMenuComponent(800, 600, factionId, mockResourceSprites);
     });
     
     afterEach(() => {
@@ -92,7 +92,7 @@ describe('BuildingMenuComponent', () => {
         
         it('should read layout config from gameUIConfig', () => {
             // Create menu with config-based positioning
-            const configuredMenu = new BuildingMenuComponent(0, 0, factionId, mockResourceSprites);
+            const configuredMenu = new BuildingMenuComponent(800, 600, factionId, mockResourceSprites);
             
             // Should have horizontal layout properties
             expect(configuredMenu['buttonWidth']).to.be.a('number');

@@ -17,7 +17,7 @@ import {
     TilePosition
 } from '../imports/factoryImports';
 import { Resource } from '../classes/Resource';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 import { DepletionBarComponent } from '../rendering/components/DepletionBarComponent';
 
 /**

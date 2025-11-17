@@ -21,7 +21,7 @@ import { SafeZone } from './SafeZone';
 import { Renderer } from '../rendering/Renderer';
 import { SpawnRuleValidator } from './SpawnRule';
 import { EventBus, GameEvents } from '../utils/eventBus';
-import { EnemyNestConfig, WaveConfig } from '../config/spawnConfig';
+import { EnemyNestConfig, WaveConfig } from '../config/gameplay/spawnConfig';
 
 /**
  * Enemy nest spawn result

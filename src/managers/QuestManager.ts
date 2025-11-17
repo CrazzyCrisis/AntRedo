@@ -9,8 +9,7 @@
  */
 
 import { BaseManager } from './BaseManager';
-import { BuildingType } from '../config/entityConfig';
-import { BUILDING_PLACEMENT_CONFIG } from '../config/buildingConfig';
+import { BuildingType, BUILDINGS } from '../config/buildings/buildingConfig';
 import { GameEvents } from '../utils/eventBus';
 
 /**
@@ -27,7 +26,7 @@ export class QuestManager extends BaseManager {
         // Initialize all buildings as unlocked (temporary for testing)
         // When quest system is implemented, buildings will start locked
         this.unlockedBuildings = new Set(
-            Object.keys(BUILDING_PLACEMENT_CONFIG) as BuildingType[]
+            Object.keys(BUILDINGS) as BuildingType[]
         );
     }
 
@@ -88,7 +87,7 @@ export class QuestManager extends BaseManager {
         this.cleanupSubscriptions(); // BaseManager cleanup
         // Reset unlocked buildings to default state
         this.unlockedBuildings = new Set(
-            Object.keys(BUILDING_PLACEMENT_CONFIG) as BuildingType[]
+            Object.keys(BUILDINGS) as BuildingType[]
         );
     }
     

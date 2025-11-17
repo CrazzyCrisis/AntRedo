@@ -1,4 +1,4 @@
-import { SpawnConstraints } from '../config/spawnConfig';
+import { SpawnConstraints } from '../config/gameplay/spawnConfig';
 import { PerlinNoise } from '../utils/PerlinNoise';
 import { TileType } from '../world/TileSystem';
 

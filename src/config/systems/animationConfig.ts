@@ -12,8 +12,8 @@
  * - loop: Loop animation (true) or play once (false)
  */
 
-import { AntJobComponent } from '../classes/components/AntJobComponent';
-import { AnimationConfig } from '../rendering/components/AnimatedSpriteSheetComponent';
+import { AntJobComponent } from '../../classes/components/AntJobComponent';
+import { AnimationConfig } from '../../rendering/components/AnimatedSpriteSheetComponent';
 
 /**
  * Ant animations by job type

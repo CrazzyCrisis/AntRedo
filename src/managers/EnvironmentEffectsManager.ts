@@ -9,7 +9,7 @@ import { GameObject } from '../classes/GameObject';
 import { HealthComponent, DamageSource } from '../classes/components/HealthComponent';
 import { TileGrid } from '../world/TileGrid';
 import { TileType } from '../world/TileSystem';
-import { HAZARDOUS_TILES, WATER_EFFECT_CONFIG, TILE_PARTICLE_COLORS } from '../config/environmentEffectsConfig';
+import { HAZARDOUS_TILES, WATER_EFFECT_CONFIG, TILE_PARTICLE_COLORS } from '../config/world/environmentEffectsConfig';
 import { WATER_PARTICLE_CONFIG } from '../config/visualEffects/waterParticleConfig';
 import { TILE_SIZE } from '../world/TileSystem';
 import { Renderer } from '../rendering/Renderer';

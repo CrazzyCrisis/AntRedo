@@ -1,4 +1,4 @@
-﻿/**
+/**
  * EntityManager - Central Entity Tracking (CONTROLLER)
  * Singleton manager for all game entities
  * Provides fast lookups by ID, type, and spatial queries

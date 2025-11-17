@@ -16,7 +16,7 @@ export type BuildingType =
     | 'warehouse' | 'barracks' | 'tower'  // Original 3
     | 'nest'                               // STORAGE: +15 ant capacity
     | 'builderHut' | 'gathererHut' | 'spitterHut'  // SPAWNER: specialized ant spawners
-    | 'speedBeacon' | 'attackBeacon' | 'attackSpeedBeacon' | 'gatherSpeedBeacon' | 'terrainBeacon'; // STAT_BOOST: 5 beacons
+    | 'speedBeacon' | 'attackBeacon' | 'attackSpeedBeacon' | 'gatherSpeedBeacon' | 'terrainNullifierBeacon'; // STAT_BOOST: 5 beacons
 export type PriorityTask = 'queenCommand' | 'gathering' | 'building' | 'combat' | 'scouting' | 'healing' | 'idle';
 
 // ============================================================================
@@ -432,7 +432,7 @@ const BUILDINGS: Record<BuildingType, BuildingConfig> = {
             { health: 240 }
         ]
     },
-    terrainBeacon: {
+    terrainNullifierBeacon: {
         size: { width: 1, height: 1 },
         costs: { wood: 15, stone: 15 },
         constructionTime: 20,

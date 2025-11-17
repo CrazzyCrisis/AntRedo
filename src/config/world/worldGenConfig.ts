@@ -3,7 +3,7 @@
  * Settings for procedural terrain generation
  */
 
-import { TileType } from '../world/TileSystem';
+import { TileType } from '../../world/TileSystem';
 
 /**
  * Tile distribution threshold configuration

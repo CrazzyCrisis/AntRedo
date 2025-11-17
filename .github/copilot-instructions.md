@@ -156,15 +156,36 @@ src/
     sceneImports.ts    # Scene dependencies (IScene, Renderer, managers, configs, etc.)
     factoryImports.ts  # Factory dependencies (Renderer, RenderLayer, SpriteComponent, etc.)
     managerImports.ts  # Manager dependencies (EventBus, entities, helpers, etc.)
-  config/           # CENTRALIZED CONFIG FILES (primary source of truth)
-    config.ts       # Main CONFIG object for game constants
+  config/           # ORGANIZED CONFIG FILES (primary source of truth)
+    index.ts        # Barrel export for all configs
     devRoomConfig.ts # Dev room settings (world, tiles, camera, debug)
-    menuLayout.ts   # UI layout configurations
-    worldGenConfig.ts # World generation parameters
+    ui/             # UI configuration files
+      gameUIConfig.ts     # In-game UI positioning and styling
+      menuLayout.ts       # Menu layout configurations
+      statusBarConfig.ts  # Status bar settings
+    gameplay/       # Gameplay configuration files
+      entityConfig.ts            # Entity stats and properties
+      resourceGatheringConfig.ts # Resource gathering rates
+      spawnConfig.ts             # Entity spawning parameters
+      devRoomSpawnConfig.ts      # Dev room spawn settings
+    world/          # World generation configuration files
+      worldGenConfig.ts          # World generation parameters
+      tileConfig.ts              # Tile properties and settings
+      tileMovementConfig.ts      # Movement speeds per terrain
+      environmentEffectsConfig.ts # Environmental effects
+    systems/        # System configuration files
+      animationConfig.ts    # Animation settings
+      audioConfig.ts        # Audio system configuration
+      spriteMapping.ts      # Sprite path mappings
+      defaultSettings.ts    # Default game settings
+    buildings/      # Building system configuration
+      buildingConfig.ts     # Centralized building definitions
+    visualEffects/  # Visual effects configuration
+      (various effect configs)
   sketch.ts         # p5.js lifecycle (setup/draw/input) - bridges p5 to game (VIEW layer)
   utils/
     eventBus.ts     # Singleton EventBus + GameEvents constants
-    helpers.ts      # 50+ pure utility functions (math, grid, vectors, etc.)
+    helpers.ts      # 75+ pure utility functions (math, grid, vectors, etc.)
     PerlinNoise.ts  # Reusable Perlin noise generator
     SeededRandom.ts # Seeded random number generator
   classes/          # Game entities (MODEL layer)
@@ -180,6 +201,12 @@ assets/
 test/               # Mocha/Chai tests - write tests BEFORE implementation
 docs/               # Documentation structure (see below)
 ```
+
+**Config Organization Philosophy:**
+- **Organized by domain** - UI, gameplay, world, systems for logical grouping
+- **Single import point** - Use `src/config/index.ts` barrel export for clean imports
+- **Selective exports** - Building config uses selective exports to avoid type conflicts
+- **Import from subdirectories** - Example: `from '../config/ui/gameUIConfig'` or use barrel: `from '../config'`
 
 ## Documentation Structure
 

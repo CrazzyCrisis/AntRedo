@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { SettingsManager } from '../../src/managers/SettingsManager';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
-import { DEFAULT_SETTINGS } from '../../src/config/defaultSettings';
+import { DEFAULT_SETTINGS } from '../../src/config/systems/defaultSettings';
 
 // Mock localStorage for Node.js environment
 class LocalStorageMock {

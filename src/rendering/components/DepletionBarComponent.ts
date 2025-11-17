@@ -6,7 +6,7 @@
 
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
-import { GATHERING_BEHAVIOR } from '../../config/resourceGatheringConfig';
+import { GATHERING_BEHAVIOR } from '../../config/gameplay/resourceGatheringConfig';
 
 export class DepletionBarComponent implements Renderable {
     public layer: RenderLayer = RenderLayer.ABOVE_ENTITIES;

@@ -3,7 +3,7 @@
  * Defines all sound files and event mappings
  */
 
-import { GameEvents } from '../utils/eventBus';
+import { GameEvents } from '../../utils/eventBus';
 
 /**
  * Sound definitions with file paths and default volumes

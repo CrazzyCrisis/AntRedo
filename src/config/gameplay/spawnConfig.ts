@@ -4,7 +4,7 @@
  * Supports both procedural and handmade level designs
  */
 
-import { TileType } from '../world/TileSystem';
+import { TileType } from '../../world/TileSystem';
 
 /**
  * Queen spawn configuration

@@ -1,43 +1,46 @@
 /**
  * Unit Tests: Building Configuration
- * Tests buildingConfig.ts - terrain validation, unlock status, cost lookup
+ * Tests centralized buildingConfig.ts - terrain validation, unlock status, cost lookup
  */
 
 import { expect } from 'chai';
-import { getBuildingConfig, BUILDING_PLACEMENT_CONFIG } from '../../src/config/buildingConfig';
-import { BuildingType } from '../../src/config/entityConfig';
+import { getBuildingByType, BUILDINGS, BuildingType } from '../../src/config/buildings/buildingConfig';
 import { TileType } from '../../src/world/TileSystem';
 
 describe('Building Configuration', () => {
     
-    describe('BUILDING_PLACEMENT_CONFIG', () => {
+    describe('BUILDINGS (Centralized Config)', () => {
         
-        it('should have configuration for all building types', () => {
-            const buildingTypes: BuildingType[] = ['warehouse', 'barracks', 'tower'];
+        it('should have configuration for all 12 building types', () => {
+            const buildingTypes: BuildingType[] = [
+                'warehouse', 'barracks', 'tower',
+                'nest', 'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon', 'gatherSpeedBeacon', 'terrainNullifierBeacon'
+            ];
             
             buildingTypes.forEach(type => {
-                expect(BUILDING_PLACEMENT_CONFIG[type]).to.exist;
-                expect(BUILDING_PLACEMENT_CONFIG[type].allowedTerrain).to.be.an('array');
-                expect(BUILDING_PLACEMENT_CONFIG[type].constructionSprite).to.be.a('string');
-                expect(BUILDING_PLACEMENT_CONFIG[type].completedSprite).to.be.a('string');
-                expect(BUILDING_PLACEMENT_CONFIG[type].unlocked).to.be.a('boolean');
+                expect(BUILDINGS[type]).to.exist;
+                expect(BUILDINGS[type].allowedTerrain).to.be.an('array');
+                expect(BUILDINGS[type].constructionSprite).to.be.a('string');
+                expect(BUILDINGS[type].completedSprite).to.be.a('string');
+                expect(BUILDINGS[type].unlocked).to.be.a('boolean');
             });
         });
         
         it('should have valid terrain types in allowedTerrain', () => {
             const validTileTypes = Object.values(TileType).filter(v => typeof v === 'number');
             
-            Object.values(BUILDING_PLACEMENT_CONFIG).forEach(config => {
-                config.allowedTerrain.forEach(terrain => {
+            Object.values(BUILDINGS).forEach(config => {
+                config.allowedTerrain.forEach((terrain: any) => {
                     expect(validTileTypes).to.include(terrain);
                 });
             });
         });
         
         it('should have unique allowed terrain sets for different buildings', () => {
-            const warehouse = BUILDING_PLACEMENT_CONFIG.warehouse;
-            const barracks = BUILDING_PLACEMENT_CONFIG.barracks;
-            const tower = BUILDING_PLACEMENT_CONFIG.tower;
+            const warehouse = BUILDINGS.warehouse;
+            const barracks = BUILDINGS.barracks;
+            const tower = BUILDINGS.tower;
             
             // Warehouse should allow farmland, grass, dirt
             expect(warehouse.allowedTerrain).to.include(TileType.GRASS);
@@ -55,14 +58,14 @@ describe('Building Configuration', () => {
         });
         
         it('should NOT allow buildings on water', () => {
-            Object.values(BUILDING_PLACEMENT_CONFIG).forEach(config => {
+            Object.values(BUILDINGS).forEach(config => {
                 expect(config.allowedTerrain).to.not.include(TileType.WATER);
                 expect(config.allowedTerrain).to.not.include(TileType.CAVE_WATER);
             });
         });
         
         it('should have valid sprite paths', () => {
-            Object.values(BUILDING_PLACEMENT_CONFIG).forEach(config => {
+            Object.values(BUILDINGS).forEach(config => {
                 expect(config.constructionSprite).to.include('assets/');
                 expect(config.constructionSprite).to.include('.png');
                 expect(config.completedSprite).to.include('assets/');
@@ -71,49 +74,46 @@ describe('Building Configuration', () => {
         });
         
         it('should default all buildings to unlocked', () => {
-            Object.values(BUILDING_PLACEMENT_CONFIG).forEach(config => {
+            Object.values(BUILDINGS).forEach(config => {
                 expect(config.unlocked).to.be.true;
             });
         });
     });
     
-    describe('getBuildingConfig()', () => {
+    describe('getBuildingByType()', () => {
         
-        it('should merge ENTITY_CONFIG.BUILDINGS with BUILDING_PLACEMENT_CONFIG', () => {
-            const warehouseConfig = getBuildingConfig('warehouse');
+        it('should return complete building configuration', () => {
+            const warehouseConfig = getBuildingByType('warehouse');
             
-            // Should have properties from ENTITY_CONFIG.BUILDINGS
+            // Should have all properties from centralized config
             expect(warehouseConfig.size).to.exist;
             expect(warehouseConfig.costs).to.exist;
             expect(warehouseConfig.constructionTime).to.exist;
             expect(warehouseConfig.levels).to.exist;
-            
-            // Should have properties from BUILDING_PLACEMENT_CONFIG
             expect(warehouseConfig.allowedTerrain).to.exist;
-            // Phase 4: constructionSprite/completedSprite may not exist for new buildings (use centralized config)
-            // expect(warehouseConfig.constructionSprite).to.exist;
-            // expect(warehouseConfig.completedSprite).to.exist;
+            expect(warehouseConfig.constructionSprite).to.exist;
+            expect(warehouseConfig.completedSprite).to.exist;
             expect(warehouseConfig.unlocked).to.exist;
         });
         
         it('should return correct size for all buildings', () => {
-            const warehouse = getBuildingConfig('warehouse');
-            const barracks = getBuildingConfig('barracks');
-            const tower = getBuildingConfig('tower');
+            const warehouse = getBuildingByType('warehouse');
+            const barracks = getBuildingByType('barracks');
+            const tower = getBuildingByType('tower');
             
-            // All buildings are 2x2 minimum (Phase 4: use optional chaining)
-            expect(warehouse.size?.width).to.equal(2);
-            expect(warehouse.size?.height).to.equal(2);
-            expect(barracks.size?.width).to.equal(2);
-            expect(barracks.size?.height).to.equal(2);
-            expect(tower.size?.width).to.equal(2);
-            expect(tower.size?.height).to.equal(2);
+            // Sizes from centralized config
+            expect(warehouse.size.width).to.equal(1);
+            expect(warehouse.size.height).to.equal(2);
+            expect(barracks.size.width).to.equal(2);
+            expect(barracks.size.height).to.equal(2);
+            expect(tower.size.width).to.equal(2);
+            expect(tower.size.height).to.equal(2);
         });
         
         it('should return correct costs for all buildings', () => {
-            const warehouse = getBuildingConfig('warehouse');
-            const barracks = getBuildingConfig('barracks');
-            const tower = getBuildingConfig('tower');
+            const warehouse = getBuildingByType('warehouse');
+            const barracks = getBuildingByType('barracks');
+            const tower = getBuildingByType('tower');
             
             // Verify costs are positive numbers
             expect(warehouse.costs.wood).to.be.greaterThan(0);
@@ -125,9 +125,9 @@ describe('Building Configuration', () => {
         });
         
         it('should return construction time in seconds', () => {
-            const warehouse = getBuildingConfig('warehouse');
-            const barracks = getBuildingConfig('barracks');
-            const tower = getBuildingConfig('tower');
+            const warehouse = getBuildingByType('warehouse');
+            const barracks = getBuildingByType('barracks');
+            const tower = getBuildingByType('tower');
             
             // Construction time should be reasonable (5-60 seconds)
             expect(warehouse.constructionTime).to.be.within(5, 60);
@@ -136,7 +136,7 @@ describe('Building Configuration', () => {
         });
         
         it('should validate terrain correctly', () => {
-            const warehouse = getBuildingConfig('warehouse');
+            const warehouse = getBuildingByType('warehouse');
             
             // Can place on grass
             expect(warehouse.allowedTerrain.includes(TileType.GRASS)).to.be.true;
@@ -149,11 +149,15 @@ describe('Building Configuration', () => {
     describe('Terrain Validation Logic', () => {
         
         it('should reject water tiles for all buildings', () => {
-            const buildingTypes: BuildingType[] = ['warehouse', 'barracks', 'tower'];
+            const buildingTypes: BuildingType[] = [
+                'warehouse', 'barracks', 'tower',
+                'nest', 'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon', 'gatherSpeedBeacon', 'terrainNullifierBeacon'
+            ];
             const waterTiles = [TileType.WATER, TileType.CAVE_WATER];
             
             buildingTypes.forEach(type => {
-                const config = getBuildingConfig(type);
+                const config = getBuildingByType(type);
                 waterTiles.forEach(waterType => {
                     expect(config.allowedTerrain.includes(waterType)).to.be.false;
                 });
@@ -161,19 +165,27 @@ describe('Building Configuration', () => {
         });
         
         it('should allow grass for all buildings', () => {
-            const buildingTypes: BuildingType[] = ['warehouse', 'barracks', 'tower'];
+            const buildingTypes: BuildingType[] = [
+                'warehouse', 'barracks', 'tower',
+                'nest', 'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon', 'gatherSpeedBeacon', 'terrainNullifierBeacon'
+            ];
             
             buildingTypes.forEach(type => {
-                const config = getBuildingConfig(type);
+                const config = getBuildingByType(type);
                 expect(config.allowedTerrain.includes(TileType.GRASS)).to.be.true;
             });
         });
         
         it('should have at least 2 allowed terrain types per building', () => {
-            const buildingTypes: BuildingType[] = ['warehouse', 'barracks', 'tower'];
+            const buildingTypes: BuildingType[] = [
+                'warehouse', 'barracks', 'tower',
+                'nest', 'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon', 'gatherSpeedBeacon', 'terrainNullifierBeacon'
+            ];
             
             buildingTypes.forEach(type => {
-                const config = getBuildingConfig(type);
+                const config = getBuildingByType(type);
                 expect(config.allowedTerrain.length).to.be.at.least(2);
             });
         });

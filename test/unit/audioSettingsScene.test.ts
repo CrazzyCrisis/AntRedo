@@ -5,7 +5,7 @@ import { Renderer } from '../../src/rendering/Renderer';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 import { AudioManager } from '../../src/managers/AudioManager';
 import { SettingsManager } from '../../src/managers/SettingsManager';
-import { AUDIO_SETTINGS_LAYOUT } from '../../src/config/menuLayout';
+import { AUDIO_SETTINGS_LAYOUT } from '../../src/config/ui/menuLayout';
 
 // Mock p5.Graphics
 const createMockGraphics = () => ({

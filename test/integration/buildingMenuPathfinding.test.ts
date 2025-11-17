@@ -32,7 +32,7 @@ describe('Building Menu + Pathfinding Integration', () => {
         questManager.unlockBuilding('barracks');
         questManager.unlockBuilding('tower');
         
-        buildingMenu = new BuildingMenuComponent(400, 300, 'player', resourceSprites);
+        buildingMenu = new BuildingMenuComponent(800, 600, 'player', resourceSprites);
     });
 
     afterEach(() => {

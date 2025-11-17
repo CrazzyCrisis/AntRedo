@@ -9,7 +9,7 @@ import { EventBus, GameEvents } from '../utils/eventBus';
 import { Renderer } from '../rendering/Renderer';
 import { RenderLayer } from '../rendering/RenderLayer';
 import { Renderable } from '../rendering/Renderable';
-import { TILE_CONFIG } from '../config/tileConfig';
+import { TILE_CONFIG } from '../config/world/tileConfig';
 import { ObjectPool } from '../utils/ObjectPool';
 
 interface ParticleSpawnOptions {

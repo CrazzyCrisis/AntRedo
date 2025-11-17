@@ -1,4 +1,4 @@
-﻿import { BaseManager } from './BaseManager';
+import { BaseManager } from './BaseManager';
 /**
  * PowerManager - Queen Power System Manager (CONTROLLER)
  * Singleton manager for queen power unlocks, upgrades, and usage
@@ -39,7 +39,7 @@ const POWER_KEY_MAP: Record<string, number> = {
  */
 export class PowerManager extends BaseManager {
     private static instance: PowerManager;
-    private powers: Map<string, Map<string, IPower>>; // queenId → (powerName → IPower)
+    private powers: Map<string, Map<string, IPower>>; // queenId ? (powerName ? IPower)
     private lastTickTime: number = Date.now();
 
     // Upgrade costs per level

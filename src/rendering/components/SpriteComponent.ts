@@ -1,7 +1,7 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus, GameEvents } from '../../utils/eventBus';
-import { TILE_CONFIG } from '../../config/tileConfig';
+import { TILE_CONFIG } from '../../config/world/tileConfig';
 
 /**
  * SpriteComponent renders a single sprite at a position.

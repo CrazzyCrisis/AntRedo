@@ -10,7 +10,7 @@ import {
     QueenPowerType,
     ResourceType,
     BuildingType
-} from '../../src/config/entityConfig';
+} from '../../src/config/gameplay/entityConfig';
 
 describe('Entity Configuration', () => {
     describe('Ant Configuration', () => {

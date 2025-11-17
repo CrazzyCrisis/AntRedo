@@ -306,7 +306,7 @@ describe('Building Configuration System', () => {
     describe('Backwards Compatibility', () => {
         
         it('should maintain BuildingType export from entityConfig', () => {
-            // import { BuildingType } from '../../src/config/entityConfig';
+            // import { BuildingType } from '../../src/config/gameplay/entityConfig';
             // const validType: BuildingType = 'warehouse';
             // expect(validType).to.equal('warehouse');
             expect(true).to.be.true; // Placeholder

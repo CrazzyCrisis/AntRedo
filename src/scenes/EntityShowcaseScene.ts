@@ -42,7 +42,7 @@ import { ResourceManager } from '../managers/ResourceManager';
 import { PowerManager } from '../managers/PowerManager';
 import { TileRendererComponent } from '../rendering/components/TileRendererComponent';
 import { GameUIOverlay } from '../rendering/overlays/GameUIOverlay';
-import { ENTITY_CONFIG, ResourceType } from '../config/entityConfig';
+import { ENTITY_CONFIG, ResourceType } from '../config/gameplay/entityConfig';
 
 /**
  * EntityShowcaseScene - Interactive demonstration of all entity systems
@@ -555,7 +555,7 @@ export class EntityShowcaseScene implements IScene {
     /**
      * Update scene (called every frame)
      */
-    update(): void {
+    update(_deltaTime: number): void {
         // Handle queen movement via InputManager
         this.handleQueenMovement();
         

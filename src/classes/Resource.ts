@@ -6,8 +6,8 @@
 
 import { GameObject } from './GameObject';
 import { EventBus } from '../utils/eventBus';
-import { ENTITY_CONFIG, ResourceType } from '../config/entityConfig';
-import { RESOURCE_EXTRACTION } from '../config/resourceGatheringConfig';
+import { ENTITY_CONFIG, ResourceType } from '../config/gameplay/entityConfig';
+import { RESOURCE_EXTRACTION } from '../config/gameplay/resourceGatheringConfig';
 import { randomInt } from '../utils/helpers';
 
 export class Resource extends GameObject {

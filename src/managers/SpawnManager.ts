@@ -1,4 +1,4 @@
-﻿import { BaseManager } from './BaseManager';
+import { BaseManager } from './BaseManager';
 /**
  * SpawnManager - Singleton manager coordinating all entity spawning
  * 
@@ -28,7 +28,7 @@ import { NoiseLayerManager } from '../spawning/NoiseLayerManager';
 import { SafeZone } from '../spawning/SafeZone';
 import { QueenFactory } from '../factories/QueenFactory';
 import { GameEvents } from '../utils/eventBus';
-import { SpawnConfig, WaveConfig } from '../config/spawnConfig';
+import { SpawnConfig, WaveConfig } from '../config/gameplay/spawnConfig';
 
 /**
  * Entity spawn result

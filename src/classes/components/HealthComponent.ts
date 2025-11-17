@@ -8,7 +8,7 @@ import { BaseComponent } from './BaseComponent';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 import { gridToWorldCenter } from '../../utils/helpers';
 import { TILE_SIZE } from '../../world/TileSystem';
-import { ENTITY_CONFIG } from '../../config/entityConfig';
+import { ENTITY_CONFIG } from '../../config/gameplay/entityConfig';
 
 /**
  * Damage source for tracking hazards

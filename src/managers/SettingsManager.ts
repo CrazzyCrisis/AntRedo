@@ -11,7 +11,7 @@ import {
     KeyBindings, 
     AccessibilitySettings,
     DEFAULT_SETTINGS 
-} from '../config/defaultSettings';
+} from '../config/systems/defaultSettings';
 import { clamp } from '../utils/helpers';
 
 const SETTINGS_STORAGE_KEY = 'antredo_settings';

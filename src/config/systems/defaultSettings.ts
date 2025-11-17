@@ -29,14 +29,12 @@ export interface VideoSettings {
     particleEffects: boolean;
     screenShake: boolean;
     cameraSmoothing: number;  // 0.0 (instant) to 1.0 (very smooth)
-    showFPS: boolean;
 }
 
 export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
     particleEffects: true,
     screenShake: true,
     cameraSmoothing: 0.1,
-    showFPS: false
 };
 
 /**

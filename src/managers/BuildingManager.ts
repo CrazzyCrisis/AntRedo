@@ -1,4 +1,4 @@
-﻿/**
+/**
  * BuildingManager - Building System Manager (CONTROLLER)
  * Singleton manager for tracking and managing all buildings
  * Handles construction, leveling, worker assignment, and stat boosts
@@ -26,19 +26,19 @@ import { gridToWorldCenter } from '../utils/helpers';
  */
 export class BuildingManager extends BaseManager {
     private static instance: BuildingManager;
-    private buildings: Map<string, Building>; // buildingId → Building
-    private buildingsByFaction: Map<string, Set<string>>; // factionId → building IDs
+    private buildings: Map<string, Building>; // buildingId ? Building
+    private buildingsByFaction: Map<string, Set<string>>; // factionId ? building IDs
     private renderer: any = null;
     private constructionSprites: Map<BuildingType, any> = new Map();
     private completedSprites: Map<BuildingType, any> = new Map();
 
     // Phase 3: Function-specific tracking
-    private spawnerTimers: Map<string, number> = new Map(); // buildingId → time until next spawn
-    private spawnerProgressBars: Map<string, ProgressBarComponent> = new Map(); // buildingId → progress bar
-    private progressBarUnregisterFunctions: Map<string, () => void> = new Map(); // buildingId → unregister function
-    private defenseCooldowns: Map<string, number> = new Map(); // buildingId → cooldown remaining
+    private spawnerTimers: Map<string, number> = new Map(); // buildingId ? time until next spawn
+    private spawnerProgressBars: Map<string, ProgressBarComponent> = new Map(); // buildingId ? progress bar
+    private progressBarUnregisterFunctions: Map<string, () => void> = new Map(); // buildingId ? unregister function
+    private defenseCooldowns: Map<string, number> = new Map(); // buildingId ? cooldown remaining
     private activeBeacons: Set<string> = new Set(); // buildingIds with active stat buffs
-    private beaconAffectedAnts: Map<string, Set<string>> = new Map(); // beaconId → antIds
+    private beaconAffectedAnts: Map<string, Set<string>> = new Map(); // beaconId ? antIds
 
     private constructor() {
         super(); // Initialize BaseManager
@@ -122,7 +122,7 @@ export class BuildingManager extends BaseManager {
         // Check if faction can afford
         const costs = ENTITY_CONFIG.BUILDINGS[buildingType].costs;
         if (!ResourceManager.getInstance().canAfford(factionId, costs)) {
-            this.emit('BUILDING_PLACEMENT_FAILED', factionId, buildingType, 'insufficient_resources');
+            this.emit(GameEvents.BUILDING_PLACEMENT_FAILED, factionId, buildingType, 'insufficient_resources');
             console.warn(`[BuildingManager] Cannot afford ${buildingType}: Need wood=${costs.wood}, stone=${costs.stone}`);
             return;
         }
@@ -313,7 +313,7 @@ export class BuildingManager extends BaseManager {
         // Check if faction can afford
         const costs = ENTITY_CONFIG.BUILDINGS[buildingType].costs;
         if (!ResourceManager.getInstance().canAfford(factionId, costs)) {
-            this.emit('BUILDING_PLACEMENT_FAILED', factionId, buildingType, 'insufficient_resources');
+            this.emit(GameEvents.BUILDING_PLACEMENT_FAILED, factionId, buildingType, 'insufficient_resources');
             return null;
         }
 
@@ -891,7 +891,7 @@ export class BuildingManager extends BaseManager {
                         const progressBar = this.spawnerProgressBars.get(building.id);
                         if (progressBar && buildingConfig.spawnerConfig) {
                             const spawnInterval = buildingConfig.spawnerConfig.spawnInterval;
-                            const progress = 1 - (Math.max(0, newTimer) / spawnInterval); // Inverted: 0 → 1 as timer counts down
+                            const progress = 1 - (Math.max(0, newTimer) / spawnInterval); // Inverted: 0 ? 1 as timer counts down
                             progressBar.setProgress(progress);
                             
                             // Convert grid position to world coordinates

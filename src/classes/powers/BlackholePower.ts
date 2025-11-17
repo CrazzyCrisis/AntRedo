@@ -4,7 +4,7 @@
  */
 
 import { IPower } from './IPower';
-import { ENTITY_CONFIG } from '../../config/entityConfig';
+import { ENTITY_CONFIG } from '../../config/gameplay/entityConfig';
 import { EventBus } from '../../utils/eventBus';
 import { EntityManager } from '../../managers/EntityManager';
 import { distance, angleBetween, clamp, getEntitiesInRadius, distanceFalloff } from '../../utils/helpers';

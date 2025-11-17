@@ -1,5 +1,5 @@
-import { SpawnConfig } from '../config/spawnConfig';
-import { WorldGenConfig } from '../config/worldGenConfig';
+import { SpawnConfig } from '../config/gameplay/spawnConfig';
+import { WorldGenConfig } from '../config/world/worldGenConfig';
 import { TileType } from './TileSystem';
 
 /**

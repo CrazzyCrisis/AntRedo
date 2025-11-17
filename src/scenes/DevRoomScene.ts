@@ -32,7 +32,7 @@ import {
     PathfindingManager
 } from '../imports/sceneImports';
 import { BaseScene } from './BaseScene';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 import { ResourceManager } from '../managers/ResourceManager';
 import { CombatVisualHandler } from '../managers/CombatVisualHandler';
 import { CombatManager } from '../managers/CombatManager';
@@ -42,7 +42,7 @@ import { GameUIOverlay } from '../rendering/overlays/GameUIOverlay';
 import { PathVisualizerComponent } from '../rendering/components/PathVisualizerComponent';
 import { PathfindingComponent } from '../classes/components/PathfindingComponent';
 import { TileHighlightComponent } from '../rendering/components/TileHighlightComponent';
-import { DEV_ROOM_SPAWN_CONFIG } from '../config/devRoomSpawnConfig';
+import { DEV_ROOM_SPAWN_CONFIG } from '../config/gameplay/devRoomSpawnConfig';
 import { TILE_SIZE } from '../world/TileSystem';
 import { ConstructionManager } from '../managers/ConstructionManager';
 import { QuestManager } from '../managers/QuestManager';
@@ -280,21 +280,47 @@ export class DevRoomScene extends BaseScene {
                 tower: this.entitySprites.cone1
             });
             
-            // Initialize BuildingManager with renderer and building sprites
+            // Initialize BuildingManager with renderer and building sprites (ALL 12 BUILDINGS)
             const buildingManager = BuildingManager.getInstance();
             buildingManager.initialize(this.renderer, {
                 construction: new Map([
+                    // Original 3
                     ['warehouse', this.entitySprites.hill1],
                     ['barracks', this.entitySprites.hive1],
-                    ['tower', this.entitySprites.cone1]
+                    ['tower', this.entitySprites.cone1],
+                    // Storage (1)
+                    ['nest', this.entitySprites.hive2],
+                    // Spawners (3)
+                    ['builderHut', this.entitySprites.hill2],
+                    ['gathererHut', this.entitySprites.hive1],
+                    ['spitterHut', this.entitySprites.cone2],
+                    // Stat Boost Beacons (5)
+                    ['speedBeacon', this.entitySprites.hill1],
+                    ['attackBeacon', this.entitySprites.cone1],
+                    ['attackSpeedBeacon', this.entitySprites.hive2],
+                    ['gatherSpeedBeacon', this.entitySprites.hill2],
+                    ['terrainBeacon', this.entitySprites.cone2]
                 ]) as Map<any, any>,
                 completed: new Map([
+                    // Original 3
                     ['warehouse', this.entitySprites.hill2 || this.entitySprites.hill1],
                     ['barracks', this.entitySprites.hive2 || this.entitySprites.hive1],
-                    ['tower', this.entitySprites.cone2 || this.entitySprites.cone1]
+                    ['tower', this.entitySprites.cone2 || this.entitySprites.cone1],
+                    // Storage (1)
+                    ['nest', this.entitySprites.hive2],
+                    // Spawners (3)
+                    ['builderHut', this.entitySprites.hill2],
+                    ['gathererHut', this.entitySprites.hive1],
+                    ['spitterHut', this.entitySprites.cone2],
+                    // Stat Boost Beacons (5)
+                    ['speedBeacon', this.entitySprites.hill1],
+                    ['attackBeacon', this.entitySprites.cone1],
+                    ['attackSpeedBeacon', this.entitySprites.hive2],
+                    ['gatherSpeedBeacon', this.entitySprites.hill2],
+                    ['terrainBeacon', this.entitySprites.cone2]
                 ]) as Map<any, any>
             });
-            console.log(`[DevRoom] ✅ BuildingManager initialized`);
+            console.log(`[DevRoom] ✅ BuildingManager initialized with all 12 building types`);
         } else {
             console.warn(`[DevRoom] Building sprites not available - placement system disabled`);
         }
@@ -535,10 +561,10 @@ export class DevRoomScene extends BaseScene {
         this.gameState.clearTileGrid();
     }
 
-    update(): void {
+    update(deltaTime: number): void {
         // Update pause menu if paused
         if (this.isPaused && this.pauseMenu) {
-            this.pauseMenu.update();
+            this.pauseMenu.update(deltaTime);
             return;
         }
         
@@ -548,26 +574,26 @@ export class DevRoomScene extends BaseScene {
         }
         
         // Update enemy building spawn timers
-        this.updateEnemyBuildingSpawns(16.67);
+        this.updateEnemyBuildingSpawns(deltaTime);
         
         // Update all entities (Queen, Ants, Bosses, etc.) - EntityManager handles lifecycle
-        EntityManager.getInstance().update(16.67); // ~60fps
+        EntityManager.getInstance().update(deltaTime);
         
         // Update spawn manager (wave spawning, safe zone)
         if (this.spawnManager) {
-            this.spawnManager.update(16.67); // ~60fps
+            this.spawnManager.update(deltaTime);
         }
         
         // Update building system managers
         if (this.constructionManager) {
-            this.constructionManager.update(16.67);
+            this.constructionManager.update(deltaTime);
         }
         
         // Update combat visual handler (cleanup expired sprite offsets)
         CombatVisualHandler.getInstance().update();
         
         // Update particle system (animate particles)
-        ParticleSystem.getInstance().update(16.67);
+        ParticleSystem.getInstance().update(deltaTime);
         
         // Update camera (handles following and smooth movement)
         CameraManager.getInstance().update();
@@ -899,6 +925,7 @@ export class DevRoomScene extends BaseScene {
      */
     private pauseGame(): void {
         this.isPaused = true;
+        this.gameState.setPaused(true); // Update centralized pause state
         this.pauseMenu = new PauseMenuScene(
             this.renderer,
             this.canvasWidth,
@@ -916,6 +943,7 @@ export class DevRoomScene extends BaseScene {
             this.pauseMenu = null;
         }
         this.isPaused = false;
+        this.gameState.setPaused(false); // Update centralized pause state
         this.renderer.markLayerDirty(RenderLayer.UI);
     }
     

@@ -6,8 +6,7 @@
 
 import { BaseManager } from './BaseManager';
 import { GameEvents } from '../utils/eventBus';
-import { BuildingType } from '../config/entityConfig';
-import { getBuildingConfig } from '../config/buildingConfig';
+import { BuildingType, getBuildingByType } from '../config/buildings/buildingConfig';
 import { TileType, TILE_SIZE } from '../world/TileSystem';
 import { Renderable } from '../rendering/Renderable';
 import { RenderLayer } from '../rendering/RenderLayer';
@@ -86,6 +85,19 @@ export class BuildingPlacementManager extends BaseManager {
                 this.cancelPlacement();
             }
         });
+        
+        // Subscribe to resource updates for real-time validation
+        this.subscribe(GameEvents.RESOURCE_UPDATED, () => {
+            if (this.isPlacementActive && this.ghostSprite) {
+                this.validatePlacement();
+                this.updateGhostTint();
+                
+                // Mark renderer layer dirty for redraw
+                if (this.renderer) {
+                    this.renderer.markLayerDirty(RenderLayer.ENTITIES);
+                }
+            }
+        });
     }
     
     public static getInstance(): BuildingPlacementManager {
@@ -133,7 +145,7 @@ export class BuildingPlacementManager extends BaseManager {
         const sprite = this.buildingSprites.get(buildingType);
         
         // Get building config for size
-        const config = getBuildingConfig(buildingType);
+        const config = getBuildingByType(buildingType);
         const width = (config.size?.width || 2) * TILE_SIZE;
         const height = (config.size?.height || 2) * TILE_SIZE;
         
@@ -166,7 +178,7 @@ export class BuildingPlacementManager extends BaseManager {
         this.currentGridY = gridPos.row;
         
         // Get building size for multi-tile positioning
-        const config = getBuildingConfig(this.currentBuildingType);
+        const config = getBuildingByType(this.currentBuildingType);
         const centerOffsetX = ((config.size?.width || 2) - 1) * 0.5;
         const centerOffsetY = ((config.size?.height || 2) - 1) * 0.5;
         const centerGridX = this.currentGridX + centerOffsetX;
@@ -198,7 +210,7 @@ export class BuildingPlacementManager extends BaseManager {
             return;
         }
         
-        const config = getBuildingConfig(this.currentBuildingType);
+        const config = getBuildingByType(this.currentBuildingType);
         
         // Check terrain for all tiles in footprint
         const footprint = this.getBuildingFootprint(this.currentGridX, this.currentGridY, config.size?.width || 2, config.size?.height || 2);
@@ -309,7 +321,7 @@ export class BuildingPlacementManager extends BaseManager {
         if (this.validationState === 'valid') {
             console.log(`[BuildingPlacement] ✅ Validation passed - emitting BUILDING_CONSTRUCTION_STARTED`);
             // Emit construction started event
-            const config = getBuildingConfig(this.currentBuildingType);
+            const config = getBuildingByType(this.currentBuildingType);
             
             this.emit(GameEvents.BUILDING_CONSTRUCTION_STARTED, {
                 buildingType: this.currentBuildingType,
@@ -325,7 +337,7 @@ export class BuildingPlacementManager extends BaseManager {
             console.warn(`[BuildingPlacement] ❌ Validation failed: ${this.validationState}`);
             
             // Emit invalid placement event
-            const config = getBuildingConfig(this.currentBuildingType);
+            const config = getBuildingByType(this.currentBuildingType);
             
             this.emit(GameEvents.BUILDING_PLACEMENT_INVALID, {
                 reason: this.validationState,

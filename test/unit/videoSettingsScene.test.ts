@@ -4,7 +4,7 @@ import { VideoSettingsScene } from '../../src/scenes/VideoSettingsScene';
 import { Renderer } from '../../src/rendering/Renderer';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 import { SettingsManager } from '../../src/managers/SettingsManager';
-import { VIDEO_SETTINGS_LAYOUT } from '../../src/config/menuLayout';
+import { VIDEO_SETTINGS_LAYOUT } from '../../src/config/ui/menuLayout';
 
 // Mock p5.Graphics
 const createMockGraphics = () => ({

@@ -1,6 +1,6 @@
 import { PerlinNoise } from '../utils/PerlinNoise';
 import { SpawnRuleValidator } from './SpawnRule';
-import { SpawnConstraints } from '../config/spawnConfig';
+import { SpawnConstraints } from '../config/gameplay/spawnConfig';
 
 /**
  * Point in 2D space

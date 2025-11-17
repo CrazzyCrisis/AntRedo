@@ -9,7 +9,7 @@
  */
 
 import { PerlinNoise } from '../utils/PerlinNoise';
-import { NoiseLayers } from '../config/spawnConfig';
+import { NoiseLayers } from '../config/gameplay/spawnConfig';
 
 /**
  * Configuration for a single noise layer

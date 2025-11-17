@@ -105,13 +105,13 @@ describe('Building System Integration Tests', () => {
             attackBeacon: mockSprite,
             attackSpeedBeacon: mockSprite,
             gatherSpeedBeacon: mockSprite,
-            terrainBeacon: mockSprite
+            terrainNullifierBeacon: mockSprite
         });
         
         // Create BuildingMenuComponent
         buildingMenu = new BuildingMenuComponent(
-            400, // centerX
-            500, // centerY
+            800, // canvasWidth
+            600, // canvasHeight
             'player',
             mockResourceSprites
         );

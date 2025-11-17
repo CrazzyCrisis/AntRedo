@@ -1,4 +1,4 @@
-﻿import { BaseManager } from './BaseManager';
+import { BaseManager } from './BaseManager';
 /**
  * PathfindingManager - Pathfinding System Manager (CONTROLLER)
  * Singleton manager wrapping the Pathfinder class

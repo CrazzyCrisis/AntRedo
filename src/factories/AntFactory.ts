@@ -18,7 +18,7 @@ import { AntJobComponent } from '../classes/components/AntJobComponent';
 import { ResourceGatheringComponent } from '../classes/components/ResourceGatheringComponent';
 import { EntityState } from '../classes/components/StateMachineComponent';
 import { getEntitySpritesheet } from '../sketch';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 import { ProgressBarComponent } from '../rendering/components/ProgressBarComponent';
 
 /**

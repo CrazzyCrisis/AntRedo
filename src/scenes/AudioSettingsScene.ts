@@ -66,7 +66,7 @@ export class AudioSettingsScene implements IScene {
         this.components = [];
     }
     
-    update(): void {
+    update(_deltaTime: number): void {
         // Update button pulse animation
         if (this.backButton.update) {
             this.backButton.update();

@@ -312,6 +312,7 @@ export const GameEvents = {
     BUILDING_PLACEMENT_VALIDATE: 'building:placement:validate',
     BUILDING_PLACEMENT_REQUESTED: 'building:placement:requested',
     BUILDING_PLACEMENT_INVALID: 'building:placement:invalid',
+    BUILDING_PLACEMENT_FAILED: 'building:placement:failed',
     BUILDING_CONSTRUCTION_STARTED: 'building:construction:started',
     BUILDING_CONSTRUCTION_PROGRESS: 'building:construction:progress',
     BUILDING_COMPLETED: 'building:completed',

@@ -13,11 +13,11 @@ export const GAME_UI_CONFIG = {
     LAYOUT: {
         BOTTOM_PANEL: {
             offsetX: 0,                 // Centered horizontally
-            offsetY: -0.95,             // Near bottom
-            height: 100                 // Panel height in pixels
+            offsetY: -0.90,             // Near bottom
+            height: 200                // Panel height in pixels
         },
         RESOURCE_DISPLAY: {
-            offsetX: 0,             
+            offsetX: -0.30,             
             offsetY: 0.98               // Near top edge
         },
         POPULATION_DISPLAY: {
@@ -29,8 +29,8 @@ export const GAME_UI_CONFIG = {
             offsetY: -0.85              // Near bottom (on panel)
         },
         QUEEN_PORTRAIT: {
-            offsetX: -1.01,             // slightly off left edge
-            offsetY: -1.01              // slightly off bottom edge
+            offsetX: -0.85,             // slightly off left edge
+            offsetY: -0.85              // slightly off bottom edge
         },
         QUEEN_COMMANDS: {
             offsetX: -0.65,             // Mid-left
@@ -38,19 +38,18 @@ export const GAME_UI_CONFIG = {
         },
         BUILDING_MENU: {
             offsetX: 0,                 // Centered horizontally
-            offsetY: -0.70,             // Slightly above BUILD button (-0.85)
-            offsetYFromCommands: -80    // Pixels above Queen Commands (-80 = 80 pixels up)
+            offsetY: -0.50              // Vertical position (-1 bottom to 1 top, 0 center)
         },
         MINIMAP: {
-            offsetX: 0.85,              // Near right edge
-            offsetY: -0.70             // Bottom right
+            offsetX: 0.76,              // Near right edge
+            offsetY: -0.5             // Bottom right
         }
     },
 
     // UI Component Sizes
     SIZES: {
-        PORTRAIT: 128,                  // Queen portrait size (pixels)
-        MINIMAP: 150,                   // Minimap size (width/height in pixels)
+        PORTRAIT: 32,                  // Queen portrait size (pixels)
+        MINIMAP: 164,                   // Minimap size (width/height in pixels)
         POWER_BAR_WIDTH: 400,           // Power bar total width
         BUILDING_MENU_BUTTON_WIDTH: 180,   // Building menu button width
         BUILDING_MENU_BUTTON_HEIGHT: 60    // Building menu button height
@@ -61,7 +60,7 @@ export const GAME_UI_CONFIG = {
         RESOURCE_DISPLAY: 1.0,          // Resource icons and text scale
         POPULATION_DISPLAY: 1.0,        // Population counter scale
         POWER_BAR: 1.0,                 // Power bar and icons scale
-        QUEEN_PORTRAIT: 1.3,            // Queen portrait scale
+        QUEEN_PORTRAIT: 1.0,            // Queen portrait scale
         QUEEN_COMMANDS: 1.2,            // Command buttons scale
         BUILDING_MENU: 1.0,             // Building menu scale
         MINIMAP: 1.0                    // Minimap scale
@@ -73,7 +72,20 @@ export const GAME_UI_CONFIG = {
         PANEL_PADDING: 15,              // Padding inside menu panel
         PANEL_BACKGROUND_COLOR: '#2C2C2C',
         PANEL_ALPHA: 200,               // Alpha value (0-255)
-        RESOURCE_ICON_SIZE: 16          // Resource icon display size
+        RESOURCE_ICON_SIZE: 16,         // Resource icon display size
+        
+        // Category Button Settings (Hierarchical Menu)
+        CATEGORY_BUTTON_WIDTH: 150,     // Category button width (pixels)
+        CATEGORY_BUTTON_HEIGHT: 50,     // Category button height (pixels)
+        CATEGORY_SPACING: 10,           // Spacing between category buttons (pixels)
+        CATEGORY_ROW_OFFSET_Y: 0.20,    // Normalized vertical offset above building buttons (ensures no overlap)
+        
+        // Category Button Colors
+        CATEGORY_NORMAL_COLOR: '#3A3A3A',
+        CATEGORY_HOVER_COLOR: '#4A4A4A',
+        CATEGORY_SELECTED_COLOR: '#5A8A5A',
+        CATEGORY_TEXT_COLOR: '#FFFFFF',
+        CATEGORY_TEXT_SIZE: 16          // Text size for category labels
     },
 
     // Default Visibility Flags

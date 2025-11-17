@@ -7,7 +7,7 @@
 import { GameObject } from './GameObject';
 import { EventBus } from '../utils/eventBus';
 import { angleBetween, vectorNormalize, normalizeAngle, distance } from '../utils/helpers';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 
 export class Projectile extends GameObject {
     public damage: number;

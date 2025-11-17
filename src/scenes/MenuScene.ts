@@ -396,7 +396,7 @@ export class MenuScene implements IScene {
     /**
      * Called every frame
      */
-    update(): void {
+    update(_deltaTime: number): void {
         // Update animations
         if (this.titleSprite) {
             this.titleSprite.update();

@@ -209,7 +209,7 @@ export class PauseMenuScene implements IScene {
         this.selectedPreset = null;
     }
 
-    update(): void {
+    update(_deltaTime: number): void {
         // Mark UI dirty for animations
         this.renderer.markLayerDirty(RenderLayer.UI);
     }

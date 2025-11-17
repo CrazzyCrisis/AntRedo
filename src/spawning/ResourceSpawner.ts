@@ -15,12 +15,12 @@
 
 import { Resource } from '../classes/Resource';
 import { ResourceFactory } from '../factories/ResourceFactory';
-import { ResourceType } from '../config/entityConfig';
+import { ResourceType } from '../config/gameplay/entityConfig';
 import { Renderer } from '../rendering/Renderer';
 import { SpawnRuleValidator } from './SpawnRule';
 import { ClusterSpawner } from './ClusterSpawner';
 import { NoiseLayerManager } from './NoiseLayerManager';
-import { ResourceVeinConfig } from '../config/spawnConfig';
+import { ResourceVeinConfig } from '../config/gameplay/spawnConfig';
 
 /**
  * Bounds for spawning area

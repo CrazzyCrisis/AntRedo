@@ -13,7 +13,7 @@ import { VisionComponent } from './components/VisionComponent';
 import { AIBehaviorComponent } from './components/AIBehaviorComponent';
 import { AntJobComponent } from './components/AntJobComponent';
 import { HungerComponent } from './components/HungerComponent';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 import { distance } from '../utils/helpers';
 
 export class Ant extends GameObject {

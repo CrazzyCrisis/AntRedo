@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { GameObject } from '../../src/classes/GameObject';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
-import { TILE_CONFIG } from '../../src/config/tileConfig';
+import { TILE_CONFIG } from '../../src/config/world/tileConfig';
 
 describe('Smooth Movement Diagnostics', () => {
     let entity: GameObject;

@@ -1,4 +1,4 @@
-﻿import { BaseManager } from './BaseManager';
+import { BaseManager } from './BaseManager';
 import { GameEvents } from '../utils/eventBus';
 /**
  * ResourceManager - Resource Economy Manager (CONTROLLER)
@@ -7,7 +7,7 @@ import { GameEvents } from '../utils/eventBus';
  */
 
 
-import { ResourceType } from '../config/entityConfig';
+import { ResourceType } from '../config/gameplay/entityConfig';
 
 /**
  * Resource storage per faction
@@ -37,8 +37,8 @@ interface ResourceLimits {
  */
 export class ResourceManager extends BaseManager {
     private static instance: ResourceManager;
-    private resources: Map<string, FactionResources>; // factionId → resources
-    private resourceLimits: Map<string, ResourceLimits>; // Phase 2: factionId → limits
+    private resources: Map<string, FactionResources>; // factionId ? resources
+    private resourceLimits: Map<string, ResourceLimits>; // Phase 2: factionId ? limits
 
     private constructor() {
         super(); // Initialize BaseManager

@@ -22,15 +22,15 @@ import { Camera } from './rendering/Camera';
 import { MenuScene } from './scenes/MenuScene';
 import { DevRoomScene } from './scenes/DevRoomScene';
 import { AudioSettingsScene } from './scenes/AudioSettingsScene';
-import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH, ENTITY_SPRITES, getEntitySpritePath } from './config/spriteMapping';
+import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH, ENTITY_SPRITES, getEntitySpritePath } from './config/systems/spriteMapping';
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
-import { AUDIO_SOUNDS, SoundKey } from './config/audioConfig';
-import { FPSCounter } from './utils/helpers';
+import { AUDIO_SOUNDS, SoundKey } from './config/systems/audioConfig';
+//import { FPSCounter } from './utils/helpers';
 
 // Declare p5.js global functions and variables
 declare const createCanvas: any;
-declare const frameRate: any;
+//declare const frameRate: any;
 declare const background: any;
 declare const keyCode: any;
 declare const key: any;
@@ -40,6 +40,7 @@ declare const mouseButton: any;
 declare const resizeCanvas: any;
 declare const loadImage: any;
 declare const loadSound: any;
+declare const deltaTime: any; // p5.js deltaTime in milliseconds
 
 // Global renderer instance
 let renderer: Renderer;
@@ -48,7 +49,7 @@ let renderer: Renderer;
 let camera: Camera;
 
 // FPS counter
-let fpsCounter: FPSCounter;
+//let fpsCounter: FPSCounter;
 
 // Preloaded menu images
 let menuImages: {
@@ -193,7 +194,7 @@ function preload() {
 
 function setup() {
     createCanvas(window.innerWidth, window.innerHeight);
-    frameRate(CONFIG.FPS);
+    //frameRate(CONFIG.FPS);
     
     // Create renderer
     renderer = new Renderer(window as any, window.innerWidth, window.innerHeight);
@@ -205,7 +206,7 @@ function setup() {
     camera.setDeadzone(200, 150);
     
     // Initialize FPS counter
-    fpsCounter = new FPSCounter();
+    //fpsCounter = new FPSCounter();
     
     // Register camera with renderer and CameraManager (centralized control)
     renderer.setCamera(camera);
@@ -328,10 +329,13 @@ function draw() {
     background(CONFIG.COLORS.BACKGROUND);
     
     // Update FPS counter
-    fpsCounter.update();
+    //fpsCounter.update();
+    
+    // Calculate delta time (p5.js provides deltaTime in milliseconds)
+    const dt = deltaTime || 16.67; // Fallback to 60fps if deltaTime not available
     
     // Update scene FIRST (checks input state)
-    SceneManager.getInstance().update();
+    SceneManager.getInstance().update(dt);
     
     // Update input manager LAST (clears just-pressed/released flags for next frame)
     InputManager.getInstance().update();
@@ -350,19 +354,19 @@ function draw() {
 }
 
 function drawFPSCounter() {
-    const fps = fpsCounter.getFPS();
-    const p5Instance = window as any;
+    // //const fps = fpsCounter.getFPS();
+    // const p5Instance = window as any;
     
-    // Draw background box
-    p5Instance.fill(0, 0, 0, 150);
-    p5Instance.noStroke();
-    p5Instance.rect(window.innerWidth - 80, 10, 70, 30);
+    // // Draw background box
+    // p5Instance.fill(0, 0, 0, 150);
+    // p5Instance.noStroke();
+    // p5Instance.rect(window.innerWidth - 80, 10, 70, 30);
     
     // Draw FPS text
-    p5Instance.fill(fps >= 55 ? '#00FF00' : fps >= 30 ? '#FFFF00' : '#FF0000');
-    p5Instance.textAlign(p5Instance.RIGHT, p5Instance.TOP);
-    p5Instance.textSize(18);
-    p5Instance.text(`${fps} FPS`, window.innerWidth - 15, 18);
+    // p5Instance.fill(fps >= 55 ? '#00FF00' : fps >= 30 ? '#FFFF00' : '#FF0000');
+    // p5Instance.textAlign(p5Instance.RIGHT, p5Instance.TOP);
+    // p5Instance.textSize(18);
+    // p5Instance.text(`${fps} FPS`, window.innerWidth - 15, 18);
 }
 
 function keyPressed() {

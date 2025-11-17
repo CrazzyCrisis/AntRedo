@@ -32,7 +32,7 @@ import { MinimapComponent } from '../components/MinimapComponent';
 import { BuildingMenuComponent } from '../components/BuildingMenuComponent';
 import { PanelComponent } from '../components/PanelComponent';
 import { Queen } from '../../classes/Queen';
-import { GAME_UI_CONFIG } from '../../config/gameUIConfig';
+import { GAME_UI_CONFIG } from '../../config/ui/gameUIConfig';
 import { EntityManager } from '../../managers/EntityManager';
 
 export interface GameUISprites {
@@ -215,14 +215,12 @@ export class GameUIOverlay {
             this.uiUnregisterFunctions.push(this.renderer.register(this.commandsUI));
         }
         
-        // Building Menu (horizontal layout above BUILD button)
+        // Building Menu (horizontal layout, position controlled by config)
         if (this.config.showCommands && this.sprites.resources) {
             console.log('[GameUIOverlay] Creating building menu...');
-            const commandsY = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
-            const menuY = commandsY + GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetYFromCommands;
             this.buildingMenu = new BuildingMenuComponent(
-                centerX,
-                menuY,
+                this.config.canvasWidth,
+                this.config.canvasHeight,
                 this.config.factionId,
                 this.sprites.resources
             );
@@ -460,9 +458,7 @@ export class GameUIOverlay {
         }
         
         if (this.buildingMenu) {
-            const commandsY = centerY - (GAME_UI_CONFIG.LAYOUT.QUEEN_COMMANDS.offsetY * halfHeight);
-            const menuY = commandsY + GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetYFromCommands;
-            this.buildingMenu.setPosition(centerX, menuY);
+            this.buildingMenu.setPosition(this.config.canvasWidth, this.config.canvasHeight);
         }
         
         if (this.minimap) {

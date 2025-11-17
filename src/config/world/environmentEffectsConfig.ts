@@ -3,7 +3,7 @@
  * Damage from hazardous tiles, swimming effects, etc.
  */
 
-import { TileType } from '../world/TileSystem';
+import { TileType } from '../../world/TileSystem';
 
 /**
  * Water/Swimming Effect Configuration

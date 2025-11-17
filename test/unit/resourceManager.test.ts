@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { ResourceManager } from '../../src/managers/ResourceManager';
 import { EventBus } from '../../src/utils/eventBus';
-import { ResourceType } from '../../src/config/entityConfig';
+import { ResourceType } from '../../src/config/gameplay/entityConfig';
 
 describe('ResourceManager', () => {
     let manager: ResourceManager;

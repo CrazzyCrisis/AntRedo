@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { QuestManager } from '../../src/managers/QuestManager';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
-import { BuildingType } from '../../src/config/entityConfig';
+import { BuildingType } from '../../src/config/gameplay/entityConfig';
 
 describe('QuestManager', () => {
     let questManager: QuestManager;
@@ -167,7 +167,7 @@ describe('QuestManager', () => {
                 'warehouse', 'barracks', 'tower', 'nest',
                 'builderHut', 'gathererHut', 'spitterHut',
                 'speedBeacon', 'attackBeacon', 'attackSpeedBeacon',
-                'gatherSpeedBeacon', 'terrainBeacon'
+                'gatherSpeedBeacon', 'terrainNullifierBeacon'
             ];
             unlocked.forEach(type => {
                 expect(allBuildings).to.include(type);
@@ -180,7 +180,7 @@ describe('QuestManager', () => {
                 'warehouse', 'barracks', 'tower', 'nest',
                 'builderHut', 'gathererHut', 'spitterHut',
                 'speedBeacon', 'attackBeacon', 'attackSpeedBeacon',
-                'gatherSpeedBeacon', 'terrainBeacon'
+                'gatherSpeedBeacon', 'terrainNullifierBeacon'
             ];
             allBuildings.forEach(building => questManager.lockBuilding(building));
             
@@ -233,7 +233,7 @@ describe('QuestManager', () => {
                 'warehouse', 'barracks', 'tower', 'nest',
                 'builderHut', 'gathererHut', 'spitterHut',
                 'speedBeacon', 'attackBeacon', 'attackSpeedBeacon',
-                'gatherSpeedBeacon', 'terrainBeacon'
+                'gatherSpeedBeacon', 'terrainNullifierBeacon'
             ];
             allBuildings.forEach(building => {
                 if (building !== 'warehouse') {

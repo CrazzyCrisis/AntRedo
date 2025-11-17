@@ -4,7 +4,7 @@
  */
 
 import { Tile, TileType, TileData } from './TileSystem';
-import { WorldGenConfig, DEFAULT_WORLD_GEN_CONFIG } from '../config/worldGenConfig';
+import { WorldGenConfig, DEFAULT_WORLD_GEN_CONFIG } from '../config/world/worldGenConfig';
 import { PerlinNoise } from '../utils/PerlinNoise';
 import { EventBus, GameEvents } from '../utils/eventBus';
 

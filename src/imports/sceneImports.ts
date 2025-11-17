@@ -89,7 +89,7 @@ export { GameObject } from '../classes/GameObject';
 // ============================================================================
 export { CONFIG } from '../config';
 export { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
-export { TILE_CONFIG } from '../config/tileConfig';
+export { TILE_CONFIG } from '../config/world/tileConfig';
 export { 
     MAIN_MENU_LAYOUT, 
     OPTIONS_MENU_LAYOUT, 
@@ -99,8 +99,8 @@ export {
     AUDIO_SETTINGS_LAYOUT,
     SETTINGS_SCALES,
     CONTROLS_LAYOUT
-} from '../config/menuLayout';
-export { KeyBindings } from '../config/defaultSettings';
+} from '../config/ui/menuLayout';
+export { KeyBindings } from '../config/systems/defaultSettings';
 
 // ============================================================================
 // OTHER SCENES (for scene transitions)

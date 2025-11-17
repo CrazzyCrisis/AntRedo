@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { GameObject } from '../../src/classes/GameObject';
-import { ENTITY_CONFIG } from '../../src/config/entityConfig';
+import { ENTITY_CONFIG } from '../../src/config/gameplay/entityConfig';
 
 describe('Hover Detection', () => {
     describe('Entity Bounds Calculation', () => {

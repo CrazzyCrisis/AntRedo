@@ -70,7 +70,7 @@ export abstract class BaseGameScene implements IScene {
     // IScene interface - must be implemented by subclasses
     abstract enter(): void;
     abstract exit(): void;
-    abstract update(): void;
+    abstract update(deltaTime: number): void;
     abstract handleMouseClick(x: number, y: number): void;
     abstract handleMouseMove(x: number, y: number): void;
     abstract handleMouseUp(x: number, y: number): void;

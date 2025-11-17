@@ -25,7 +25,7 @@ import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 import { EventBus } from '../../utils/eventBus';
 import { lerp } from '../../utils/helpers';
-import { STATUS_BAR_CONFIGS, DEFAULT_STATUS_BAR_VISUAL, StatusBarConfig } from '../../config/statusBarConfig';
+import { STATUS_BAR_CONFIGS, DEFAULT_STATUS_BAR_VISUAL, StatusBarConfig } from '../../config/ui/statusBarConfig';
 
 export class StatusBarComponent implements Renderable {
     public layer: RenderLayer = RenderLayer.ABOVE_ENTITIES;

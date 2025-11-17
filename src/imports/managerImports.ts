@@ -68,5 +68,5 @@ export { TileData, TILE_SIZE } from '../world/TileSystem';
 // ============================================================================
 // CONFIG
 // ============================================================================
-export { ResourceType, BuildingType, ENTITY_CONFIG } from '../config/entityConfig';
+export { ResourceType, BuildingType, ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 export { CONFIG } from '../config';

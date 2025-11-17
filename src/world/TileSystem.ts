@@ -3,7 +3,7 @@
  * Provides foundation for procedural generation and A* pathfinding
  */
 
-import { TILE_CONFIG } from '../config/tileConfig';
+import { TILE_CONFIG } from '../config/world/tileConfig';
 
 /**
  * Enum defining all available tile types

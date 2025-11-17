@@ -6,7 +6,7 @@
 
 import { GameObject } from './GameObject';
 import { EventBus } from '../utils/eventBus';
-import { ENTITY_CONFIG, BuildingType } from '../config/entityConfig';
+import { ENTITY_CONFIG, BuildingType } from '../config/gameplay/entityConfig';
 
 export class Building extends GameObject {
     public readonly buildingType: BuildingType;

@@ -66,11 +66,11 @@ export { EntityManager } from '../managers/EntityManager';
 // ============================================================================
 // CONFIG
 // ============================================================================
-export { ResourceType, BuildingType, ENTITY_CONFIG } from '../config/entityConfig';
+export { ResourceType, BuildingType, ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 export { 
     ANT_ANIMATIONS, 
     QUEEN_ANIMATIONS, 
     BOSS_ANIMATIONS,
     JOB_TO_ANIMATION_MAP,
     JOB_TO_SPRITESHEET_MAP 
-} from '../config/animationConfig';
+} from '../config/systems/animationConfig';

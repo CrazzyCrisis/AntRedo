@@ -14,7 +14,7 @@ import {
     TILE_SIZE
 } from '../imports/factoryImports';
 import { Projectile } from '../classes/Projectile';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 
 /**
  * ProjectileFactory creates Projectile entities with automatic rendering and entity management.

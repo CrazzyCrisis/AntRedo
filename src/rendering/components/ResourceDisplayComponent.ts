@@ -105,12 +105,14 @@ export class ResourceDisplayComponent implements Renderable {
         this.resources.stone = resourceManager.getResourceCount(this.factionId, 'stone');
         this.resources.magicCrystals = resourceManager.getResourceCount(this.factionId, 'magicCrystal');
         
-        // Also refresh limits
-        const limits = resourceManager.getResourceLimits(this.factionId);
-        this.limits.food = limits.food;
-        this.limits.wood = limits.wood;
-        this.limits.stone = limits.stone;
-        this.limits.magicCrystal = limits.magicCrystal;
+        // Also refresh limits (fix: use getLimits instead of getResourceLimits)
+        const limits = resourceManager.getLimits(this.factionId);
+        if (limits) {
+            this.limits.food = limits.food;
+            this.limits.wood = limits.wood;
+            this.limits.stone = limits.stone;
+            this.limits.magicCrystal = limits.magicCrystal;
+        }
     }
 
     private setupEventListeners(): void {

@@ -10,10 +10,10 @@ import {
     EntityManager,
     gridToWorldCenter
 } from '../imports/factoryImports';
-import { QUEEN_ANIMATIONS } from '../config/animationConfig';
+import { QUEEN_ANIMATIONS } from '../config/systems/animationConfig';
 import { getEntitySpritesheet } from '../sketch';
 import { Queen } from '../classes/Queen';
-import { ENTITY_CONFIG } from '../config/entityConfig';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
 import { EntityState } from '../classes/components/StateMachineComponent';
 
 /**

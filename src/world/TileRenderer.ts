@@ -13,7 +13,7 @@ import { TileGrid } from './TileGrid';
 import { TileFrillSystem } from './TileEdgeSystem';
 import { TILE_SIZE } from './TileSystem';
 import { Camera } from '../rendering/Camera';
-import { TILE_CONFIG } from '../config/tileConfig';
+import { TILE_CONFIG } from '../config/world/tileConfig';
 import { EventBus, GameEvents } from '../utils/eventBus';
 import { RenderLayer } from '../rendering/RenderLayer';
 

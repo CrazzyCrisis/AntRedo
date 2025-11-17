@@ -29,6 +29,17 @@ export enum BuildingFunctionType {
 }
 
 /**
+ * Building UI categories for hierarchical menu system
+ * Groups buildings by player-facing category (not function)
+ */
+export enum BuildingUICategory {
+    STORAGE = 'STORAGE',     // Warehouses, Nests - storage buildings
+    UNITS = 'UNITS',         // Barracks, Huts - ant spawners
+    BOOSTS = 'BOOSTS',       // Beacons - stat boost buildings
+    DEFENSE = 'DEFENSE'      // Towers - defensive structures
+}
+
+/**
  * Resource types that can be stored/produced
  */
 export type ResourceType = 'food' | 'wood' | 'stone' | 'magicCrystal';
@@ -135,6 +146,7 @@ export interface BuildingLevel {
 export interface BuildingConfig {
     // Display
     name: string;                 // Configurable display name (shown in UI)
+    uiCategory: BuildingUICategory;  // UI category for hierarchical menu
     
     // Physical
     size: { width: number; height: number };  // Tiles occupied (2x2, 1x1, etc.)
@@ -175,6 +187,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     warehouse: {
         name: 'Warehouse',
+        uiCategory: BuildingUICategory.STORAGE,
         size: { width: 2, height: 2 },
         costs: { wood: 20, stone: 10 },
         constructionTime: 30,
@@ -185,18 +198,19 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.FARMLAND],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/warehouse.png',
+        completedSprite: 'assets/images/Buildings/Hill/Hill1.png',
         unlocked: true,
         functionType: BuildingFunctionType.STORAGE,
         storageConfig: {
-            foodLimit: 50,      // +50 food capacity
-            woodLimit: 50,      // +50 wood capacity
-            stoneLimit: 50      // +50 stone capacity
+            foodLimit: 125,      // Increase food capacity by x amount
+            woodLimit: 50,      // Increase wood capacity by x amount
+            stoneLimit: 50      // Increase stone capacity by x amount
         }
     },
     
     barracks: {
         name: 'Barracks',
+        uiCategory: BuildingUICategory.UNITS,
         size: { width: 2, height: 2 },
         costs: { wood: 15, stone: 15 },
         constructionTime: 25,
@@ -207,7 +221,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/barracks.png',
+        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
         unlocked: true,
         functionType: BuildingFunctionType.SPAWNER,
         spawnerConfig: {
@@ -220,6 +234,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     tower: {
         name: 'Defense Tower',
+        uiCategory: BuildingUICategory.DEFENSE,
         size: { width: 2, height: 2 },
         costs: { wood: 10, stone: 20 },
         constructionTime: 20,
@@ -230,7 +245,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/tower.png',
+        completedSprite: 'assets/images/Buildings/Cone/Cone1.png',
         unlocked: true,
         functionType: BuildingFunctionType.DEFENSE,
         defenseConfig: {
@@ -241,15 +256,11 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
             targetPriority: 'nearest'
         }
     },
-    
-    // ========================================================================
-    // NEW BUILDINGS (9)
-    // ========================================================================
-    
     // --- STORAGE (1) ---
     
     nest: {
         name: 'Ant Nest',
+        uiCategory: BuildingUICategory.STORAGE,
         size: { width: 2, height: 2 },
         costs: { wood: 25, stone: 15 },
         constructionTime: 35,
@@ -260,7 +271,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.DIRT],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Hive/Hive2.png',
         unlocked: true,
         functionType: BuildingFunctionType.STORAGE,
         storageConfig: {
@@ -272,7 +283,8 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     builderHut: {
         name: 'Builder Hut',
-        size: { width: 1, height: 1 },
+        uiCategory: BuildingUICategory.UNITS,
+        size: { width: 2, height: 2 },
         costs: { wood: 10, stone: 5 },
         constructionTime: 15,
         levels: [
@@ -282,7 +294,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.DIRT],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Hill/Hill2.png',
         unlocked: true,
         functionType: BuildingFunctionType.SPAWNER,
         spawnerConfig: {
@@ -295,7 +307,8 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     gathererHut: {
         name: 'Gatherer Hut',
-        size: { width: 1, height: 1 },
+        uiCategory: BuildingUICategory.UNITS,
+        size: { width: 2, height: 2 },
         costs: { wood: 8, stone: 5 },
         constructionTime: 12,
         levels: [
@@ -318,7 +331,8 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     spitterHut: {
         name: 'Spitter Hut',
-        size: { width: 1, height: 1 },
+        uiCategory: BuildingUICategory.UNITS,
+        size: { width: 2, height: 2 },
         costs: { wood: 12, stone: 10 },
         constructionTime: 18,
         levels: [
@@ -328,7 +342,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Cone/Cone2.png',
         unlocked: true,
         functionType: BuildingFunctionType.SPAWNER,
         spawnerConfig: {
@@ -343,6 +357,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     speedBeacon: {
         name: 'Speed Beacon',
+        uiCategory: BuildingUICategory.BOOSTS,
         size: { width: 1, height: 1 },
         costs: { wood: 15, stone: 10 },
         constructionTime: 10,
@@ -353,7 +368,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Hill/Hill1.png',
         unlocked: true,
         functionType: BuildingFunctionType.STAT_BOOST,
         statBoostConfig: {
@@ -364,6 +379,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     attackBeacon: {
         name: 'Attack Beacon',
+        uiCategory: BuildingUICategory.BOOSTS,
         size: { width: 1, height: 1 },
         costs: { wood: 18, stone: 12 },
         constructionTime: 12,
@@ -374,7 +390,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Cone/Cone1.png',
         unlocked: true,
         functionType: BuildingFunctionType.STAT_BOOST,
         statBoostConfig: {
@@ -385,6 +401,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     attackSpeedBeacon: {
         name: 'Attack Speed Beacon',
+        uiCategory: BuildingUICategory.BOOSTS,
         size: { width: 1, height: 1 },
         costs: { wood: 20, stone: 15 },
         constructionTime: 14,
@@ -395,7 +412,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Hive/Hive2.png',
         unlocked: true,
         functionType: BuildingFunctionType.STAT_BOOST,
         statBoostConfig: {
@@ -406,6 +423,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     gatherSpeedBeacon: {
         name: 'Gather Speed Beacon',
+        uiCategory: BuildingUICategory.BOOSTS,
         size: { width: 1, height: 1 },
         costs: { wood: 16, stone: 10 },
         constructionTime: 11,
@@ -416,7 +434,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.FARMLAND],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Hill/Hill2.png',
         unlocked: true,
         functionType: BuildingFunctionType.STAT_BOOST,
         statBoostConfig: {
@@ -427,6 +445,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     
     terrainNullifierBeacon: {
         name: 'Terrain Nullifier Beacon',
+        uiCategory: BuildingUICategory.BOOSTS,
         size: { width: 1, height: 1 },
         costs: { wood: 25, stone: 20 },
         constructionTime: 16,
@@ -437,7 +456,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         ],
         allowedTerrain: [TileType.GRASS, TileType.STONE],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
-        completedSprite: 'assets/images/Buildings/Hive/Hive1.png',
+        completedSprite: 'assets/images/Buildings/Cone/Cone2.png',
         unlocked: true,
         functionType: BuildingFunctionType.STAT_BOOST,
         statBoostConfig: {
@@ -487,4 +506,16 @@ export function getBuildingsByFunction(functionType: BuildingFunctionType): Buil
  */
 export function isBuildingUnlocked(buildingType: BuildingType): boolean {
     return BUILDINGS[buildingType].unlocked;
+}
+
+/**
+ * Get all buildings by UI category
+ * Used by BuildingMenuComponent for hierarchical filtering
+ * @param uiCategory - UI category to filter by
+ * @returns Array of building types in that category
+ */
+export function getBuildingsByUICategory(uiCategory: BuildingUICategory): BuildingType[] {
+    return Object.entries(BUILDINGS)
+        .filter(([_, config]) => config.uiCategory === uiCategory)
+        .map(([type, _]) => type as BuildingType);
 }
