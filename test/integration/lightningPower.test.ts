@@ -15,7 +15,6 @@ describe('Lightning Power Integration', () => {
     let entityManager: EntityManager;
     let queen: Queen;
     const testFactionId = 'test-faction';
-    const testQueenId = 'test-queen';
 
     beforeEach(() => {
         EventBus.clear();
@@ -44,7 +43,7 @@ describe('Lightning Power Integration', () => {
             setTimeout(() => {
                 let lightningStrikeEmitted = false;
                 
-                EventBus.once('LIGHTNING_STRIKE', (strikeX, strikeY, damage, radius, hitCount, boltCount, queenX, queenY) => {
+                EventBus.once('LIGHTNING_STRIKE', (strikeX, strikeY, damage, radius, _hitCount, boltCount, queenX, queenY) => {
                     lightningStrikeEmitted = true;
                     expect(strikeX).to.equal(15);
                     expect(strikeY).to.equal(15);
@@ -100,7 +99,7 @@ describe('Lightning Power Integration', () => {
             setTimeout(() => {
                 let knockbackCount = 0;
                 
-                EventBus.on('ENTITY_KNOCKBACK', (entityId, knockbackX, knockbackY) => {
+                EventBus.on('ENTITY_KNOCKBACK', (_entityId, knockbackX, knockbackY) => {
                     knockbackCount++;
                     expect(Math.abs(knockbackX) + Math.abs(knockbackY)).to.be.greaterThan(0);
                 });

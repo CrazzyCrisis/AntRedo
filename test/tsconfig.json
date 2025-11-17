@@ -12,5 +12,8 @@
     "allowSyntheticDefaultImports": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
-  }
+  },
+  "exclude": [
+    "unit/tdd_pending/**/*"
+  ]
 }

@@ -92,11 +92,20 @@ describe('Building System Integration Tests', () => {
         // Initialize BuildingPlacementManager
         buildingPlacementManager.initialize(renderer, camera, tileGrid, 'player');
         
-        // Register building sprites
+        // Register building sprites (Phase 4: All 12 building types)
         buildingPlacementManager.registerBuildingSprites({
             warehouse: mockSprite,
             barracks: mockSprite,
-            tower: mockSprite
+            tower: mockSprite,
+            nest: mockSprite,
+            builderHut: mockSprite,
+            gathererHut: mockSprite,
+            spitterHut: mockSprite,
+            speedBeacon: mockSprite,
+            attackBeacon: mockSprite,
+            attackSpeedBeacon: mockSprite,
+            gatherSpeedBeacon: mockSprite,
+            terrainBeacon: mockSprite
         });
         
         // Create BuildingMenuComponent

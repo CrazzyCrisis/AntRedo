@@ -21,6 +21,7 @@ interface BuildingPlacementConfig {
 /**
  * Building placement configuration for all building types
  * Each building has specific terrain requirements and sprite paths
+ * Phase 4: Added placeholder entries for new buildings (centralized config used instead)
  */
 export const BUILDING_PLACEMENT_CONFIG: Record<BuildingType, BuildingPlacementConfig> = {
     warehouse: {
@@ -43,17 +44,107 @@ export const BUILDING_PLACEMENT_CONFIG: Record<BuildingType, BuildingPlacementCo
         constructionSprite: 'assets/images/Buildings/construction_site.png',
         completedSprite: 'assets/images/Buildings/tower.png',
         unlocked: true
+    },
+    // Phase 4: Placeholder entries for new buildings (use centralized config via getBuildingByType)
+    nest: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Hive2.png',
+        unlocked: true
+    },
+    builderHut: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Hill2.png',
+        unlocked: true
+    },
+    gathererHut: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Hive1.png',
+        unlocked: true
+    },
+    spitterHut: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Cone2.png',
+        unlocked: true
+    },
+    speedBeacon: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Hill1.png',
+        unlocked: true
+    },
+    attackBeacon: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Cone1.png',
+        unlocked: true
+    },
+    attackSpeedBeacon: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Hive2.png',
+        unlocked: true
+    },
+    gatherSpeedBeacon: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Hill2.png',
+        unlocked: true
+    },
+    terrainBeacon: {
+        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        constructionSprite: 'assets/images/Buildings/construction_site.png',
+        completedSprite: 'assets/images/Buildings/Cone2.png',
+        unlocked: true
     }
 };
 
 /**
  * Get full building configuration (combines ENTITY_CONFIG + placement config)
+ * Phase 4: Falls back to centralized buildingConfig.ts for new building types
  * @param buildingType - Type of building to get config for
  * @returns Complete building configuration with stats and placement rules
  */
 export function getBuildingConfig(buildingType: BuildingType) {
+    // Legacy support for original 3 buildings
+    if (buildingType in ENTITY_CONFIG.BUILDINGS && buildingType in BUILDING_PLACEMENT_CONFIG) {
+        return {
+            ...ENTITY_CONFIG.BUILDINGS[buildingType],
+            ...BUILDING_PLACEMENT_CONFIG[buildingType]
+        };
+    }
+    
+    // Phase 4: Use centralized config for new buildings
+    const { getBuildingByType } = require('./buildings/buildingConfig');
+    const centralConfig = getBuildingByType(buildingType);
+    
+    if (!centralConfig) {
+        console.warn(`[getBuildingConfig] No config found for building type: ${buildingType}`);
+        // Return minimal fallback to prevent crashes
+        return {
+            costs: { wood: 0, stone: 0 },
+            unlocked: false,
+            allowedTerrain: []
+        };
+    }
+    
+    // Convert centralized config to legacy format expected by UI
     return {
-        ...ENTITY_CONFIG.BUILDINGS[buildingType],
-        ...BUILDING_PLACEMENT_CONFIG[buildingType]
+        costs: centralConfig.costs,
+        unlocked: centralConfig.unlocked,
+        allowedTerrain: centralConfig.allowedTerrain,
+        name: centralConfig.name,
+        displayName: centralConfig.displayName,
+        description: centralConfig.description,
+        // Legacy fields for compatibility
+        size: { width: 2, height: 2 }, // Default size for all new buildings
+        constructionTime: 30,
+        levels: [{
+            health: 100,
+            constructionTime: 30
+        }]
     };
 }

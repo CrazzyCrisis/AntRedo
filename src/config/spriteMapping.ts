@@ -98,11 +98,24 @@ export const ENTITY_SPRITES = {
     queen: 'creatures/ants/gray_ant_queen.png',
     boss: 'creatures/spider/spider.png',
     
-    // Buildings
+    // Buildings - Original 3
     building: '16x16 Tiles/anthill.png',
-    warehouse: 'Buildings/Hill/Hill1.png',      // Reuse Hill sprite for warehouse
-    barracks: 'Buildings/Hive/Hive1.png',       // Reuse Hive sprite for barracks
-    tower: 'Buildings/Cone/Cone1.png',          // Reuse Cone sprite for tower
+    warehouse: 'Buildings/Hill/Hill1.png',      // STORAGE: Resource storage
+    barracks: 'Buildings/Hive/Hive1.png',       // SPAWNER: Worker ants
+    tower: 'Buildings/Cone/Cone1.png',          // DEFENSE: Attack tower
+    
+    // Phase 4: New buildings (9 total)
+    nest: 'Buildings/Hive/Hive2.png',           // STORAGE: Ant capacity (+15)
+    builderHut: 'Buildings/Hill/Hill2.png',     // SPAWNER: Builder ants
+    gathererHut: 'Buildings/Hive/Hive1.png',    // SPAWNER: Gatherer ants (placeholder)
+    spitterHut: 'Buildings/Cone/Cone2.png',     // SPAWNER: Spitter ants
+    speedBeacon: 'Buildings/Hill/Hill1.png',    // STAT_BOOST: Speed +50% (placeholder)
+    attackBeacon: 'Buildings/Cone/Cone1.png',   // STAT_BOOST: Attack +3 (placeholder)
+    attackSpeedBeacon: 'Buildings/Hive/Hive2.png', // STAT_BOOST: Attack speed +30% (placeholder)
+    gatherSpeedBeacon: 'Buildings/Hill/Hill2.png', // STAT_BOOST: Gather speed +50% (placeholder)
+    terrainBeacon: 'Buildings/Cone/Cone2.png',  // STAT_BOOST: Terrain nullifier (placeholder)
+    
+    // Building sprite variants
     hill1: 'Buildings/Hill/Hill1.png',
     hill2: 'Buildings/Hill/Hill2.png',
     hive1: 'Buildings/Hive/Hive1.png',

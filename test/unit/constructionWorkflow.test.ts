@@ -116,14 +116,25 @@ describe('Construction Workflow', () => {
     
     describe('Construction Progress Tracking', () => {
         
+        it('should start with isConstructed = false', () => {
+            const mockBuilding = {
+                isConstructed: false,
+                constructionProgress: 0
+            };
+            
+            expect(mockBuilding.isConstructed).to.be.false;
+            expect(mockBuilding.constructionProgress).to.equal(0);
+        });
+        
         it('should increment progress when workers assigned', () => {
             // Create mock building
             const mockBuilding = {
                 id: 'building-1',
                 constructionProgress: 0,
-                isConstructionComplete: () => false,
+                isConstructed: false,
                 addProgress: function(amount: number) {
-                    this.constructionProgress += amount;
+                    if (this.isConstructed) return;
+                    this.constructionProgress = Math.min(100, this.constructionProgress + amount);
                 }
             };
             
@@ -131,6 +142,46 @@ describe('Construction Workflow', () => {
             mockBuilding.addProgress(10);
             
             expect(mockBuilding.constructionProgress).to.equal(10);
+        });
+        
+        it('should calculate progress based on workers and construction time', () => {
+            const constructionTime = 30; // seconds
+            const deltaTime = 1; // 1 second
+            const workers = 2; // 2 workers
+            
+            const progressPerWorker = 100 / constructionTime; // 3.33% per worker per second
+            const expectedProgress = workers * progressPerWorker * deltaTime; // 6.66%
+            
+            expect(expectedProgress).to.be.approximately(6.66, 0.1);
+        });
+        
+        it('should not add progress to completed buildings', () => {
+            const mockBuilding = {
+                isConstructed: true,
+                constructionProgress: 100,
+                addProgress: function(amount: number) {
+                    if (this.isConstructed) return;
+                    this.constructionProgress += amount;
+                }
+            };
+            
+            mockBuilding.addProgress(10);
+            
+            expect(mockBuilding.constructionProgress).to.equal(100); // No change
+        });
+        
+        it('should clamp progress at 100%', () => {
+            const mockBuilding = {
+                constructionProgress: 95,
+                isConstructed: false,
+                addProgress: function(amount: number) {
+                    this.constructionProgress = Math.min(100, this.constructionProgress + amount);
+                }
+            };
+            
+            mockBuilding.addProgress(20); // Would overflow to 115
+            
+            expect(mockBuilding.constructionProgress).to.equal(100);
         });
         
         it('should emit BUILDING_CONSTRUCTION_PROGRESS event', (done) => {
@@ -147,12 +198,43 @@ describe('Construction Workflow', () => {
         it('should complete construction at 100% progress', () => {
             const mockBuilding = {
                 constructionProgress: 100,
+                isConstructed: false,
+                completeConstruction: function() {
+                    this.isConstructed = true;
+                },
                 isConstructionComplete: function() {
                     return this.constructionProgress >= 100;
                 }
             };
             
             expect(mockBuilding.isConstructionComplete()).to.be.true;
+            
+            mockBuilding.completeConstruction();
+            expect(mockBuilding.isConstructed).to.be.true;
+        });
+        
+        it('should trigger completion automatically when progress reaches 100', () => {
+            let completionTriggered = false;
+            
+            const mockBuilding = {
+                constructionProgress: 95,
+                isConstructed: false,
+                addProgress: function(amount: number) {
+                    this.constructionProgress = Math.min(100, this.constructionProgress + amount);
+                    if (this.constructionProgress >= 100 && !this.isConstructed) {
+                        this.completeConstruction();
+                    }
+                },
+                completeConstruction: function() {
+                    this.isConstructed = true;
+                    completionTriggered = true;
+                }
+            };
+            
+            mockBuilding.addProgress(10); // Brings to 105%, clamped to 100
+            
+            expect(completionTriggered).to.be.true;
+            expect(mockBuilding.isConstructed).to.be.true;
         });
     });
     

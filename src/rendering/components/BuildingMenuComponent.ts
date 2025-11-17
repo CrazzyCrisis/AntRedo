@@ -73,9 +73,16 @@ export class BuildingMenuComponent implements Renderable {
     /**
      * Initialize building buttons in horizontal layout
      * Buttons are centered on centerX, positioned at centerY
+     * Phase 4: Now supports all 12 building types
      */
     private initializeButtons(): void {
-        const buildingTypes: BuildingType[] = ['warehouse', 'barracks', 'tower'];
+        // Phase 4: All 12 building types from centralized config
+        const buildingTypes: BuildingType[] = [
+            'warehouse', 'barracks', 'tower',        // Original 3
+            'nest',                                  // STORAGE
+            'builderHut', 'gathererHut', 'spitterHut', // SPAWNER
+            'speedBeacon', 'attackBeacon', 'attackSpeedBeacon', 'gatherSpeedBeacon', 'terrainBeacon' // STAT_BOOST
+        ];
         const questManager = QuestManager.getInstance();
         const resourceManager = ResourceManager.getInstance();
         

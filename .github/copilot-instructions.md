@@ -921,11 +921,34 @@ describe('FeatureName', () => {
 - **Rendering:** Layer sorting, dirty flags, camera transforms
 - **EventBus interactions:** Events emitted/received correctly
 
-### Running Tests
+### Running Tests (Optimized Workflow)
 ```bash
-npm test           # Run all tests once
-npm run test:watch # Watch mode - runs on file changes (TDD mode)
+# FULL TEST SUITE (3-5 minutes, 140+ tests - use sparingly)
+npm test
+
+# TARGETED TESTING (50-150ms - use this during development!)
+npm test -- --grep "pattern"              # Run specific test suites
+npm test -- --grep "Resource Limits"      # Single system
+npm test -- --grep "Building|Quest"       # Multiple systems with |
+
+# VERIFY BUILD (after test completion)
+npm run build                             # TypeScript compile + esbuild bundle
 ```
+
+**TDD Workflow (Optimized):**
+1. Write tests for new feature in `test/unit/tdd_pending/` or existing test file
+2. Run targeted tests: `npm test -- --grep "YourFeature"` (~50-150ms)
+3. Implement feature in `src/`
+4. Re-run targeted tests until passing
+5. Run `npm run build` to verify no compilation errors
+6. Run full test suite ONLY at end of major phase: `npm test`
+7. Commit when all targeted tests pass + build succeeds
+
+**Benefits:**
+- 50-150ms targeted tests vs 3-5 min full suite = 100-200x faster feedback
+- Iterate rapidly on specific features
+- Catch compilation errors with `npm run build` (fast, ~2-3 seconds)
+- Full test suite only at milestones (avoids 141+ pre-existing failures noise)
 
 ### Test Examples
 ```typescript

@@ -78,12 +78,11 @@ describe('Camera + Terrain + Queen Integration', () => {
     
     describe('Queen Spawn and Camera Follow', () => {
         it('should snap camera to Queen position when follow event is emitted', () => {
-            const mockSprite = { width: 32, height: 32 };
             const queenGridX = 100;
             const queenGridY = 100;
             
             // Create queen - should emit CAMERA_FOLLOW_ENTITY
-            QueenFactory.create(renderer, mockSprite, queenGridX, queenGridY, 'player');
+            QueenFactory.create(renderer, queenGridX, queenGridY, 'player');
             
             // Camera should have snapped to Queen's world position
             const expectedWorldX = queenGridX * TILE_SIZE;
@@ -94,8 +93,7 @@ describe('Camera + Terrain + Queen Integration', () => {
         });
         
         it('should follow Queen as she moves', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            const queen = QueenFactory.create(renderer, 100, 100, 'player');
             
             // Initial position
             const initialCameraX = camera.x;
@@ -112,8 +110,7 @@ describe('Camera + Terrain + Queen Integration', () => {
         });
         
         it('should update camera every frame to follow Queen', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            const queen = QueenFactory.create(renderer, 100, 100, 'player');
             
             // Move queen to new position
             queen.moveTo(105, 105);
@@ -206,8 +203,7 @@ describe('Camera + Terrain + Queen Integration', () => {
     
     describe('Full Integration: Queen Movement + Camera + Terrain', () => {
         it('should keep terrain and Queen in sync when Queen moves', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            const queen = QueenFactory.create(renderer, 100, 100, 'player');
             
             // Create terrain renderable
             let tileRenderCount = 0;
@@ -242,12 +238,11 @@ describe('Camera + Terrain + Queen Integration', () => {
         });
         
         it('should handle camera following Queen with terrain visible', () => {
-            const mockSprite = { width: 32, height: 32 };
             const startGridX = 50;
             const startGridY = 50;
             
             // Create Queen
-            const queen = QueenFactory.create(renderer, mockSprite, startGridX, startGridY, 'player');
+            const queen = QueenFactory.create(renderer, startGridX, startGridY, 'player');
             
             // Verify camera snapped to Queen
             expect(camera.x).to.equal(startGridX * TILE_SIZE);
@@ -343,9 +338,8 @@ describe('Camera + Terrain + Queen Integration', () => {
     });
     
     describe('Edge Cases', () => {
-        it('should handle Queen at origin (0, 0)', () => {
-            const mockSprite = { width: 32, height: 32 };
-            QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+        it('should handle camera at origin (0, 0)', () => {
+            QueenFactory.create(renderer, 0, 0, 'player');
             
             expect(camera.x).to.equal(0);
             expect(camera.y).to.equal(0);
@@ -356,20 +350,18 @@ describe('Camera + Terrain + Queen Integration', () => {
             expect(camera.y).to.equal(0);
         });
         
-        it('should handle Queen at large coordinates', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const largeX = 1000;
-            const largeY = 1000;
+        it('should handle large world coordinates', () => {
+            const largeX = 10000;
+            const largeY = 10000;
             
-            QueenFactory.create(renderer, mockSprite, largeX, largeY, 'player');
+            QueenFactory.create(renderer, largeX, largeY, 'player');
             
             expect(camera.x).to.equal(largeX * TILE_SIZE);
             expect(camera.y).to.equal(largeY * TILE_SIZE);
         });
         
         it('should stop following when Queen is destroyed', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            const queen = QueenFactory.create(renderer, 100, 100, 'player');
             
             // Destroy Queen
             EventBus.emit(GameEvents.ENTITY_DESTROYED, queen.id);
@@ -400,8 +392,7 @@ describe('Camera + Terrain + Queen Integration', () => {
             };
             
             // Create Queen at (100, 100) grid = (3200, 3200) world
-            const mockSprite = { width: 32, height: 32 };
-            QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            QueenFactory.create(renderer, 100, 100, 'player');
             
             // Verify camera snapped
             expect(camera.x).to.equal(3200);
@@ -431,8 +422,7 @@ describe('Camera + Terrain + Queen Integration', () => {
         });
         
         it('should keep terrain and Queen aligned after movement', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            const queen = QueenFactory.create(renderer, 100, 100, 'player');
             
             let tileRenderX = 0;
             let tileRenderY = 0;
@@ -513,8 +503,7 @@ describe('Camera + Terrain + Queen Integration', () => {
         });
         
         it('should log camera position updates during movement', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 100, 100, 'player');
+            const queen = QueenFactory.create(renderer, 100, 100, 'player');
             
             // Move Queen
             queen.moveTo(105, 105);

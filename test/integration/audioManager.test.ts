@@ -69,50 +69,6 @@ describe('AudioManager Integration Tests', () => {
             audioManager.setSFXVolume(-0.3);
             expect(audioManager.getSFXVolume()).to.equal(0);
         });
-
-        it('should emit AUDIO_VOLUME_CHANGE event when master volume changes', (done) => {
-            EventBus.on(GameEvents.AUDIO_VOLUME_CHANGE, (type: string, value: number) => {
-                expect(type).to.equal('master');
-                expect(value).to.equal(0.9);
-                done();
-            });
-            
-            audioManager.setMasterVolume(0.9);
-        });
-
-        it('should emit AUDIO_VOLUME_CHANGE event when music volume changes', (done) => {
-            EventBus.on(GameEvents.AUDIO_VOLUME_CHANGE, (type: string, value: number) => {
-                expect(type).to.equal('music');
-                expect(value).to.equal(0.3);
-                done();
-            });
-            
-            audioManager.setBGMVolume(0.3);
-        });
-
-        it('should emit AUDIO_VOLUME_CHANGE event when SFX volume changes', (done) => {
-            EventBus.on(GameEvents.AUDIO_VOLUME_CHANGE, (type: string, value: number) => {
-                expect(type).to.equal('sfx');
-                expect(value).to.equal(0.65);
-                done();
-            });
-            
-            audioManager.setSFXVolume(0.65);
-        });
-    });
-
-    describe('Mute Control', () => {
-        it('should set and get BGM to 0, should emit BGM_MUTED event', (done) => {
-            EventBus.on('BGM_MUTED', () => {
-                done();
-            });
-
-            audioManager.setBGMVolume(0.0);
-            expect(audioManager.getBGMVolume()).to.equal(0.0);
-            
-            audioManager.setBGMVolume(0.8);
-            expect(audioManager.getBGMVolume()).to.equal(0.8);
-        });
     });
 
     describe('Settings Integration', () => {

@@ -329,6 +329,15 @@ export const GameEvents = {
     BUILDING_PATHFINDING_BLOCK: 'building:pathfinding:block',
     BUILDING_PATHFINDING_UNBLOCK: 'building:pathfinding:unblock',
     
+    // Phase 3: Building function events
+    SPAWNER_ANT_SPAWNED: 'building:spawner:ant_spawned',      // (buildingId, antId, antType)
+    DEFENSE_TOWER_FIRED: 'building:defense:tower_fired',      // (buildingId, buildingX, buildingY, targetId, targetX, targetY, damage, speed)
+    BEACON_BOOST_APPLIED: 'building:beacon:boost_applied',    // (antId, speedBoost, attackBoost, attackSpeedBoost, gatherSpeedBoost, terrainNullifier)
+    BEACON_BOOST_REMOVED: 'building:beacon:boost_removed',    // (antId)
+    
+    // Legacy barracks event (for backwards compatibility)
+    BARRACKS_PLACED: 'building:barracks:placed',
+    
     // Projectile events
     PROJECTILE_SPAWNED: 'projectile:spawned',
     PROJECTILE_HIT: 'projectile:hit',

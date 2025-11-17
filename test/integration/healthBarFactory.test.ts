@@ -105,9 +105,7 @@ describe('Health Bar Factory Integration', () => {
     
     describe('QueenFactory Health Bar Creation', () => {
         it('should create health bar for queen', () => {
-            const mockSprite = { width: 32, height: 32 };
-            
-            QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
+            QueenFactory.create(renderer, 10, 10, 'player');
             
             // Health bar should be registered
             const aboveEntitiesRenderables = (renderer as any).renderables.get(RenderLayer.ABOVE_ENTITIES);
@@ -120,8 +118,7 @@ describe('Health Bar Factory Integration', () => {
         });
         
         it('should cleanup health bar when queen is destroyed', () => {
-            const mockSprite = { width: 32, height: 32 };
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
+            const queen = QueenFactory.create(renderer, 10, 10, 'player');
             
             const aboveEntitiesRenderables = (renderer as any).renderables.get(RenderLayer.ABOVE_ENTITIES);
             const initialCount = aboveEntitiesRenderables.length;

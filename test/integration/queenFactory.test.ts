@@ -8,7 +8,6 @@ import { EventBus, GameEvents } from '../../src/utils/eventBus';
 describe('QueenFactory', () => {
     let renderer: Renderer;
     let mockP5: any;
-    let mockSprite: any;
 
     beforeEach(() => {
         EventBus.clear();
@@ -28,12 +27,6 @@ describe('QueenFactory', () => {
             })
         };
 
-        // Create mock sprite
-        mockSprite = {
-            width: 32,
-            height: 32
-        };
-
         renderer = new Renderer(mockP5, 800, 600);
     });
 
@@ -44,7 +37,7 @@ describe('QueenFactory', () => {
 
     describe('Factory Creation', () => {
         it('should create queen at specified position', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             expect(queen).to.be.instanceOf(Queen);
             expect(queen.gridX).to.equal(10);
@@ -52,19 +45,19 @@ describe('QueenFactory', () => {
         });
 
         it('should create queen with faction ID', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 5, 5, 'player');
+            const queen = QueenFactory.create(renderer, 5, 5, 'player');
 
             expect(queen.getFactionId()).to.equal('player');
         });
 
         it('should create player-controlled queen by default', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 5, 5, 'player');
+            const queen = QueenFactory.create(renderer, 5, 5, 'player');
 
             expect(queen.isPlayerControlled()).to.be.true;
         });
 
         it('should initialize powers map', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 5, 5, 'player');
+            const queen = QueenFactory.create(renderer, 5, 5, 'player');
 
             const powers = queen.getPowers();
             expect(powers.size).to.be.greaterThan(0);
@@ -76,13 +69,13 @@ describe('QueenFactory', () => {
                 done();
             });
 
-            QueenFactory.create(renderer, mockSprite, 5, 5, 'player');
+            QueenFactory.create(renderer, 5, 5, 'player');
         });
     });
 
     describe('Rendering Integration', () => {
         it('should register sprite with renderer', () => {
-            QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            QueenFactory.create(renderer, 10, 15, 'player');
 
             // Verify renderer has renderable on ENTITIES layer
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
@@ -90,14 +83,14 @@ describe('QueenFactory', () => {
         });
 
         it('should render on ENTITIES layer', () => {
-            QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            QueenFactory.create(renderer, 10, 15, 'player');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             expect(renderables).to.have.lengthOf(1);
         });
 
         it('should update sprite position on ENTITY_MOVED', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             // Emit move event
             EventBus.emit('ENTITY_MOVED', queen.id, 20, 25);
@@ -113,7 +106,7 @@ describe('QueenFactory', () => {
         });
 
         it('should update depth on ENTITY_MOVED', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const sprite = renderables[0];
@@ -128,7 +121,7 @@ describe('QueenFactory', () => {
         });
 
         it('should ignore ENTITY_MOVED from other entities', () => {
-            QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            QueenFactory.create(renderer, 10, 15, 'player');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const sprite = renderables[0];
@@ -148,7 +141,7 @@ describe('QueenFactory', () => {
 
     describe('Cleanup', () => {
         it('should unregister sprite on queen death', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
             
             let renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             expect(renderables).to.have.lengthOf(1);
@@ -161,7 +154,7 @@ describe('QueenFactory', () => {
         });
 
         it('should cleanup on ENTITY_DESTROYED', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
             
             let renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             expect(renderables).to.have.lengthOf(1);
@@ -173,13 +166,13 @@ describe('QueenFactory', () => {
         });
 
         it('should have cleanup method attached', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             expect((queen as any)._cleanup).to.be.a('function');
         });
 
         it('should cleanup when calling _cleanup', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
             
             let renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             expect(renderables).to.have.lengthOf(1);
@@ -193,8 +186,8 @@ describe('QueenFactory', () => {
 
     describe('Multiple Queens (Different Factions)', () => {
         it('should create queens for different factions independently', () => {
-            const queen1 = QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
-            const queen2 = QueenFactory.create(renderer, mockSprite, 20, 20, 'enemy');
+            const queen1 = QueenFactory.create(renderer, 10, 10, 'player');
+            const queen2 = QueenFactory.create(renderer, 20, 20, 'enemy');
 
             expect(queen1.id).to.not.equal(queen2.id);
             expect(queen1.getFactionId()).to.equal('player');
@@ -202,16 +195,16 @@ describe('QueenFactory', () => {
         });
 
         it('should register each queen sprite separately', () => {
-            QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
-            QueenFactory.create(renderer, mockSprite, 20, 20, 'enemy');
+            QueenFactory.create(renderer, 10, 10, 'player');
+            QueenFactory.create(renderer, 20, 20, 'enemy');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             expect(renderables).to.have.lengthOf(2);
         });
 
         it('should handle movement of multiple queens independently', () => {
-            const queen1 = QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
-            QueenFactory.create(renderer, mockSprite, 20, 20, 'enemy');
+            const queen1 = QueenFactory.create(renderer, 10, 10, 'player');
+            QueenFactory.create(renderer, 20, 20, 'enemy');
 
             const renderables = (renderer as any).renderables.get(RenderLayer.ENTITIES);
             const sprite1 = renderables[0];
@@ -231,19 +224,19 @@ describe('QueenFactory', () => {
 
     describe('Component Integration', () => {
         it('should create queen with pathfinding component', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             expect(queen.getComponent('Pathfinding')).to.exist;
         });
 
         it('should create queen with health component', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             expect(queen.getComponent('Health')).to.exist;
         });
 
         it('should create queen with combat component', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 10, 15, 'player');
+            const queen = QueenFactory.create(renderer, 10, 15, 'player');
 
             expect(queen.getComponent('Combat')).to.exist;
         });
@@ -251,28 +244,28 @@ describe('QueenFactory', () => {
 
     describe('Edge Cases', () => {
         it('should handle queen at grid origin', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            const queen = QueenFactory.create(renderer, 0, 0, 'player');
 
             expect(queen.gridX).to.equal(0);
             expect(queen.gridY).to.equal(0);
         });
 
         it('should handle negative grid positions', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, -5, -10, 'faction_1');
+            const queen = QueenFactory.create(renderer, -5, -10, 'faction_1');
 
             expect(queen.gridX).to.equal(-5);
             expect(queen.gridY).to.equal(-10);
         });
 
         it('should handle very large grid positions', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 1000, 1000, 'faction_2');
+            const queen = QueenFactory.create(renderer, 1000, 1000, 'faction_2');
 
             expect(queen.gridX).to.equal(1000);
             expect(queen.gridY).to.equal(1000);
         });
 
         it('should handle empty faction ID', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 5, 5, '');
+            const queen = QueenFactory.create(renderer, 5, 5, '');
 
             expect(queen.getFactionId()).to.equal('');
         });
@@ -280,24 +273,24 @@ describe('QueenFactory', () => {
 
     describe('Singleton Pattern', () => {
         it('should enforce only one Queen per faction', () => {
-            QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            QueenFactory.create(renderer, 0, 0, 'player');
 
             // Attempt to create second Queen for same faction
             expect(() => {
-                QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
+                QueenFactory.create(renderer, 10, 10, 'player');
             }).to.throw('Queen already exists for faction \'player\'');
         });
 
         it('should allow multiple Queens for different factions', () => {
-            const queen1 = QueenFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            const queen2 = QueenFactory.create(renderer, mockSprite, 50, 50, 'faction_2');
+            const queen1 = QueenFactory.create(renderer, 0, 0, 'faction_1');
+            const queen2 = QueenFactory.create(renderer, 50, 50, 'faction_2');
 
             expect(queen1.getFactionId()).to.equal('faction_1');
             expect(queen2.getFactionId()).to.equal('faction_2');
         });
 
         it('should get active Queen by faction', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            const queen = QueenFactory.create(renderer, 0, 0, 'player');
 
             const retrieved = QueenFactory.getQueen('player');
             expect(retrieved).to.equal(queen);
@@ -309,15 +302,15 @@ describe('QueenFactory', () => {
         });
 
         it('should check if Queen exists for faction', () => {
-            QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            QueenFactory.create(renderer, 0, 0, 'player');
 
             expect(QueenFactory.hasQueen('player')).to.be.true;
             expect(QueenFactory.hasQueen('enemy')).to.be.false;
         });
 
         it('should get all active Queens', () => {
-            const queen1 = QueenFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            const queen2 = QueenFactory.create(renderer, mockSprite, 50, 50, 'faction_2');
+            const queen1 = QueenFactory.create(renderer, 0, 0, 'faction_1');
+            const queen2 = QueenFactory.create(renderer, 50, 50, 'faction_2');
 
             const allQueens = QueenFactory.getAllQueens();
             expect(allQueens).to.have.lengthOf(2);
@@ -326,7 +319,7 @@ describe('QueenFactory', () => {
         });
 
         it('should remove Queen from active list on death', () => {
-            const queen = QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            const queen = QueenFactory.create(renderer, 0, 0, 'player');
 
             expect(QueenFactory.hasQueen('player')).to.be.true;
 
@@ -338,7 +331,7 @@ describe('QueenFactory', () => {
 
         it.skip('should remove Queen from active list on destroy', () => {
             QueenFactory.clearAll(); // Ensure clean state
-            const queen = QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            const queen = QueenFactory.create(renderer, 0, 0, 'player');
 
             expect(QueenFactory.hasQueen('player')).to.be.true;
 
@@ -349,19 +342,19 @@ describe('QueenFactory', () => {
 
         it('should allow creating new Queen after previous one dies', () => {
             QueenFactory.clearAll(); // Ensure clean state
-            const queen1 = QueenFactory.create(renderer, mockSprite, 0, 0, 'player');
+            const queen1 = QueenFactory.create(renderer, 0, 0, 'player');
             queen1.destroy();
             QueenFactory.clearAll(); // Clear the dead queen from factory
 
             // Should not throw
-            const queen2 = QueenFactory.create(renderer, mockSprite, 10, 10, 'player');
+            const queen2 = QueenFactory.create(renderer, 10, 10, 'player');
             expect(queen2).to.exist;
             expect(QueenFactory.getQueen('player')).to.equal(queen2);
         });
 
         it('should clear all Queens', () => {
-            QueenFactory.create(renderer, mockSprite, 0, 0, 'faction_1');
-            QueenFactory.create(renderer, mockSprite, 50, 50, 'faction_2');
+            QueenFactory.create(renderer, 0, 0, 'faction_1');
+            QueenFactory.create(renderer, 50, 50, 'faction_2');
 
             expect(QueenFactory.getAllQueens()).to.have.lengthOf(2);
 
@@ -373,3 +366,4 @@ describe('QueenFactory', () => {
         });
     });
 });
+

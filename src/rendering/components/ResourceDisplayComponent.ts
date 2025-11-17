@@ -16,6 +16,13 @@ interface ResourceCounts {
     magicCrystals: number;
 }
 
+interface ResourceLimits {
+    food: number;
+    wood: number;
+    stone: number;
+    magicCrystal: number; // Note: singular, matches ResourceManager
+}
+
 interface PendingResourceCounts {
     food: number;
     wood: number;
@@ -35,6 +42,7 @@ export class ResourceDisplayComponent implements Renderable {
     private y: number;
     private factionId: string;
     private resources: ResourceCounts;
+    private limits: ResourceLimits; // Resource limits
     private pending: PendingResourceCounts; // Resources held by ants
     private entityManager: any | null = null; // For querying ants
     private baseIconSize: number = 24;
@@ -59,6 +67,12 @@ export class ResourceDisplayComponent implements Renderable {
             wood: 0,
             stone: 0,
             magicCrystals: 0
+        };
+        this.limits = {
+            food: 0,
+            wood: 0,
+            stone: 0,
+            magicCrystal: 0
         };
         this.pending = {
             food: 0,
@@ -90,6 +104,13 @@ export class ResourceDisplayComponent implements Renderable {
         this.resources.wood = resourceManager.getResourceCount(this.factionId, 'wood');
         this.resources.stone = resourceManager.getResourceCount(this.factionId, 'stone');
         this.resources.magicCrystals = resourceManager.getResourceCount(this.factionId, 'magicCrystal');
+        
+        // Also refresh limits
+        const limits = resourceManager.getResourceLimits(this.factionId);
+        this.limits.food = limits.food;
+        this.limits.wood = limits.wood;
+        this.limits.stone = limits.stone;
+        this.limits.magicCrystal = limits.magicCrystal;
     }
 
     private setupEventListeners(): void {
@@ -97,6 +118,16 @@ export class ResourceDisplayComponent implements Renderable {
         EventBus.on(GameEvents.RESOURCE_UPDATED, (factionId: string, resourceType: string, newAmount: number) => {
             if (factionId === this.factionId) {
                 this.updateResourceCount(resourceType, newAmount);
+            }
+        });
+        
+        // Listen for resource limit changes
+        EventBus.on('RESOURCE_LIMIT_CHANGED', (factionId: string, type: string, newLimit: number) => {
+            if (factionId === this.factionId) {
+                const resourceKey = type.toLowerCase();
+                if (resourceKey in this.limits) {
+                    (this.limits as any)[resourceKey] = newLimit;
+                }
             }
         });
     }
@@ -176,19 +207,19 @@ export class ResourceDisplayComponent implements Renderable {
         graphics.textSize(fontSize);
         graphics.fill(255, 255, 255);
 
-        // Draw each resource (stored + pending)
-        this.drawResource(graphics, this.sprites.food || '🍖', this.resources.food, this.pending.food, 0, [255, 200, 100], iconSize, spacing, fontSize); // Food - orange
-        this.drawResource(graphics, this.sprites.wood || '🪵', this.resources.wood, this.pending.wood, 1, [139, 90, 43], iconSize, spacing, fontSize); // Wood - brown
-        this.drawResource(graphics, this.sprites.stone || '🪨', this.resources.stone, this.pending.stone, 2, [150, 150, 150], iconSize, spacing, fontSize); // Stone - gray
-        this.drawResource(graphics, this.sprites.magicCrystal || '💎', this.resources.magicCrystals, this.pending.magicCrystal, 3, [150, 100, 255], iconSize, spacing, fontSize); // Crystals - purple
+        // Draw each resource (stored + pending + limit)
+        this.drawResource(graphics, this.sprites.food || '🍖', this.resources.food, this.limits.food, this.pending.food, 0, [255, 200, 100], iconSize, spacing, fontSize); // Food - orange
+        this.drawResource(graphics, this.sprites.wood || '🪵', this.resources.wood, this.limits.wood, this.pending.wood, 1, [139, 90, 43], iconSize, spacing, fontSize); // Wood - brown
+        this.drawResource(graphics, this.sprites.stone || '🪨', this.resources.stone, this.limits.stone, this.pending.stone, 2, [150, 150, 150], iconSize, spacing, fontSize); // Stone - gray
+        this.drawResource(graphics, this.sprites.magicCrystal || '💎', this.resources.magicCrystals, this.limits.magicCrystal, this.pending.magicCrystal, 3, [150, 100, 255], iconSize, spacing, fontSize); // Crystals - purple
 
         graphics.pop();
     }
 
     /**
-     * Draw individual resource icon and count (with pending)
+     * Draw individual resource icon and count (with pending and limit)
      */
-    private drawResource(graphics: any, iconOrSprite: any, count: number, pendingCount: number, index: number, color: number[], iconSize: number, spacing: number, fontSize: number): void {
+    private drawResource(graphics: any, iconOrSprite: any, count: number, limit: number, pendingCount: number, index: number, color: number[], iconSize: number, spacing: number, fontSize: number): void {
         const xPos = this.x + (index * spacing);
         const yPos = this.y + iconSize / 2;
 
@@ -209,11 +240,20 @@ export class ResourceDisplayComponent implements Renderable {
         const countText = formatNumberWithCommas(count);
         graphics.text(countText, xPos + iconSize + 8, yPos);
 
-        // Draw pending count if > 0
-        if (pendingCount > 0) {
+        // Draw limit
+        if (limit > 0) {
             const textWidth = graphics.textWidth(countText);
+            graphics.fill(200, 200, 200); // Light gray for limit
+            graphics.text(` / ${formatNumberWithCommas(limit)}`, xPos + iconSize + 8 + textWidth, yPos);
+        }
+
+        // Draw pending count if > 0 (below the limit)
+        if (pendingCount > 0) {
+            const countWidth = graphics.textWidth(countText);
+            const limitText = limit > 0 ? ` / ${formatNumberWithCommas(limit)}` : '';
+            const limitWidth = graphics.textWidth(limitText);
             graphics.fill(100, 200, 100); // Green color for pending
-            graphics.text(` +${formatNumberWithCommas(pendingCount)}`, xPos + iconSize + 8 + textWidth, yPos);
+            graphics.text(` +${formatNumberWithCommas(pendingCount)}`, xPos + iconSize + 8 + countWidth + limitWidth, yPos);
         }
     }
 }

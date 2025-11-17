@@ -134,8 +134,8 @@ export class BuildingPlacementManager extends BaseManager {
         
         // Get building config for size
         const config = getBuildingConfig(buildingType);
-        const width = config.size.width * TILE_SIZE;
-        const height = config.size.height * TILE_SIZE;
+        const width = (config.size?.width || 2) * TILE_SIZE;
+        const height = (config.size?.height || 2) * TILE_SIZE;
         
         // Create ghost sprite with correct dimensions
         this.ghostSprite = new GhostSpriteComponent(sprite, 0, 0, width, height);
@@ -167,8 +167,8 @@ export class BuildingPlacementManager extends BaseManager {
         
         // Get building size for multi-tile positioning
         const config = getBuildingConfig(this.currentBuildingType);
-        const centerOffsetX = (config.size.width - 1) * 0.5;
-        const centerOffsetY = (config.size.height - 1) * 0.5;
+        const centerOffsetX = ((config.size?.width || 2) - 1) * 0.5;
+        const centerOffsetY = ((config.size?.height || 2) - 1) * 0.5;
         const centerGridX = this.currentGridX + centerOffsetX;
         const centerGridY = this.currentGridY + centerOffsetY;
         
@@ -201,7 +201,7 @@ export class BuildingPlacementManager extends BaseManager {
         const config = getBuildingConfig(this.currentBuildingType);
         
         // Check terrain for all tiles in footprint
-        const footprint = this.getBuildingFootprint(this.currentGridX, this.currentGridY, config.size.width, config.size.height);
+        const footprint = this.getBuildingFootprint(this.currentGridX, this.currentGridY, config.size?.width || 2, config.size?.height || 2);
         
         for (const tile of footprint) {
             const tileData = this.tileGrid.getTileDataAt(tile.x, tile.y);

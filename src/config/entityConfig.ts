@@ -11,7 +11,12 @@
 export type AntJobType = 'gatherer' | 'builder' | 'warrior' | 'scout';
 export type QueenPowerType = 'lightning' | 'fireball' | 'blackhole' | 'tidalwave' | 'finalFlash';
 export type ResourceType = 'food' | 'wood' | 'stone' | 'magicCrystal';
-export type BuildingType = 'warehouse' | 'barracks' | 'tower';
+// Phase 4: Extended with 9 new building types (12 total)
+export type BuildingType = 
+    | 'warehouse' | 'barracks' | 'tower'  // Original 3
+    | 'nest'                               // STORAGE: +15 ant capacity
+    | 'builderHut' | 'gathererHut' | 'spitterHut'  // SPAWNER: specialized ant spawners
+    | 'speedBeacon' | 'attackBeacon' | 'attackSpeedBeacon' | 'gatherSpeedBeacon' | 'terrainBeacon'; // STAT_BOOST: 5 beacons
 export type PriorityTask = 'queenCommand' | 'gathering' | 'building' | 'combat' | 'scouting' | 'healing' | 'idle';
 
 // ============================================================================
@@ -344,6 +349,97 @@ const BUILDINGS: Record<BuildingType, BuildingConfig> = {
             { health: 100, productionRate: 1.2 },      // 20% production boost
             { health: 200, productionRate: 1.5 },      // 50% production boost
             { health: 300, productionRate: 2.0 }       // 100% production boost (double)
+        ]
+    },
+    // Phase 4: Placeholder entries for new buildings (use centralized buildingConfig.ts)
+    nest: {
+        size: { width: 2, height: 2 },
+        costs: { wood: 10, stone: 5 },
+        constructionTime: 20,
+        levels: [
+            { health: 150, antCapBonus: 15 },
+            { health: 300, antCapBonus: 15 },
+            { health: 450, antCapBonus: 15 }
+        ]
+    },
+    builderHut: {
+        size: { width: 2, height: 2 },
+        costs: { wood: 15, stone: 10 },
+        constructionTime: 25,
+        levels: [
+            { health: 100 },
+            { health: 200 },
+            { health: 300 }
+        ]
+    },
+    gathererHut: {
+        size: { width: 2, height: 2 },
+        costs: { wood: 15, stone: 10 },
+        constructionTime: 25,
+        levels: [
+            { health: 100 },
+            { health: 200 },
+            { health: 300 }
+        ]
+    },
+    spitterHut: {
+        size: { width: 2, height: 2 },
+        costs: { wood: 20, stone: 15 },
+        constructionTime: 30,
+        levels: [
+            { health: 120 },
+            { health: 240 },
+            { health: 360 }
+        ]
+    },
+    speedBeacon: {
+        size: { width: 1, height: 1 },
+        costs: { wood: 10, stone: 10 },
+        constructionTime: 15,
+        levels: [
+            { health: 80 },
+            { health: 160 },
+            { health: 240 }
+        ]
+    },
+    attackBeacon: {
+        size: { width: 1, height: 1 },
+        costs: { wood: 10, stone: 10 },
+        constructionTime: 15,
+        levels: [
+            { health: 80 },
+            { health: 160 },
+            { health: 240 }
+        ]
+    },
+    attackSpeedBeacon: {
+        size: { width: 1, height: 1 },
+        costs: { wood: 10, stone: 10 },
+        constructionTime: 15,
+        levels: [
+            { health: 80 },
+            { health: 160 },
+            { health: 240 }
+        ]
+    },
+    gatherSpeedBeacon: {
+        size: { width: 1, height: 1 },
+        costs: { wood: 10, stone: 10 },
+        constructionTime: 15,
+        levels: [
+            { health: 80 },
+            { health: 160 },
+            { health: 240 }
+        ]
+    },
+    terrainBeacon: {
+        size: { width: 1, height: 1 },
+        costs: { wood: 15, stone: 15 },
+        constructionTime: 20,
+        levels: [
+            { health: 100 },
+            { health: 200 },
+            { health: 300 }
         ]
     }
 };

@@ -47,7 +47,7 @@ describe('QuestManager', () => {
         it('should return all building types in getUnlockedBuildings()', () => {
             const unlocked = questManager.getUnlockedBuildings();
             
-            expect(unlocked).to.have.lengthOf(3);
+            expect(unlocked).to.have.lengthOf(12);
             expect(unlocked).to.include('warehouse');
             expect(unlocked).to.include('barracks');
             expect(unlocked).to.include('tower');
@@ -162,15 +162,27 @@ describe('QuestManager', () => {
             const unlocked = questManager.getUnlockedBuildings();
             
             expect(unlocked).to.be.an('array');
+            // All 12 building types should be unlocked by default
+            const allBuildings: BuildingType[] = [
+                'warehouse', 'barracks', 'tower', 'nest',
+                'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon',
+                'gatherSpeedBeacon', 'terrainBeacon'
+            ];
             unlocked.forEach(type => {
-                expect(['warehouse', 'barracks', 'tower']).to.include(type);
+                expect(allBuildings).to.include(type);
             });
         });
         
         it('should return empty array if all buildings locked', () => {
-            questManager.lockBuilding('warehouse');
-            questManager.lockBuilding('barracks');
-            questManager.lockBuilding('tower');
+            // Lock ALL 12 buildings
+            const allBuildings: BuildingType[] = [
+                'warehouse', 'barracks', 'tower', 'nest',
+                'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon',
+                'gatherSpeedBeacon', 'terrainBeacon'
+            ];
+            allBuildings.forEach(building => questManager.lockBuilding(building));
             
             const unlocked = questManager.getUnlockedBuildings();
             expect(unlocked).to.have.lengthOf(0);
@@ -216,9 +228,18 @@ describe('QuestManager', () => {
     describe('Integration with Building System', () => {
         
         it('should support quest-based progression pattern', () => {
-            // Start with only warehouse unlocked
-            questManager.lockBuilding('barracks');
-            questManager.lockBuilding('tower');
+            // Lock all buildings except warehouse
+            const allBuildings: BuildingType[] = [
+                'warehouse', 'barracks', 'tower', 'nest',
+                'builderHut', 'gathererHut', 'spitterHut',
+                'speedBeacon', 'attackBeacon', 'attackSpeedBeacon',
+                'gatherSpeedBeacon', 'terrainBeacon'
+            ];
+            allBuildings.forEach(building => {
+                if (building !== 'warehouse') {
+                    questManager.lockBuilding(building);
+                }
+            });
             
             // Check only warehouse available
             expect(questManager.getUnlockedBuildings()).to.deep.equal(['warehouse']);
