@@ -10,6 +10,7 @@ import {
     SpriteComponent,
     EntityManager,
     EventBus,
+    GameEvents,
     setupEntitySpriteBinding,
     TILE_SIZE,
     ResourceType,
@@ -95,6 +96,9 @@ export class ResourceFactory {
         depletionBar.hide();
         const depletionBarUnregister = renderer.register(depletionBar);
 
+        // Emit RESOURCE_CREATED for minimap
+        EventBus.emit(GameEvents.RESOURCE_CREATED, resource.id, gridX, gridY, resourceType);
+        
         // Listen to RESOURCE_EXTRACTED event to update depletion bar
         const extractListener = EventBus.on('RESOURCE_EXTRACTED', (resourceId: string, _type: string, _current: number, _max: number) => {
             if (resourceId === resource.id) {

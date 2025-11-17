@@ -146,6 +146,9 @@ export class BuildingFactory {
             sizeHeight: building.size.height,
             factionId: building.factionId
         });
+        
+        // Emit BUILDING_PLACED for minimap
+        EventBus.emit(GameEvents.BUILDING_PLACED, building.id, building.gridX, building.gridY);
 
         return building;
     }

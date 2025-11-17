@@ -23,11 +23,26 @@ export class CameraManager {
     private renderer: Renderer | null = null;
     private followEntityId: string | null = null;
     private isFollowing: boolean = false;
+    private wasPreviouslyFollowing: boolean = false;
+    
+    // Timer system for temporary camera movement (minimap clicks)
+    private followResumeTimer: number = 0;
+    private followResumeDelay: number = 5000; // 5 seconds in milliseconds
     
     private constructor() {
         // Listen for camera follow requests
         EventBus.on(GameEvents.CAMERA_FOLLOW_ENTITY, (entityId: string) => {
             this.followEntity(entityId);
+        });
+        
+        // Listen for manual camera stop (minimap clicks)
+        EventBus.on(GameEvents.CAMERA_STOP_FOLLOWING, () => {
+            this.stopFollowingTemporarily();
+        });
+        
+        // Listen for resume following request
+        EventBus.on(GameEvents.CAMERA_RESUME_FOLLOWING, () => {
+            this.resumeFollowing();
         });
         
         // Stop following if entity is destroyed
@@ -92,6 +107,33 @@ export class CameraManager {
     stopFollowing(): void {
         this.followEntityId = null;
         this.isFollowing = false;
+        this.wasPreviouslyFollowing = false;
+        this.followResumeTimer = 0;
+    }
+    
+    /**
+     * Temporarily stop following (for minimap clicks)
+     * Will automatically resume after timer expires
+     */
+    stopFollowingTemporarily(): void {
+        if (this.isFollowing) {
+            this.wasPreviouslyFollowing = true;
+            this.isFollowing = false;
+            this.followResumeTimer = this.followResumeDelay;
+            console.log('[CameraManager] Stopped following temporarily - will resume in 5s');
+        }
+    }
+    
+    /**
+     * Resume following the previously followed entity
+     */
+    resumeFollowing(): void {
+        if (this.wasPreviouslyFollowing && this.followEntityId) {
+            this.isFollowing = true;
+            this.wasPreviouslyFollowing = false;
+            this.followResumeTimer = 0;
+            console.log('[CameraManager] Resumed following entity');
+        }
     }
     
     /**
@@ -101,6 +143,15 @@ export class CameraManager {
      */
     update(): void {
         if (!this.camera) return;
+        
+        // Update follow resume timer (16.67ms per frame at 60fps)
+        if (this.followResumeTimer > 0) {
+            this.followResumeTimer -= 16.67;
+            if (this.followResumeTimer <= 0) {
+                this.followResumeTimer = 0;
+                EventBus.emit(GameEvents.CAMERA_RESUME_FOLLOWING);
+            }
+        }
         
         // If following an entity, update camera target
         if (this.isFollowing && this.followEntityId) {

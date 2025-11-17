@@ -228,6 +228,11 @@ export class EntityShowcaseScene implements IScene {
         
         // Emit world generated event for other systems (pass TileGrid)
         EventBus.emit(GameEvents.WORLD_GENERATED, tileGrid);
+        
+        // Pass TileGrid to UI overlay for minimap caching
+        if (this.uiOverlay) {
+            this.uiOverlay.setTileGrid(tileGrid);
+        }
     }
 
     /**

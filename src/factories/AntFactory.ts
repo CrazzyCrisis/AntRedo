@@ -185,6 +185,9 @@ export class AntFactory {
         const jobName = jobType === AntJobComponent.JOB_GATHERER ? 'WORKER' :
                         jobType === AntJobComponent.JOB_WARRIOR ? 'WARRIOR' : 'SCOUT';
         EventBus.emit(GameEvents.ANT_SPAWNED, ant.id, jobName);
+        
+        // Emit ANT_CREATED for minimap
+        EventBus.emit(GameEvents.ANT_CREATED, ant.id, gridX, gridY);
 
         return ant;
     }

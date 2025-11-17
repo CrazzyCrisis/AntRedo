@@ -130,6 +130,9 @@ export class QueenFactory {
         
         // 5.5. Request camera follow (MUST happen AFTER EntityManager registration)
         EventBus.emit(GameEvents.CAMERA_FOLLOW_ENTITY, queen.id);
+        
+        // 5.6. Emit QUEEN_CREATED for minimap
+        EventBus.emit(GameEvents.QUEEN_CREATED, queen.id, gridX, gridY);
 
         // 6. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
         const originalCleanup = (queen as any)._cleanup;

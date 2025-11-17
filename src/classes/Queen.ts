@@ -57,12 +57,12 @@ export class Queen extends GameObject {
         this.entityClass = 'queen'; // Set entity class for tile speed modifiers
         this.entityManager = entityManager;
         
-        // Set movement speed (tiles per second)
-        this.moveSpeed = ENTITY_CONFIG.QUEEN.speed; // Queen moves at 4 tiles/second
+        // Set movement speed (tiles per second) from config
+        this.moveSpeed = ENTITY_CONFIG.QUEEN.speed;
 
         // Initialize components
         this.addComponent('StateMachine', new StateMachineComponent(EntityState.IDLE));
-        this.addComponent('Pathfinding', new PathfindingComponent(1.5)); // Slower than ants
+        this.addComponent('Pathfinding', new PathfindingComponent(ENTITY_CONFIG.QUEEN.speed)); // Use same speed as player control
         this.addComponent('Health', new HealthComponent(ENTITY_CONFIG.QUEEN.health, 0, 'queen', factionId)); // Higher health than ants, food-based healing
         this.addComponent('Combat', new CombatComponent(
             ENTITY_CONFIG.QUEEN.attackDamage,
@@ -345,18 +345,18 @@ export class Queen extends GameObject {
         let moveX = 0;
         let moveY = 0;
 
-        // Check for held movement keys
+        // Check for held movement keys (direction only, speed applied in processMovement)
         if (inputManager.isActionPressed('moveUp')) {
-            moveY = -1 * this.getSpeed();
+            moveY = -1;
         }
         if (inputManager.isActionPressed('moveDown')) {
-            moveY = 1 * this.getSpeed();
+            moveY = 1;
         }
         if (inputManager.isActionPressed('moveLeft')) {
-            moveX = -1 * this.getSpeed();
+            moveX = -1;
         }
         if (inputManager.isActionPressed('moveRight')) {
-            moveX = 1 * this.getSpeed();
+            moveX = 1;
         }
 
         // Request movement (processed by GameObject with speed/deltaTime)
@@ -504,10 +504,10 @@ export class Queen extends GameObject {
         const dirX = this.fleeSafePosition.x - this.gridX;
         const dirY = this.fleeSafePosition.y - this.gridY;
         
-        // Normalize and move (use queen's speed)
+        // Normalize and move (direction only, speed applied in processMovement)
         const dist = Math.sqrt(dirX * dirX + dirY * dirY);
         if (dist > 0) {
-            this.requestMove(Math.sign(dirX) * this.getSpeed(), Math.sign(dirY) * this.getSpeed());
+            this.requestMove(Math.sign(dirX), Math.sign(dirY));
         }
     }
 

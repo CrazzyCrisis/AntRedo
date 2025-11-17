@@ -284,6 +284,8 @@ export const GameEvents = {
     POWER_UNLOCKED: 'power:unlocked',
     POWER_LOCKED: 'power:locked',
     CAMERA_FOLLOW_ENTITY: 'camera:follow:entity',
+    CAMERA_STOP_FOLLOWING: 'camera:stop:following',     // Stop following entity (minimap click)
+    CAMERA_RESUME_FOLLOWING: 'camera:resume:following', // Resume following entity (timer expired)
     ENTITY_HEALTH_CHANGED: 'entity:health:changed',
     
     // Boss events

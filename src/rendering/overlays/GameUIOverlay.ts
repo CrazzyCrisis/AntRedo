@@ -34,6 +34,7 @@ import { PanelComponent } from '../components/PanelComponent';
 import { Queen } from '../../classes/Queen';
 import { GAME_UI_CONFIG } from '../../config/ui/gameUIConfig';
 import { EntityManager } from '../../managers/EntityManager';
+import { TileGrid } from '../../world/TileGrid';
 
 export interface GameUISprites {
     queen: any;
@@ -267,7 +268,8 @@ export class GameUIOverlay {
             // Setup minimap click listener
             this.eventUnsubscribers.push(
                 EventBus.on(GameEvents.MINIMAP_CLICKED, (worldX: number, worldY: number) => {
-                    this.camera.moveTo(worldX, worldY);
+                    // Use smooth follow instead of instant snap for better UX
+                    this.camera.follow(worldX, worldY);
                 })
             );
         }
@@ -292,6 +294,20 @@ export class GameUIOverlay {
         // Initialize power bar with queen's powers
         if (this.powerBar && queen) {
             this.setupPowerBar(queen);
+        }
+    }
+
+    /**
+     * Set tile grid for minimap world caching
+     * Call this after world generation to enable minimap terrain display
+     */
+    setTileGrid(tileGrid: TileGrid): void {
+        if (this.minimap) {
+            this.minimap.setTileGrid(tileGrid);
+            console.log('✅ Minimap tile grid set - world cache will render');
+            
+            // Populate minimap with existing entities (entities spawn before minimap is created)
+            this.minimap.populateExistingEntities();
         }
     }
 

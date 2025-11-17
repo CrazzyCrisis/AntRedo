@@ -243,10 +243,20 @@ export class EntityManager extends BaseManager {
      * @param deltaTime - Time since last frame in milliseconds
      */
     public update(deltaTime: number): void {
+        // Collect all active entities for vision checks
+        const allEntities = Array.from(this.entities.values()).filter(e => e.isActive);
+        
         // Update all active entities
         for (const entity of this.entities.values()) {
             if (entity.isActive) {
                 entity.update(deltaTime);
+                
+                // Check vision for entities with VisionComponent
+                const visionComponent = entity.getComponent('Vision');
+                if (visionComponent) {
+                    // This triggers ENTITY_DETECTED/ENTITY_LOST events
+                    (visionComponent as any).getVisibleEntities(allEntities);
+                }
             }
         }
     }

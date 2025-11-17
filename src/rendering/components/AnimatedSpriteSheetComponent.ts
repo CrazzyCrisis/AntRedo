@@ -203,9 +203,6 @@ export class AnimatedSpriteSheetComponent implements Renderable {
                     this.isMoving = true;
                     if (this.currentAnimationName === 'idle') {
                         this.playAnimation('walk');
-                        if (this.debugJobType === 'builder') {
-                            console.log('[BUILDER] Smooth movement detected → switching to walk');
-                        }
                     }
                 }
             }
@@ -225,9 +222,6 @@ export class AnimatedSpriteSheetComponent implements Renderable {
                 // Switch back to idle if currently walking
                 if (this.currentAnimationName === 'walk') {
                     this.playAnimation('idle');
-                    if (this.debugJobType === 'builder') {
-                        console.log('[BUILDER] Movement stopped → switching to idle');
-                    }
                 }
             }
         }
@@ -242,7 +236,6 @@ export class AnimatedSpriteSheetComponent implements Renderable {
 
         // Check if it's time to advance frame
         if (this.frameCounter >= config.speed) {
-            const prevFrame = this.currentFrame;
             this.frameCounter = 0;
 
             const totalFrames = config.endCol - config.startCol + 1;
@@ -259,11 +252,6 @@ export class AnimatedSpriteSheetComponent implements Renderable {
                 if (this.currentFrame >= totalFrames) {
                     this.currentFrame = totalFrames - 1;
                 }
-            }
-
-            // Debug: Log builder frame transitions
-            if (this.debugJobType === 'builder') {
-                console.log(`[BUILDER] Animation: ${this.currentAnimationName} | Frame: ${prevFrame} → ${this.currentFrame} | Total frames: ${totalFrames} | Speed: ${config.speed} | Range: col ${config.startCol}-${config.endCol}`);
             }
         }
     }

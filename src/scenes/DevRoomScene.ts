@@ -380,6 +380,9 @@ export class DevRoomScene extends BaseScene {
         // Create a simple tile renderer component
         this.createTileRenderer(tileGrid);
         
+        // Pass TileGrid to UI overlay for minimap caching (will be set when setupGameUI is called)
+        // Note: uiOverlay is not yet initialized here, will be set in setupGameUI
+        
         // Initialize spawning system if entity sprites available
         if (this.entitySprites) {
             this.initializeSpawningSystem(tileGrid);
@@ -424,8 +427,8 @@ export class DevRoomScene extends BaseScene {
         this.unregisterFunctions.push(this.renderer.register(this.tileHighlight));
         
         // Create UI overlay config
-        const tileGrid = GameStateManager.getInstance().getTileGrid();
-        if (!tileGrid) {
+        const uiTileGrid = GameStateManager.getInstance().getTileGrid();
+        if (!uiTileGrid) {
             console.warn('[DevRoomScene] Cannot setup UI overlay - missing tile grid');
             return;
         }
@@ -461,10 +464,13 @@ export class DevRoomScene extends BaseScene {
         this.uiOverlay.initialize();
         this.uiOverlay.setQueen(queen as any);
         
+        // Set TileGrid for minimap caching
+        this.uiOverlay.setTileGrid(uiTileGrid);
+        
         // Refresh resource display after resources are initialized
         this.uiOverlay.refreshResourceDisplay();
         
-        console.log('[DevRoomScene] ✅ GameUIOverlay initialized');
+        console.log('[DevRoomScene] ✅ GameUIOverlay initialized with minimap caching');
     }
 
     private createBackButton(): void {
@@ -1038,6 +1044,11 @@ export class DevRoomScene extends BaseScene {
         
         // Recreate tile renderer
         this.createTileRenderer(tileGrid);
+        
+        // Pass TileGrid to UI overlay for minimap caching
+        if (this.uiOverlay) {
+            this.uiOverlay.setTileGrid(tileGrid);
+        }
         
         // Reinitialize spawning system if available
         if (this.entitySprites) {

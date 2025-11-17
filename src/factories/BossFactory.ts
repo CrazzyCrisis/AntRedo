@@ -9,6 +9,8 @@ import {
     RenderLayer,
     SpriteComponent,
     EntityManager,
+    EventBus,
+    GameEvents,
     setupEntitySpriteBinding,
     setupHealthBarBinding,
     TILE_SIZE,
@@ -81,6 +83,9 @@ export class BossFactory {
 
         // Setup health bar (automatically tracks position and cleans up)
         setupHealthBarBinding(boss, renderer, RenderLayer.VISUAL_EFFECTS);
+        
+        // Emit BOSS_CREATED for minimap
+        EventBus.emit(GameEvents.BOSS_CREATED, boss.id, gridX, gridY);
 
         return boss;
     }
