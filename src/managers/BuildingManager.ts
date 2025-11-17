@@ -87,6 +87,11 @@ export class BuildingManager extends BaseManager {
         EventBus.on('BUILDING_LEVELED_UP', (buildingId: string, newLevel: number) => {
             this.onBuildingLeveledUp(buildingId, newLevel);
         });
+        
+        // Listen for barracks placement to spawn initial ants
+        EventBus.on('BARRACKS_PLACED', (buildingId: string, factionId: string, gridX: number, gridY: number) => {
+            this.spawnBarracksAnts(buildingId, factionId, gridX, gridY);
+        });
     }
 
     /**
@@ -208,6 +213,43 @@ export class BuildingManager extends BaseManager {
         }
 
         this.emit('BUILDING_LEVEL_UP_COMPLETE', buildingId, newLevel);
+    }
+    
+    /**
+     * Spawn initial ants when barracks is placed
+     * @param buildingId - Building ID
+     * @param factionId - Faction ID
+     * @param gridX - Grid X position
+     * @param gridY - Grid Y position
+     */
+    private spawnBarracksAnts(_buildingId: string, factionId: string, gridX: number, gridY: number): void {
+        console.log(`[BuildingManager] Spawning ants for barracks at (${gridX}, ${gridY})`);
+        
+        // Spawn 3 worker ants around the barracks
+        const { AntFactory } = require('../factories/AntFactory');
+        const { AntJobComponent } = require('../classes/components/AntJobComponent');
+        
+        const spawnOffsets = [
+            { dx: -1, dy: 0 },  // Left
+            { dx: 1, dy: 0 },   // Right
+            { dx: 0, dy: -1 }   // Top
+        ];
+        
+        for (const offset of spawnOffsets) {
+            const spawnX = gridX + offset.dx;
+            const spawnY = gridY + offset.dy;
+            
+            // Create worker ant
+            AntFactory.create(
+                this.renderer,
+                spawnX,
+                spawnY,
+                factionId,
+                AntJobComponent.JOB_GATHERER  // Spawn as gatherers/workers
+            );
+            
+            console.log(`[BuildingManager] Spawned worker ant at (${spawnX}, ${spawnY})`);
+        }
     }
 
     /**

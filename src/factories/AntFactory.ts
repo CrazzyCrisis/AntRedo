@@ -9,7 +9,8 @@ import {
     gridToWorldCenter,
     JOB_TO_ANIMATION_MAP,
     JOB_TO_SPRITESHEET_MAP,
-    EventBus
+    EventBus,
+    GameEvents
 } from '../imports/factoryImports';
 import { FactionManager } from '../managers/FactionManager';
 import { Ant } from '../classes/Ant';
@@ -179,6 +180,11 @@ export class AntFactory {
         
         // Register ant with FactionManager for population tracking
         FactionManager.getInstance().addAntToFaction(ant.id, factionId);
+        
+        // Emit ANT_SPAWNED event for population tracking
+        const jobName = jobType === AntJobComponent.JOB_GATHERER ? 'WORKER' :
+                        jobType === AntJobComponent.JOB_WARRIOR ? 'WARRIOR' : 'SCOUT';
+        EventBus.emit(GameEvents.ANT_SPAWNED, ant.id, jobName);
 
         return ant;
     }
