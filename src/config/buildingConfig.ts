@@ -25,8 +25,8 @@ interface BuildingPlacementConfig {
  */
 export const BUILDING_PLACEMENT_CONFIG: Record<BuildingType, BuildingPlacementConfig> = {
     warehouse: {
-        // Warehouses need flat, stable ground - grass, dirt, farmland
-        allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.FARMLAND],
+        // Warehouses need flat, stable ground - grass, dirt, farmland, water
+        allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.FARMLAND, TileType.WATER],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
         completedSprite: 'assets/images/Buildings/Hill/Hill1.png',
         unlocked: true  // Default unlocked for testing
@@ -89,7 +89,7 @@ export const BUILDING_PLACEMENT_CONFIG: Record<BuildingType, BuildingPlacementCo
         unlocked: true
     },
     gatherSpeedBeacon: {
-        allowedTerrain: [TileType.GRASS, TileType.DIRT],
+        allowedTerrain: [TileType.GRASS, TileType.DIRT, TileType.WATER],
         constructionSprite: 'assets/images/Buildings/construction_site.png',
         completedSprite: 'assets/images/Buildings/Hill/Hill2.png',
         unlocked: true

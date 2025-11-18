@@ -16,7 +16,7 @@ export const WATER_PARTICLE_CONFIG = {
     shape: 'circle' as const,   // 'circle' | 'square' | 'diamond' (future shapes)
     
     // Color and transparency
-    color: '#3366CC',           // Base water blue color
+    color: '#88abf394',           // Base water blue color
     colorVariance: 0.1,         // Color hue variance (0-1)
     alphaStart: 0.8,            // Starting opacity (0-1)
     alphaEnd: 0,                // Ending opacity (0-1)

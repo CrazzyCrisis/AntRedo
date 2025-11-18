@@ -10,7 +10,7 @@ export const DAMAGE_NUMBER_CONFIG = {
     
     // Colors by damage type
     colors: {
-        physical: '#FF4444',    // Red for physical damage
+        physical: '#f7cfcfff',    // Red for physical damage
         magical: '#8844FF',     // Purple for magical damage
         healing: '#44FF44',     // Green for healing
         critical: '#FFAA00',    // Orange for critical hits

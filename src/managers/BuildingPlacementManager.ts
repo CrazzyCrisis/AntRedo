@@ -142,7 +142,17 @@ export class BuildingPlacementManager extends BaseManager {
         this.validationState = 'valid';
         
         // Get sprite for this building type
-        const sprite = this.buildingSprites.get(buildingType);
+        let sprite = this.buildingSprites.get(buildingType);
+        
+        // If sprite not registered, try to load from config
+        if (!sprite) {
+            const config = getBuildingByType(buildingType);
+            if (config.completedSprite) {
+                // Load sprite dynamically from config path
+                console.warn(`[BuildingPlacementManager] Ghost sprite for ${buildingType} not registered, using completed sprite from config`);
+                sprite = (window as any).loadImage(config.completedSprite);
+            }
+        }
         
         // Get building config for size
         const config = getBuildingByType(buildingType);

@@ -66,15 +66,13 @@ export class MinimapComponent implements Renderable {
     }
 
     private setupEventListeners(): void {
-        // Listen for entity movements
-        EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, worldX: number, worldY: number) => {
+        // Listen for entity movements (receives GRID coordinates, must convert to world)
+        EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, gridX: number, gridY: number) => {
             const marker = this.markers.get(entityId);
             if (marker) {
-                marker.worldX = worldX;
-                marker.worldY = worldY;
-            } else {
-                // Marker doesn't exist - entity might have spawned before minimap was created
-                console.warn(`[Minimap] ENTITY_MOVED for unknown marker: ${entityId}`);
+                // Convert grid to world coordinates
+                marker.worldX = gridX * TILE_SIZE;
+                marker.worldY = gridY * TILE_SIZE;
             }
         });
         
