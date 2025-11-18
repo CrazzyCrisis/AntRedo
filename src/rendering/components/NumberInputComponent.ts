@@ -20,6 +20,11 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 
+// p5.js constants
+declare const CENTER: any;
+declare const LEFT: any;
+declare const RIGHT: any;
+
 export class NumberInputComponent implements Renderable {
     public layer: RenderLayer = RenderLayer.UI;
     public depth: number = 10;
@@ -44,6 +49,7 @@ export class NumberInputComponent implements Renderable {
     private leftArrowHovered: boolean = false;
     private rightArrowHovered: boolean = false;
     private textBuffer: string = ''; // Buffer for building up text input
+    private isFirstInput: boolean = false; // Track if this is first input after focus
     
     // Callback
     private onChangeCallback: ((value: number) => void) | null = null;
@@ -177,7 +183,8 @@ export class NumberInputComponent implements Renderable {
         // Check input box
         if (this.isMouseOver(mouseX, mouseY)) {
             this.focused = true;
-            this.textBuffer = this.value.toFixed(2); // Initialize buffer with current value
+            this.textBuffer = this.value.toFixed(2); // Initialize buffer with current value (selected)
+            this.isFirstInput = true; // Mark that first input should replace all
         } else {
             this.unfocus();
         }
@@ -190,11 +197,13 @@ export class NumberInputComponent implements Renderable {
         if (this.focused && this.textBuffer) {
             const parsed = parseFloat(this.textBuffer);
             if (!isNaN(parsed)) {
-                this.setValue(parsed);
+                const clamped = Math.max(this.min, Math.min(this.max, parsed));
+                this.setValue(clamped);
             }
         }
         this.focused = false;
         this.textBuffer = '';
+        this.isFirstInput = false;
     }
     
     /**
@@ -207,46 +216,75 @@ export class NumberInputComponent implements Renderable {
     
     /**
      * Handle text input (when focused)
-     * Supports building up a number character by character
+     * First input after focus replaces the selected text, subsequent inputs append
+     * Multi-character strings are parsed as complete input (e.g., '0.75')
      */
-    handleTextInput(key: string): void {
+    handleTextInput(input: string): void {
         if (!this.focused) return;
         
-        // Handle backspace
-        if (key === 'Backspace') {
-            this.textBuffer = this.textBuffer.slice(0, -1);
+        // Handle multi-character input (complete string like '0.75')
+        if (input.length > 1) {
+            const parsed = parseFloat(input);
+            if (!isNaN(parsed)) {
+                const clamped = Math.max(this.min, Math.min(this.max, parsed));
+                this.setValue(clamped);
+                this.textBuffer = clamped.toFixed(2);
+            }
+            this.isFirstInput = false;
             return;
         }
         
-        // Handle Enter - commit the value
-        if (key === 'Enter') {
+        // Single character input handling
+        
+        // Handle special keys
+        if (input === 'Backspace') {
+            this.textBuffer = this.textBuffer.slice(0, -1);
+            this.isFirstInput = false;
+            return;
+        }
+        
+        if (input === 'Enter') {
             this.unfocus();
             return;
         }
         
-        // Handle Escape - cancel editing
-        if (key === 'Escape') {
-            this.textBuffer = this.value.toFixed(2); // Reset to current value
+        if (input === 'Escape') {
+            this.textBuffer = this.value.toFixed(2);
             this.unfocus();
             return;
         }
         
         // Only accept numeric characters, decimal point, and minus sign
-        if (/^[0-9.-]$/.test(key)) {
+        if (!/^[0-9.-]$/.test(input)) {
+            return; // Reject non-numeric input
+        }
+        
+        // First input after focus - replace all selected text
+        if (this.isFirstInput) {
+            // Prevent invalid starts
+            if (input === '.') {
+                this.textBuffer = '0.';
+            } else {
+                this.textBuffer = input;
+            }
+            this.isFirstInput = false;
+        } else {
+            // Subsequent inputs - append character
+            
             // Prevent multiple decimal points
-            if (key === '.' && this.textBuffer.includes('.')) return;
+            if (input === '.' && this.textBuffer.includes('.')) return;
             
             // Prevent multiple minus signs, and only allow at start
-            if (key === '-' && (this.textBuffer.includes('-') || this.textBuffer.length > 0)) return;
+            if (input === '-' && (this.textBuffer.includes('-') || this.textBuffer.length > 0)) return;
             
-            this.textBuffer += key;
-            
-            // Try to parse and validate (but don't commit yet)
-            const parsed = parseFloat(this.textBuffer);
-            if (!isNaN(parsed)) {
-                // Show preview but don't commit until unfocus
-                // (we'll display textBuffer in render)
-            }
+            this.textBuffer += input;
+        }
+        
+        // Try to parse and update value in real-time
+        const parsed = parseFloat(this.textBuffer);
+        if (!isNaN(parsed)) {
+            const clamped = Math.max(this.min, Math.min(this.max, parsed));
+            this.setValue(clamped);
         }
     }
     
@@ -307,7 +345,7 @@ export class NumberInputComponent implements Renderable {
         graphics.fill(255);
         graphics.noStroke();
         graphics.textSize(14);
-        graphics.textAlign((window as any).CENTER, (window as any).CENTER);
+        graphics.textAlign(CENTER, CENTER);
         graphics.text(direction === 'left' ? '◀' : '▶', x + this.arrowWidth / 2, y);
     }
     
@@ -331,7 +369,7 @@ export class NumberInputComponent implements Renderable {
         graphics.fill(255);
         graphics.noStroke();
         graphics.textSize(12);
-        graphics.textAlign((window as any).CENTER, (window as any).CENTER);
+        graphics.textAlign(CENTER, CENTER);
         
         // Show text buffer when focused, otherwise show value
         const displayText = this.focused && this.textBuffer ? this.textBuffer : this.value.toFixed(2);

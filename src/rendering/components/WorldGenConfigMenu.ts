@@ -8,7 +8,7 @@ import { RenderLayer } from '../RenderLayer';
 import { SliderWithArrowsComponent } from './SliderWithArrowsComponent';
 import { ToggleComponent } from './ToggleComponent';
 import { NumberInputComponent } from './NumberInputComponent';
-import { WorldGenConfig, sortThresholdsByValue } from '../../config/worldGenConfig';
+import { WorldGenConfig, sortThresholdsByValue } from '../../config/world/worldGenConfig';
 import { TileType } from '../../world/TileSystem';
 import { EventBus, GameEvents } from '../../utils/eventBus';
 

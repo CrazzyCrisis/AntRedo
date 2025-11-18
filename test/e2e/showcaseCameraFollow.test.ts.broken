@@ -1,0 +1,339 @@
+/**
+ * E2E Tests for EntityShowcaseScene Camera Following
+ * Tests the actual camera behavior in the showcase scene
+ */
+
+import { expect } from 'chai';
+import { EntityShowcaseScene } from '../../src/scenes/EntityShowcaseScene';
+import { Renderer } from '../../src/rendering/Renderer';
+import { Camera } from '../../src/rendering/Camera';
+import { FramebufferManager } from '../../src/rendering/FramebufferManager';
+import { EventBus } from '../../src/utils/eventBus';
+import { InputManager } from '../../src/managers/InputManager';
+
+describe('EntityShowcaseScene Camera E2E Tests', () => {
+    let scene: EntityShowcaseScene;
+    let renderer: Renderer;
+    let camera: Camera;
+    let framebufferManager: FramebufferManager;
+
+    beforeEach(() => {
+        EventBus.clear();
+        
+        // Mock p5.Graphics
+        const mockGraphics = {
+            clear: () => {},
+            push: () => {},
+            pop: () => {},
+            translate: () => {},
+            image: () => {},
+            background: () => {},
+            width: 800,
+            height: 600
+        };
+
+        // Create real camera
+        camera = new Camera(0, 0, 800, 600);
+        
+        // Create framebuffer manager
+        framebufferManager = new FramebufferManager(800, 600, () => mockGraphics as any);
+        
+        // Create renderer
+        renderer = new Renderer(framebufferManager, camera);
+
+        // Mock sprites
+        const mockSprite = { width: 32, height: 32 };
+        const entitySprites = {
+            ant: mockSprite,
+            queen: mockSprite,
+            boss: mockSprite,
+            building: mockSprite,
+            resource: mockSprite
+        };
+        const tileSprites: any = { 0: mockSprite, 1: mockSprite, 2: mockSprite };
+        const tileEdgeSprites: any = {};
+
+        // Create scene
+        scene = new EntityShowcaseScene(
+            renderer,
+            camera,
+            800,
+            600,
+            entitySprites,
+            tileSprites,
+            tileEdgeSprites
+        );
+    });
+
+    afterEach(() => {
+        EventBus.clear();
+    });
+
+    describe('Scene Initialization', () => {
+        it('should initialize camera at origin before enter()', () => {
+            expect(camera.x).to.equal(0);
+            expect(camera.y).to.equal(0);
+        });
+
+        it('should move camera to queen position on enter()', () => {
+            scene.enter();
+            
+            // Queen spawns at (100, 75) = world (3200, 2400) with 32px tiles
+            expect(camera.x).to.be.greaterThan(3000);
+            expect(camera.y).to.be.greaterThan(2000);
+        });
+
+        it('should have queen after enter()', () => {
+            scene.enter();
+            
+            // Access private queen property via type assertion
+            const queen = (scene as any).queen;
+            expect(queen).to.not.be.null;
+            expect(queen).to.not.be.undefined;
+        });
+    });
+
+    describe('Queen Movement and Camera Following', () => {
+        beforeEach(() => {
+            scene.enter();
+        });
+
+        it('should update camera.follow() target when queen moves', () => {
+            const queen = (scene as any).queen;
+            const initialCameraX = camera.x;
+            const initialCameraY = camera.y;
+            
+            // Move queen
+            queen.moveTo(queen.gridX + 5, queen.gridY);
+            
+            // Call update to process movement
+            scene.update();
+            
+            // Camera should have new target (may not have moved yet due to smoothing)
+            // But targetX should be set
+            const targetX = (camera as any).targetX;
+            expect(targetX).to.be.greaterThan(initialCameraX);
+        });
+
+        it('should move camera towards queen after update()', () => {
+            const queen = (scene as any).queen;
+            const initialCameraX = camera.x;
+            
+            // Move queen significantly
+            queen.moveTo(queen.gridX + 10, queen.gridY);
+            
+            // Call update multiple times
+            for (let i = 0; i < 5; i++) {
+                scene.update();
+            }
+            
+            // Camera should have moved towards new position
+            expect(camera.x).to.be.greaterThan(initialCameraX);
+        });
+
+        it('should track queen position through multiple updates', () => {
+            const queen = (scene as any).queen;
+            const positions: Array<{ cameraX: number; queenX: number }> = [];
+            
+            // Move queen step by step
+            for (let i = 0; i < 5; i++) {
+                queen.moveTo(queen.gridX + 1, queen.gridY);
+                scene.update();
+                
+                positions.push({
+                    cameraX: camera.x,
+                    queenX: queen.worldX
+                });
+            }
+            
+            // Camera X should be increasing
+            for (let i = 1; i < positions.length; i++) {
+                expect(positions[i].cameraX).to.be.at.least(positions[i - 1].cameraX);
+            }
+        });
+    });
+
+    describe('InputManager Integration', () => {
+        beforeEach(() => {
+            scene.enter();
+        });
+
+        it('should move queen when moveRight action pressed', () => {
+            const queen = (scene as any).queen;
+            const initialX = queen.gridX;
+            
+            // Simulate key press
+            InputManager.getInstance().handleKeyPress('d');
+            
+            // Update scene
+            scene.update();
+            
+            // Queen should have moved
+            expect(queen.gridX).to.be.greaterThan(initialX);
+        });
+
+        it('should update camera after queen moves from input', () => {
+            const initialCameraX = camera.x;
+            
+            // Simulate moving right 5 times
+            for (let i = 0; i < 5; i++) {
+                InputManager.getInstance().handleKeyPress('d');
+                scene.update();
+                InputManager.getInstance().update(); // Clear flags
+            }
+            
+            // Camera should have moved
+            expect(camera.x).to.be.greaterThan(initialCameraX);
+        });
+    });
+
+    describe('Camera Smoothing Behavior', () => {
+        beforeEach(() => {
+            scene.enter();
+        });
+
+        it('should smooth camera movement over multiple frames', () => {
+            const queen = (scene as any).queen;
+            
+            // Move queen far away
+            const targetX = queen.gridX + 50;
+            queen.moveTo(targetX, queen.gridY);
+            
+            const cameraPositions: number[] = [];
+            
+            // Track camera position over 10 frames
+            for (let frame = 0; frame < 10; frame++) {
+                scene.update();
+                cameraPositions.push(camera.x);
+            }
+            
+            // Camera should gradually approach target
+            for (let i = 1; i < cameraPositions.length; i++) {
+                expect(cameraPositions[i]).to.be.at.least(cameraPositions[i - 1]);
+            }
+        });
+
+        it('should eventually reach queen position', () => {
+            const queen = (scene as any).queen;
+            
+            // Move queen
+            queen.moveTo(queen.gridX + 20, queen.gridY);
+            
+            // Update many times
+            for (let i = 0; i < 100; i++) {
+                scene.update();
+            }
+            
+            // Camera should be very close to queen
+            const distance = Math.abs(camera.x - queen.worldX);
+            expect(distance).to.be.lessThan(5);
+        });
+    });
+
+    describe('Update Order Verification', () => {
+        beforeEach(() => {
+            scene.enter();
+        });
+
+        it('should call camera.follow() before camera.update()', () => {
+            const queen = (scene as any).queen;
+            let followCalled = false;
+            let updateCalled = false;
+            let updateCalledBeforeFollow = false;
+            
+            // Spy on camera methods
+            const originalFollow = camera.follow.bind(camera);
+            const originalUpdate = camera.update.bind(camera);
+            
+            camera.follow = function(x: number, y: number) {
+                followCalled = true;
+                if (updateCalled) {
+                    updateCalledBeforeFollow = true;
+                }
+                return originalFollow(x, y);
+            };
+            
+            camera.update = function() {
+                updateCalled = true;
+                return originalUpdate();
+            };
+            
+            // Move queen and update
+            queen.moveTo(queen.gridX + 1, queen.gridY);
+            scene.update();
+            
+            expect(followCalled).to.be.true;
+            expect(updateCalled).to.be.true;
+            expect(updateCalledBeforeFollow).to.be.false; // Update should NOT be called before follow
+        });
+    });
+
+    describe('Camera Target Setting', () => {
+        beforeEach(() => {
+            scene.enter();
+        });
+
+        it('should set camera target to queen position', () => {
+            const queen = (scene as any).queen;
+            
+            // Trigger update
+            scene.update();
+            
+            // Check camera internal target
+            const targetX = (camera as any).targetX;
+            const targetY = (camera as any).targetY;
+            
+            expect(targetX).to.equal(queen.worldX);
+            expect(targetY).to.equal(queen.worldY);
+        });
+
+        it('should update camera target when queen moves', () => {
+            const queen = (scene as any).queen;
+            const newX = queen.gridX + 10;
+            
+            queen.moveTo(newX, queen.gridY);
+            scene.update();
+            
+            const targetX = (camera as any).targetX;
+            expect(targetX).to.equal(newX * 32); // 32 = tile size
+        });
+    });
+
+    describe('Diagnostic Tests', () => {
+        beforeEach(() => {
+            scene.enter();
+        });
+
+        it('DIAGNOSTIC: Log camera and queen positions', () => {
+            const queen = (scene as any).queen;
+            
+            console.log('=== Initial State ===');
+            console.log(`Queen: grid(${queen.gridX}, ${queen.gridY}) world(${queen.worldX}, ${queen.worldY})`);
+            console.log(`Camera: (${camera.x}, ${camera.y})`);
+            console.log(`Camera target: (${(camera as any).targetX}, ${(camera as any).targetY})`);
+            
+            // Move queen
+            queen.moveTo(queen.gridX + 5, queen.gridY);
+            
+            console.log('\n=== After moveTo ===');
+            console.log(`Queen: grid(${queen.gridX}, ${queen.gridY}) world(${queen.worldX}, ${queen.worldY})`);
+            
+            // Update scene
+            scene.update();
+            
+            console.log('\n=== After scene.update() ===');
+            console.log(`Camera: (${camera.x}, ${camera.y})`);
+            console.log(`Camera target: (${(camera as any).targetX}, ${(camera as any).targetY})`);
+            console.log(`Camera smoothing: ${camera.smoothing}`);
+            
+            // Multiple updates
+            for (let i = 0; i < 10; i++) {
+                scene.update();
+            }
+            
+            console.log('\n=== After 10 updates ===');
+            console.log(`Camera: (${camera.x}, ${camera.y})`);
+            console.log(`Distance to target: ${Math.abs(camera.x - (camera as any).targetX)}`);
+        });
+    });
+});

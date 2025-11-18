@@ -11,8 +11,6 @@ describe('TileFrillSystem - Sprite Path Generation', () => {
         it('should return exactly 10 paths for GRASS tile', () => {
             const paths = TileFrillSystem.getFrillSpritePaths(TileType.GRASS);
             
-            console.log('\n=== GRASS FRILL PATHS ===');
-            console.log(`Total paths: ${paths.length}`);
             paths.forEach((path, idx) => console.log(`  [${idx}] ${path}`));
             
             expect(paths).to.have.lengthOf(10, 'Should return all 10 frill variations');
@@ -53,9 +51,6 @@ describe('TileFrillSystem - Sprite Path Generation', () => {
 
         it('should include all 4 corner sprites', () => {
             const paths = TileFrillSystem.getFrillSpritePaths(TileType.GRASS);
-            
-            console.log('\n=== CHECKING CORNER SPRITES ===');
-            console.log('All paths:', paths);
             
             expect(paths).to.include('assets/images/tileEdges_16x16/grass/grass_tl.png', 'Should include top-left corner');
             expect(paths).to.include('assets/images/tileEdges_16x16/grass/grass_tr.png', 'Should include top-right corner');
@@ -115,7 +110,7 @@ describe('TileFrillSystem - Sprite Path Generation', () => {
 
             expectedPatterns.forEach((pattern, idx) => {
                 const matchFound = paths.some(path => pattern.test(path));
-                expect(matchFound).to.be.true(`Pattern ${idx} (${pattern}) should match at least one path`);
+                expect(matchFound, `Pattern ${idx} (${pattern}) should match at least one path`).to.be.true;
             });
         });
     });
@@ -162,15 +157,11 @@ describe('TileFrillSystem - Sprite Path Generation', () => {
             let totalPaths = 0;
             const allPaths: string[] = [];
 
-            console.log('\n=== TOTAL SPRITE PATH COUNT ===');
             supportedTypes.forEach(tileType => {
                 const paths = TileFrillSystem.getFrillSpritePaths(tileType);
-                console.log(`${TileType[tileType]}: ${paths.length} paths`);
                 totalPaths += paths.length;
                 allPaths.push(...paths);
             });
-            console.log(`Total: ${totalPaths} paths`);
-            console.log(`Expected: 60 paths (6 types × 10 variations)`);
 
             expect(totalPaths).to.equal(60, 'Should generate 60 total paths (6 types × 10 variations)');
             

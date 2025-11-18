@@ -104,18 +104,18 @@ describe('TileSystem', () => {
                 const tile = new Tile(2, 3, TileType.GRASS);
                 const worldPos = tile.getWorldPosition();
                 
-                // Assuming 16x16 tile size
-                expect(worldPos.x).to.equal(2 * 16);
-                expect(worldPos.y).to.equal(3 * 16);
+                // TILE_SIZE = 32, so (2,3) -> (64, 96)
+                expect(worldPos.x).to.equal(64);
+                expect(worldPos.y).to.equal(96);
             });
 
             it('should provide world center position', () => {
                 const tile = new Tile(1, 1, TileType.GRASS);
                 const center = tile.getWorldCenter();
                 
-                // Center should be at tile position + half tile size
-                expect(center.x).to.equal(1 * 16 + 8);
-                expect(center.y).to.equal(1 * 16 + 8);
+                // Center should be at tile position + half tile size: (1*32+16, 1*32+16) = (48, 48)
+                expect(center.x).to.equal(48);
+                expect(center.y).to.equal(48);
             });
         });
 

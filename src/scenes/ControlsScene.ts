@@ -1,12 +1,15 @@
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { KeybindComponent } from '../rendering/components/KeybindComponent';
-import { ButtonComponent } from '../rendering/components/ButtonComponent';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { InputManager } from '../managers/InputManager';
-import { KeyBindings } from '../config/defaultSettings';
-import { CONTROLS_LAYOUT } from '../config/menuLayout';
+import {
+    IScene,
+    Renderer,
+    RenderLayer,
+    KeybindComponent,
+    ButtonComponent,
+    EventBus,
+    GameEvents,
+    InputManager,
+    KeyBindings,
+    CONTROLS_LAYOUT
+} from '../imports/sceneImports';
 
 /**
  * Controls Settings Scene
@@ -76,7 +79,7 @@ export class ControlsScene implements IScene {
         this.keybindComponents = [];
     }
 
-    update(): void {
+    update(_deltaTime: number): void {
         // Update button pulse animations
         if (this.backButton) {
             this.backButton.update();

@@ -1,3 +1,5 @@
+import { EventBus, GameEvents } from '../utils/eventBus';
+
 /**
  * Camera handles viewport positioning, smooth following, and coordinate conversions
  * between world space and screen space.
@@ -12,18 +14,40 @@ export class Camera {
     private canvasWidth: number;
     private canvasHeight: number;
     
+    // Deadzone (bounding box) - camera only moves when target leaves this area
+    private deadzoneWidth: number = 0;  // Pixels (0 = no deadzone by default)
+    private deadzoneHeight: number = 0; // Pixels
+    
     // Shake effect properties
     private shakeIntensity: number = 0;
     private shakeDuration: number = 0;
     private shakeTimer: number = 0;
     private shakeOffsetX: number = 0;
     private shakeOffsetY: number = 0;
+    private unsubscribeShake: (() => void) | null = null;
 
     constructor(x: number, y: number, canvasWidth: number = 800, canvasHeight: number = 600) {
         this.x = x;
         this.y = y;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        
+        // Listen for camera shake events from combat system
+        this.unsubscribeShake = EventBus.on(GameEvents.CAMERA_SHAKE, 
+            (intensity: number, durationMs: number) => {
+                this.shake(intensity, durationMs / 1000); // Convert ms to seconds
+            }
+        );
+    }
+
+    /**
+     * Cleanup event listeners
+     */
+    destroy(): void {
+        if (this.unsubscribeShake) {
+            this.unsubscribeShake();
+            this.unsubscribeShake = null;
+        }
     }
 
     /**
@@ -52,14 +76,53 @@ export class Camera {
     }
 
     /**
-     * Update camera position (call every frame)
+     * Set deadzone size (bounding box where camera doesn't move)
+     * @param width - Width of deadzone in pixels (0 = no deadzone)
+     * @param height - Height of deadzone in pixels (0 = no deadzone)
      */
-    update(): void {
-        // Update smooth following
+    setDeadzone(width: number, height: number): void {
+        this.deadzoneWidth = width;
+        this.deadzoneHeight = height;
+    }
+
+    /**
+     * Update camera position (call every frame)
+     * Returns true if camera moved this frame
+     */
+    update(): boolean {
+        const prevX = this.x;
+        const prevY = this.y;
+        const prevShakeX = this.shakeOffsetX;
+        const prevShakeY = this.shakeOffsetY;
+        
+        // Update smooth following with deadzone
         if (this.targetX !== null && this.targetY !== null) {
-            const dx = this.targetX - this.x;
-            const dy = this.targetY - this.y;
+            let dx = this.targetX - this.x;
+            let dy = this.targetY - this.y;
             
+            // Apply deadzone - only move camera if target is outside deadzone box
+            const halfDeadzoneW = this.deadzoneWidth / 2;
+            const halfDeadzoneH = this.deadzoneHeight / 2;
+            
+            // Clamp dx to deadzone
+            if (Math.abs(dx) < halfDeadzoneW) {
+                dx = 0;
+            } else if (dx > 0) {
+                dx -= halfDeadzoneW;
+            } else {
+                dx += halfDeadzoneW;
+            }
+            
+            // Clamp dy to deadzone
+            if (Math.abs(dy) < halfDeadzoneH) {
+                dy = 0;
+            } else if (dy > 0) {
+                dy -= halfDeadzoneH;
+            } else {
+                dy += halfDeadzoneH;
+            }
+            
+            // Apply eased movement
             this.x += dx * (1 - this.smoothing);
             this.y += dy * (1 - this.smoothing);
         }
@@ -79,6 +142,11 @@ export class Camera {
                 this.shakeIntensity = 0;
             }
         }
+        
+        // Check if camera moved (position or shake changed)
+        const moved = this.x !== prevX || this.y !== prevY || 
+                     this.shakeOffsetX !== prevShakeX || this.shakeOffsetY !== prevShakeY;
+        return moved;
     }
 
     /**

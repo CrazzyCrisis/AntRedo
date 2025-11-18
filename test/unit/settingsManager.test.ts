@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { SettingsManager } from '../../src/managers/SettingsManager';
 import { EventBus, GameEvents } from '../../src/utils/eventBus';
-import { DEFAULT_SETTINGS } from '../../src/config/defaultSettings';
+import { DEFAULT_SETTINGS } from '../../src/config/systems/defaultSettings';
 
 // Mock localStorage for Node.js environment
 class LocalStorageMock {
@@ -72,10 +72,10 @@ describe('SettingsManager', () => {
             const audio = settingsManager.getAudioSettings();
             
             expect(audio.masterVolume).to.equal(0.7);
-            expect(audio.musicVolume).to.equal(0.8);
+            expect(audio.bgmVolume).to.equal(0.8);
             expect(audio.sfxVolume).to.equal(0.8);
-            expect(audio.musicEnabled).to.be.true;
-            expect(audio.sfxEnabled).to.be.true;
+            expect(audio.voiceVolume).to.equal(0.8);
+            expect(audio.systemVolume).to.equal(0.8);
         });
 
         it('should have default video settings', () => {
@@ -106,10 +106,10 @@ describe('SettingsManager', () => {
         it('should save settings to localStorage', () => {
             settingsManager.setAudioSettings({
                 masterVolume: 0.5,
-                musicVolume: 0.6,
+                bgmVolume: 0.6,
                 sfxVolume: 0.7,
-                musicEnabled: false,
-                sfxEnabled: true
+                voiceVolume: 0.8,
+                systemVolume: 0.9
             });
             
             const saved = localStorage.getItem('antredo_settings');
@@ -153,10 +153,10 @@ describe('SettingsManager', () => {
         it('should update audio settings', () => {
             const newAudio = {
                 masterVolume: 0.5,
-                musicVolume: 0.6,
+                bgmVolume: 0.6,
                 sfxVolume: 0.7,
-                musicEnabled: false,
-                sfxEnabled: true
+                voiceVolume: 0.8,
+                systemVolume: 0.9
             };
             
             settingsManager.setAudioSettings(newAudio);
@@ -216,10 +216,10 @@ describe('SettingsManager', () => {
             
             const newAudio = {
                 masterVolume: 0.5,
-                musicVolume: 0.6,
+                bgmVolume: 0.6,
                 sfxVolume: 0.7,
-                musicEnabled: false,
-                sfxEnabled: true
+                voiceVolume: 0.8,
+                systemVolume: 0.9
             };
             
             settingsManager.setAudioSettings(newAudio);
@@ -282,10 +282,10 @@ describe('SettingsManager', () => {
             // Change some settings
             settingsManager.setAudioSettings({
                 masterVolume: 0.1,
-                musicVolume: 0.2,
+                bgmVolume: 0.2,
                 sfxVolume: 0.3,
-                musicEnabled: false,
-                sfxEnabled: false
+                voiceVolume: 0.4,
+                systemVolume: 0.5
             });
             
             // Reset
@@ -311,10 +311,10 @@ describe('SettingsManager', () => {
         it('should save defaults to localStorage after reset', () => {
             settingsManager.setAudioSettings({
                 masterVolume: 0.1,
-                musicVolume: 0.2,
+                bgmVolume: 0.2,
                 sfxVolume: 0.3,
-                musicEnabled: false,
-                sfxEnabled: false
+                voiceVolume: 0.4,
+                systemVolume: 0.5
             });
             
             settingsManager.resetToDefaults();
@@ -330,15 +330,18 @@ describe('SettingsManager', () => {
         it('should clamp volume values to 0-1 range', () => {
             settingsManager.setAudioSettings({
                 masterVolume: 1.5,
-                musicVolume: -0.5,
+                bgmVolume: -0.5,
                 sfxVolume: 0.5,
-                musicEnabled: true,
-                sfxEnabled: true
+                voiceVolume: 0.4,
+                systemVolume: 0.5
             });
             
             const audio = settingsManager.getAudioSettings();
             expect(audio.masterVolume).to.equal(1.0);
-            expect(audio.musicVolume).to.equal(0.0);
+            expect(audio.bgmVolume).to.equal(0.0);
+            expect(audio.sfxVolume).to.equal(0.5);
+            expect(audio.voiceVolume).to.equal(0.4);
+            expect(audio.systemVolume).to.equal(0.5);
         });
 
         it('should clamp camera smoothing to 0-1 range', () => {

@@ -1,6 +1,9 @@
 /**
  * DevRoom Configuration
  * Centralized config for dev room settings
+ * 
+ * NOTE: Tile-related config (SIZE, COLORS, USE_SPRITES, USE_EDGES, GRID_OVERLAY, and
+ * tile-related DEBUG flags) have been moved to tileConfig.ts for better organization.
  */
 
 export const DEV_ROOM_CONFIG = {
@@ -9,44 +12,22 @@ export const DEV_ROOM_CONFIG = {
         WIDTH: 200,              // Width in tiles
         HEIGHT: 200,             // Height in tiles
         SEED: 12345,            // Fixed seed for consistency (use undefined for random)
-        NOISE_SCALE: 0.15      // Perlin noise scale (0.05-0.3 typical range)
+        NOISE_SCALE: 0.05      // Perlin noise scale (0.05-0.3 typical range)
     },
 
-    // Tile rendering settings
-    TILES: {
-        SIZE: 32,                // Tile size in pixels
-        
-        // Tile colors (used until actual sprites are loaded)
-        COLORS: {
-            GRASS: '#90EE90',           // Light green
-            DIRT: '#8B4513',            // Brown
-            STONE: '#808080',           // Grey
-            SAND: '#F4A460',            // Sandy brown
-            WATER: '#4682B4',           // Blue
-            CAVE_FLOOR: '#D2B48C',      // Tan
-            CAVE_WALL: '#2F4F4F',       // Dark grey
-            CAVE_DIRT: '#654321',       // Dark brown
-            CAVE_EXTRA_DARK: '#1C1C1C', // Very dark grey
-            PEBBLE_1: '#A9A9A9',        // Light grey
-            PEBBLE_2: '#8B8989',        // Medium grey
-            PEBBLE_3: '#696969',        // Dark grey
-            MOSS: '#556B2F',            // Olive green
-            FARMLAND: '#8B7355',        // Light brown
-            ANTHILL: '#CD853F',         // Peru
-            SAND_DARK: '#DAA520',       // Goldenrod
-            WATER_CAVE: '#4169E1'       // Royal blue
-        },
-
-        // Sprite mapping - now implemented!
-        USE_SPRITES: true,       // Set to true to use PNG sprites, false for placeholder colors
-        USE_EDGES: true          // Set to true to use edge/corner autotiling sprites
+    // Starting resources for testing
+    STARTING_RESOURCES: {
+        FOOD: 100,              // Starting food for healing system testing
+        WOOD: 100,              // Enough to build multiple buildings (warehouse=20, barracks=15, tower=10)
+        STONE: 100,             // Enough to build multiple buildings (warehouse=10, barracks=15, tower=20)
+        MAGIC_CRYSTAL: 50       // For future features
     },
 
     // Camera settings
     CAMERA: {
-        INITIAL_X: 240,          // Starting camera X (centered on 30-tile width at 16px each)
-        INITIAL_Y: 160,          // Starting camera Y (centered on 20-tile height at 16px each)
-        FOLLOW_PLAYER: false,    // Enable camera following when player is added
+        INITIAL_X: 3840,          // Starting camera X (centered on 30-tile width at 256px each)
+        INITIAL_Y: 5120,          // Starting camera Y (centered on 20-tile height at 256px each)
+        FOLLOW_PLAYER: true,    // Enable camera following when player is added
         SMOOTHING: 0.1           // Camera smoothing factor
     },
 
@@ -73,19 +54,8 @@ export const DEV_ROOM_CONFIG = {
         BUTTON_PULSE_AMOUNT: 0.05
     },
 
-    // Debug settings
+    // Debug settings (scene-specific)
     DEBUG: {
-        SHOW_GRID: false,        // Show tile grid overlay
-        SHOW_COORDS: false,      // Show tile coordinates
-        SHOW_COSTS: false,       // Show movement costs
         SHOW_INFO: true          // Show world info text
-    },
-
-    // Grid overlay settings
-    GRID_OVERLAY: {
-        ENABLED: true,           // Show grid lines over tiles
-        COLOR: '#0c5b1bff',        // Grid line color (black)
-        ALPHA: 125,               // Transparency (0-255, lower = more transparent)
-        LINE_WEIGHT: 1           // Line thickness in pixels
     }
 } as const;

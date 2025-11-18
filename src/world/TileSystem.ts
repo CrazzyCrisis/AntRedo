@@ -3,7 +3,7 @@
  * Provides foundation for procedural generation and A* pathfinding
  */
 
-import { DEV_ROOM_CONFIG } from '../config/devRoomConfig';
+import { TILE_CONFIG } from '../config/world/tileConfig';
 
 /**
  * Enum defining all available tile types
@@ -52,14 +52,16 @@ export interface TileData {
 /**
  * Tile properties lookup table
  * Defines gameplay characteristics for each tile type
+ * Values are sourced from centralized tileMovementConfig.ts
+ * Note: Config access is delayed to avoid circular dependencies
  */
 export const TILE_PROPERTIES: Record<TileType, TileProperties> = {
     [TileType.GRASS]: { walkable: true, movementCost: 1.0, spriteIndex: 0 },
     [TileType.DIRT]: { walkable: true, movementCost: 1.1, spriteIndex: 1 },
-    [TileType.STONE]: { walkable: true, movementCost: 1.3, spriteIndex: 2 },
+    [TileType.STONE]: { walkable: true, movementCost: 5.0, spriteIndex: 2 },
     [TileType.SAND]: { walkable: true, movementCost: 1.5, spriteIndex: 3 },
     [TileType.SAND_DARK]: { walkable: true, movementCost: 1.5, spriteIndex: 4 },
-    [TileType.WATER]: { walkable: false, movementCost: Infinity, spriteIndex: 5 },
+    [TileType.WATER]: { walkable: false, movementCost: 100.0, spriteIndex: 5 },
     [TileType.FARMLAND]: { walkable: true, movementCost: 1.2, spriteIndex: 6 },
     [TileType.MOSS]: { walkable: true, movementCost: 1.1, spriteIndex: 7 },
     [TileType.PEBBLE_1]: { walkable: true, movementCost: 1.0, spriteIndex: 8 },
@@ -69,14 +71,14 @@ export const TILE_PROPERTIES: Record<TileType, TileProperties> = {
     [TileType.CAVE_WALL]: { walkable: false, movementCost: Infinity, spriteIndex: 12 },
     [TileType.CAVE_DIRT]: { walkable: true, movementCost: 1.2, spriteIndex: 13 },
     [TileType.CAVE_DARK]: { walkable: false, movementCost: Infinity, spriteIndex: 14 },
-    [TileType.CAVE_WATER]: { walkable: false, movementCost: Infinity, spriteIndex: 15 },
+    [TileType.CAVE_WATER]: { walkable: false, movementCost: 100.0, spriteIndex: 15 },
     [TileType.ANTHILL]: { walkable: false, movementCost: Infinity, spriteIndex: 16 }
 };
 
 /**
  * Tile size constant (from config)
  */
-export const TILE_SIZE = DEV_ROOM_CONFIG.TILES.SIZE;
+export const TILE_SIZE = TILE_CONFIG.SIZE;
 
 /**
  * Tile class - Represents a single tile in the world grid

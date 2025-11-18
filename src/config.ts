@@ -2,7 +2,7 @@
 interface GameConfig {
     CANVAS_WIDTH: number;
     CANVAS_HEIGHT: number;
-    FPS: number;
+    //FPS: number;
     DEBUG_MODE: boolean;
     PLAYER_SPEED: number;
     ENEMY_SPEED: number;
@@ -18,7 +18,7 @@ interface GameConfig {
 export const CONFIG: GameConfig = {
     CANVAS_WIDTH: 800,
     CANVAS_HEIGHT: 600,
-    FPS: 60,
+    //FPS: 60,
     DEBUG_MODE: false,
     
     // Game settings

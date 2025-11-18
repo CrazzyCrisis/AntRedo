@@ -18,8 +18,9 @@ export interface IScene {
     /**
      * Called every frame while scene is active
      * Use this for animations, game logic, etc.
+     * @param deltaTime - Time elapsed since last frame in milliseconds
      */
-    update(): void;
+    update(deltaTime: number): void;
 
     /**
      * Called when mouse is clicked

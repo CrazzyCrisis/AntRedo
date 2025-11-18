@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "include": [
+    "integration/cameraMovement.test.ts",
+    "integration/inputManagerFlow.test.ts",
+    "integration/queenMovement.test.ts"
+  ],
+  "exclude": [
+    "e2e/**",
+    "unit/**"
+  ]
+}

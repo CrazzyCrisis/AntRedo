@@ -6,6 +6,17 @@
 import { Renderable } from '../../src/rendering/Renderable';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
 
+// Mock p5.js constants globally for Node.js test environment
+// These must be available before any component files are imported
+if (typeof (global as any).CENTER === 'undefined') {
+    (global as any).CENTER = 'center';
+    (global as any).LEFT = 'left';
+    (global as any).RIGHT = 'right';
+    (global as any).TOP = 'top';
+    (global as any).BOTTOM = 'bottom';
+    (global as any).BASELINE = 'baseline';
+}
+
 /**
  * Setup global window mock for p5.js constants
  */
@@ -28,8 +39,14 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
     return {
         width,
         height,
+        drawingContext: {
+            imageSmoothingEnabled: true
+        },
         clear: function() { 
             this._cleared = true; 
+        },
+        remove: function() {
+            this._removed = true;
         },
         image: function() { 
             this._imageDrawn = true; 
@@ -75,7 +92,37 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         textAlign: function() {
             this._textAlignSet = true;
         },
+        textWidth: function(text: string) {
+            // Mock text width calculation - roughly 8 pixels per character
+            return text.length * 8;
+        },
+        imageMode: function(_mode: any) {
+            this._imageModeSet = true;
+        },
+        line: function(_x1: number, _y1: number, _x2: number, _y2: number) {
+            this._lineDrawn = true;
+        },
+        ellipse: function() {
+            this._ellipseDrawn = true;
+        },
+        triangle: function() {
+            this._triangleDrawn = true;
+        },
+        noSmooth: function() {
+            this._noSmoothCalled = true;
+        },
+        smooth: function() {
+            this._smoothCalled = true;
+        },
+        strokeJoin: function() {
+            this._strokeJoinSet = true;
+        },
+        strokeCap: function() {
+            this._strokeCapSet = true;
+        },
+        // Tracking flags
         _cleared: false,
+        _removed: false,
         _imageDrawn: false,
         _pushCalled: false,
         _popCalled: false,
@@ -91,7 +138,65 @@ export function createMockGraphics(width: number = 800, height: number = 600) {
         _circleDrawn: false,
         _textDrawn: false,
         _textSizeSet: false,
-        _textAlignSet: false
+        _textAlignSet: false,
+        _imageModeSet: false,
+        _lineDrawn: false,
+        _ellipseDrawn: false,
+        _triangleDrawn: false,
+        _noSmoothCalled: false,
+        _smoothCalled: false,
+        _strokeJoinSet: false,
+        _strokeCapSet: false
+    };
+}
+
+/**
+ * Creates a mock p5.SoundFile object with all necessary methods
+ */
+export function createMockSound() {
+    return {
+        _volume: 1.0,
+        _isPlaying: false,
+        _isPaused: false,
+        _isLooping: false,
+        
+        setVolume: function(vol: number) {
+            this._volume = vol;
+        },
+        
+        play: function() {
+            this._isPlaying = true;
+            this._isPaused = false;
+        },
+        
+        stop: function() {
+            this._isPlaying = false;
+            this._isPaused = false;
+            this._isLooping = false;
+        },
+        
+        pause: function() {
+            this._isPaused = true;
+            this._isPlaying = false;
+        },
+        
+        loop: function() {
+            this._isPlaying = true;
+            this._isPaused = false;
+            this._isLooping = true;
+        },
+        
+        isPlaying: function() {
+            return this._isPlaying;
+        },
+        
+        isPaused: function() {
+            return this._isPaused;
+        },
+        
+        isLooping: function() {
+            return this._isLooping;
+        }
     };
 }
 

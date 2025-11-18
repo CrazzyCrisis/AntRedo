@@ -4,7 +4,7 @@
  * Imports from actual menu config to stay in sync
  */
 
-import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT } from '../../src/config/menuLayout';
+import { MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT } from '../../src/config/ui/menuLayout';
 
 // Canvas dimensions used in tests
 export const TEST_CANVAS = {

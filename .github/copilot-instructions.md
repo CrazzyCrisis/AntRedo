@@ -1,5 +1,74 @@
 # AntRedo Copilot Instructions
 
+## ⚠️ CRITICAL: Read Instructions First (ALWAYS)
+**BEFORE starting ANY task, work, or responding to requests:**
+1. **READ these instructions COMPLETELY** - Don't skip or assume you remember
+2. **Verify current patterns and conventions** - Check architecture, naming, file structure
+3. **Review relevant documentation** in `docs/` for the specific system you're working on
+4. **Check existing similar implementations** to maintain consistency
+
+**This is MANDATORY, not optional.** Instructions contain critical patterns that MUST be followed:
+- MVC architecture separation
+- Config-first philosophy
+- TDD workflow (tests before implementation)
+- Helper reuse (never reinvent existing utilities)
+- EventBus patterns
+- Naming conventions
+
+**Treat these instructions as the source of truth.** They are regularly updated with project-specific patterns that are essential for code quality and maintainability.
+
+---
+
+## 🎯 CODE QUALITY PRINCIPLES (CRITICAL)
+
+### DRY (Don't Repeat Yourself) - MANDATORY
+**NEVER write duplicate code.** If a pattern appears more than once, it MUST be extracted into a helper function or base class.
+
+**ALWAYS check before implementing:**
+1. **Search `helpers.ts` first** - 50+ utilities already exist (math, collision, grid operations, entity queries, etc.)
+2. **Check for existing patterns** - Look at similar implementations before writing new code
+3. **Extract common logic immediately** - If you write similar code twice, stop and extract it
+4. **Use existing base classes** - Components extend `BaseComponent`, not `IComponent` directly
+
+**Examples of extracted patterns:**
+- Factory sprite binding: `setupEntitySpriteBinding()` eliminates 15 lines per factory
+- Component lifecycle: `BaseComponent` eliminates 3 lines per component
+- Entity queries: `getEntitiesInRadius()`, `isEntityEnemy()` used across all power classes
+- EventBus helpers: `emitEntityEvent()`, `destroyAndEmit()` for common emit patterns
+
+**When you see duplicate code:**
+1. **STOP** - Don't continue implementing
+2. **Extract** - Create helper function in `helpers.ts` or base class
+3. **Refactor** - Update all instances to use the helper
+4. **Document** - Add to relevant docs if it's a new pattern
+
+### Code Tidiness Standards
+- **No magic numbers** - All values in config files
+- **No repetitive patterns** - Extract into helpers/base classes
+- **Consistent naming** - Follow existing conventions
+- **Minimal boilerplate** - Use factories, base classes, helpers to eliminate repetitive code
+- **Clear abstractions** - Hide complexity behind simple interfaces
+- **NO SUMMARY DOCUMENTS** - Do not create markdown files to document changes unless explicitly requested by user, always update checklists and architecture docs as needed
+
+### Helper Extraction Workflow
+1. **Identify pattern** - See code appearing 2+ times
+2. **Generalize** - Make it work for all use cases
+3. **Add to helpers.ts** - Place in appropriate section (math, entity, factory, eventbus)
+4. **Add JSDoc** - Clear documentation with examples
+5. **Refactor usage** - Update all instances to use helper
+6. **Update instructions** - Document new helper in copilot instructions
+
+**Current helper categories in helpers.ts:**
+- Math utilities (clamp, lerp, distance, angle, etc.)
+- Grid/tile operations (worldToGrid, gridToWorld, getNeighbors)
+- Collision detection (pointInRect, circleIntersect, etc.)
+- Entity queries (getEntitiesInRadius, isEntityEnemy)
+- Factory patterns (setupEntitySpriteBinding)
+- EventBus patterns (emitEntityEvent, destroyAndEmit)
+- Force calculations (distanceFalloff, calculatePushForce)
+
+---
+
 ## Project Overview
 TypeScript game built with p5.js in **global mode**. Game logic compiles to `dist/` as CommonJS, then bundled with **esbuild** to browser-compatible IIFE format. Heavy use of centralized EventBus pattern for decoupled communication.
 
@@ -29,6 +98,26 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - Factories register renderables with the Renderer, developers don't touch rendering code
 - Example: `PlayerFactory.create()` returns Player model and handles all rendering setup
 - See `docs/codeExamples/FACTORY_PATTERN.md` for implementation details
+- **All factories use `../imports/factoryImports`** - reduces 8-10 imports to 1 per factory
+
+**Factory Import Pattern:**
+```typescript
+import {
+    Renderer, RenderLayer, SpriteComponent,
+    EventBus, setupEntitySpriteBinding, TILE_SIZE,
+    EntityManager
+} from '../imports/factoryImports';
+import { MyEntity } from '../classes/MyEntity';
+
+export class MyEntityFactory {
+    static create(renderer: Renderer, sprite: any, x: number, y: number) {
+        const entity = new MyEntity(x, y);
+        const spriteComponent = new SpriteComponent(sprite, x, y);
+        setupEntitySpriteBinding(entity, spriteComponent, renderer, RenderLayer.ENTITIES, gridToWorld);
+        return entity;
+    }
+}
+```
 
 ### Rendering System
 - **Layer-based rendering** with p5.js framebuffers (`createGraphics`)
@@ -53,7 +142,7 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 - Config files become documentation of game parameters
 
 **Examples:**
-- Tile size → `DEV_ROOM_CONFIG.TILES.SIZE`
+- Tile size → `TILE_CONFIG.SIZE` or `TILE_SIZE` (exported from TileSystem.ts)
 - UI positions → `MAIN_MENU_LAYOUT.PLAY_BUTTON.offsetX`
 - Animation speeds → `MENU_ANIMATIONS.TITLE_SPEED`
 - Game physics → `CONFIG.PLAYER.SPEED`
@@ -63,15 +152,40 @@ TypeScript game built with p5.js in **global mode**. Game logic compiles to `dis
 ### Project Structure
 ```
 src/
-  config/           # CENTRALIZED CONFIG FILES (primary source of truth)
-    config.ts       # Main CONFIG object for game constants
+  imports/          # CENTRALIZED BARREL EXPORTS (eliminate repetitive imports)
+    sceneImports.ts    # Scene dependencies (IScene, Renderer, managers, configs, etc.)
+    factoryImports.ts  # Factory dependencies (Renderer, RenderLayer, SpriteComponent, etc.)
+    managerImports.ts  # Manager dependencies (EventBus, entities, helpers, etc.)
+  config/           # ORGANIZED CONFIG FILES (primary source of truth)
+    index.ts        # Barrel export for all configs
     devRoomConfig.ts # Dev room settings (world, tiles, camera, debug)
-    menuLayout.ts   # UI layout configurations
-    worldGenConfig.ts # World generation parameters
+    ui/             # UI configuration files
+      gameUIConfig.ts     # In-game UI positioning and styling
+      menuLayout.ts       # Menu layout configurations
+      statusBarConfig.ts  # Status bar settings
+    gameplay/       # Gameplay configuration files
+      entityConfig.ts            # Entity stats and properties
+      resourceGatheringConfig.ts # Resource gathering rates
+      spawnConfig.ts             # Entity spawning parameters
+      devRoomSpawnConfig.ts      # Dev room spawn settings
+    world/          # World generation configuration files
+      worldGenConfig.ts          # World generation parameters
+      tileConfig.ts              # Tile properties and settings
+      tileMovementConfig.ts      # Movement speeds per terrain
+      environmentEffectsConfig.ts # Environmental effects
+    systems/        # System configuration files
+      animationConfig.ts    # Animation settings
+      audioConfig.ts        # Audio system configuration
+      spriteMapping.ts      # Sprite path mappings
+      defaultSettings.ts    # Default game settings
+    buildings/      # Building system configuration
+      buildingConfig.ts     # Centralized building definitions
+    visualEffects/  # Visual effects configuration
+      (various effect configs)
   sketch.ts         # p5.js lifecycle (setup/draw/input) - bridges p5 to game (VIEW layer)
   utils/
     eventBus.ts     # Singleton EventBus + GameEvents constants
-    helpers.ts      # 50+ pure utility functions (math, grid, vectors, etc.)
+    helpers.ts      # 75+ pure utility functions (math, grid, vectors, etc.)
     PerlinNoise.ts  # Reusable Perlin noise generator
     SeededRandom.ts # Seeded random number generator
   classes/          # Game entities (MODEL layer)
@@ -87,6 +201,12 @@ assets/
 test/               # Mocha/Chai tests - write tests BEFORE implementation
 docs/               # Documentation structure (see below)
 ```
+
+**Config Organization Philosophy:**
+- **Organized by domain** - UI, gameplay, world, systems for logical grouping
+- **Single import point** - Use `src/config/index.ts` barrel export for clean imports
+- **Selective exports** - Building config uses selective exports to avoid type conflicts
+- **Import from subdirectories** - Example: `from '../config/ui/gameUIConfig'` or use barrel: `from '../config'`
 
 ## Documentation Structure
 
@@ -113,6 +233,7 @@ docs/
 - Keep checklists clean - reference code snippets, don't embed large code blocks
 - Update relevant docs when adding new patterns or systems
 - **Create checklists for multi-step tasks** - Break down complex work into tracked subtasks in `docs/checklists/`
+- **ALWAYS update checklists** - When working from a checklist, mark tasks complete with `[x]` as you finish them
 
 ## Key Conventions
 
@@ -215,27 +336,210 @@ export const MAIN_MENU_BUTTONS = {
 - Any positioning or styling value
 
 ### Utilities (`helpers.ts`)
-- 50+ tested pure functions - **always check here before implementing common math/collision/array operations**
+- 75+ tested pure functions - **always check here before implementing common math/collision/array operations**
 - Grid/tile helpers: `worldToGrid()`, `gridToWorld()`, `getNeighbors4/8()`
-- Vector math: `vectorNormalize()`, `vectorLimit()`, `angleBetween()`
+- Vector math: `vectorNormalize()`, `vectorLimit()`, `angleBetween()`, `perpendicularAngle()`
+- Interpolation: `lerp()`, `lerpColor()` for smooth transitions
+- Visual effects: `fadeOutAlpha()`, `fadeInAlpha()` for alpha calculations, `drawRadialCooldown()` for ability cooldowns
+- UI helpers: `drawUIPanel()` for rounded panel backgrounds, `formatNumberWithCommas()` for display, `smoothTransition()` for animations
+- Button interaction helpers: `isPointInRect()` for bounds checking, `calculateButtonBarPositions()` for horizontal layouts, `getButtonStateColor()` for state-based colors
+- Entity queries: `getEntitiesInRadius()`, `isEntityEnemy()`
+- Factory helpers: `setupEntitySpriteBinding()` - auto sprite registration + event cleanup
+- EventBus helpers: `emitEntityEvent()`, `destroyAndEmit()`
+- Force calculations: `distanceFalloff()`, `calculatePushForce()`
 - Classes: `Timer`, `FPSCounter`, `StateMachine<T>` for common patterns
-- Import needed functions: `import { clamp, distance } from './utils/helpers'`
+- Import needed functions: `import { clamp, distance, setupEntitySpriteBinding, lerp, fadeOutAlpha, drawRadialCooldown, drawUIPanel, formatNumberWithCommas, smoothTransition, isPointInRect, getButtonStateColor } from './utils/helpers'`
+
+### Component System Architecture
+**All components MUST extend `BaseComponent`** - Never implement `IComponent` directly.
+
+**BaseComponent Pattern:**
+```typescript
+// src/classes/components/BaseComponent.ts
+// Provides automatic onAttach/onDetach lifecycle management
+export abstract class BaseComponent implements IComponent {
+    public owner!: GameObject;
+    
+    onAttach(owner: GameObject): void {
+        this.owner = owner;
+        this.onAttached(); // Hook for subclass
+    }
+    
+    onDetach(): void {
+        this.onDetaching(); // Hook for subclass
+        this.owner = undefined!;
+    }
+    
+    protected onAttached(): void {} // Override for custom logic
+    protected onDetaching(): void {} // Override for cleanup
+    
+    abstract update(deltaTime: number): void; // Must implement
+}
+```
+
+**Component Implementation:**
+```typescript
+// GOOD - Use BaseComponent
+export class MyComponent extends BaseComponent {
+    constructor(value: number) {
+        super(); // REQUIRED
+        this.value = value;
+    }
+    
+    // Optional: custom attach logic
+    protected onAttached(): void {
+        // Subscribe to events, etc.
+    }
+    
+    // Optional: custom detach logic
+    protected onDetaching(): void {
+        // Unsubscribe, cleanup, etc.
+    }
+    
+    update(deltaTime: number): void {
+        // Component logic
+    }
+}
+
+// BAD - Don't implement IComponent directly (creates boilerplate)
+export class MyComponent implements IComponent {
+    public owner!: GameObject; // Boilerplate
+    
+    onAttach(owner: GameObject): void { // Boilerplate
+        this.owner = owner; // Boilerplate
+    } // Boilerplate
+    
+    onDetach(): void { // Boilerplate
+        this.owner = undefined!; // Boilerplate
+    } // Boilerplate
+    
+    update(deltaTime: number): void { /* ... */ }
+}
+```
+
+**Benefits:**
+- Eliminates 3+ lines of boilerplate per component
+- Consistent lifecycle management across all components
+- Optional hooks (`onAttached`, `onDetaching`) for custom logic
+- Type safety with `owner` reference always available
+
+### Factory Pattern with Sprite Binding Helper
+**All factories MUST use `setupEntitySpriteBinding()`** - Never manually register sprites or wire EventBus listeners.
+
+**Pattern:**
+```typescript
+import { setupEntitySpriteBinding } from '../utils/helpers';
+
+const entity = new MyEntity(x, y);
+const sprite = new SpriteComponent(/* ... */);
+
+// ONE LINE replaces 15+ lines of boilerplate:
+// - renderer.register(sprite)
+// - EventBus.on('ENTITY_MOVED', ...)
+// - EventBus.once('ENTITY_DESTROYED', ...)
+// - entity._cleanup = () => { ... }
+setupEntitySpriteBinding(entity, sprite, renderer, layer, gridToWorld);
+
+// Add entity-specific listeners after helper setup
+// Helper creates entity._cleanup, extend it if needed:
+const originalCleanup = (entity as any)._cleanup;
+entity._cleanup = () => {
+    originalCleanup();
+    // Your custom cleanup
+};
+
+return entity;
+```
+
+**Benefits:**
+- Eliminates 15 lines per factory (~90 lines saved across 6 factories)
+- Consistent sprite registration pattern
+- Automatic movement tracking and depth sorting
+- Automatic cleanup on entity destruction
+- No missed event unsubscriptions
+
+### Manager Base Class Pattern (NEW - Eliminates Boilerplate)
+**All managers MUST extend `BaseManager`** - Never implement singleton + EventBus patterns manually.
+
+**BaseManager provides:**
+- Automatic EventBus subscription tracking
+- Helper methods: `subscribe()`, `subscribeOnce()`, `emit()`
+- Automatic cleanup: `cleanupSubscriptions()`
+
+**Pattern:**
+```typescript
+import { BaseManager } from './BaseManager';
+import { GameEvents } from '../utils/eventBus';
+
+export class MyManager extends BaseManager {
+    private static instance: MyManager;
+    
+    private constructor() {
+        super(); // REQUIRED - initializes BaseManager
+        
+        // Automatic subscription tracking
+        this.subscribe(GameEvents.PLAYER_MOVE, (x: number, y: number) => {
+            this.handleMove(x, y);
+        });
+        
+        // One-time listeners
+        this.subscribeOnce(GameEvents.GAME_START, () => {
+            this.initialize();
+        });
+    }
+    
+    public static getInstance(): MyManager {
+        if (!MyManager.instance) {
+            MyManager.instance = new MyManager();
+        }
+        return MyManager.instance;
+    }
+    
+    private handleMove(x: number, y: number): void {
+        // Process move
+        this.emit(GameEvents.PLAYER_MOVED, x, y); // Helper method
+    }
+    
+    public cleanup(): void {
+        this.cleanupSubscriptions(); // One-line cleanup!
+        // Additional cleanup...
+    }
+}
+```
+
+**Benefits:**
+- Eliminates 8-12 lines per manager (~100-120 lines saved across 15 managers)
+- No manual `unsubscribeFunctions` array management
+- No repetitive `EventBus.on() + push()` pattern
+- Guaranteed cleanup on `cleanup()` call
+- Consistent subscription pattern across all managers
+
+**See:** `docs/architecture/BASE_MANAGER_PATTERN.md` and `docs/checklists/MANAGER_REFACTORING.md`
 
 ### EventBus Patterns
 ```typescript
-// Listen (returns unsubscribe function)
+// IN MANAGERS: Use BaseManager helpers
+this.subscribe(GameEvents.PLAYER_DAMAGE, (amount, health) => {
+    this.updateHealth(health);
+});
+this.emit(GameEvents.PLAYER_MOVE, this.x, this.y, this.direction);
+
+// IN OTHER CODE: Use EventBus directly
 const unsub = EventBus.on(GameEvents.PLAYER_DAMAGE, (amount, health) => {
     this.updateHealth(health);
 });
-
-// Emit with multiple args
-EventBus.emit(GameEvents.PLAYER_MOVE, this.x, this.y, this.direction);
 
 // One-time listeners
 EventBus.once(GameEvents.LEVEL_COMPLETE, () => { /* ... */ });
 
 // Cleanup
 EventBus.off(GameEvents.EVENT_NAME, callback);
+
+// Helper: Emit entity event with owner check
+emitEntityEvent(this.owner, GameEvents.ENTITY_MOVED, x, y);
+
+// Helper: Destroy and emit
+destroyAndEmit(entity, 'ENTITY_DESTROYED');
 ```
 
 ### TypeScript Strictness
@@ -287,14 +591,70 @@ npm run test:watch # Watch mode
 ### Scene System (NEW - Scene-Based Architecture)
 **Pattern:** IScene interface + SceneManager singleton for game state management (menus, gameplay, pause, etc.)
 
+**Centralized Imports (CRITICAL - Use This Pattern):**
+All scenes MUST import from `../imports/sceneImports` barrel export to reduce boilerplate and maintain consistency.
+
+**Before (20+ imports per scene):**
+```typescript
+import { IScene } from './IScene';
+import { Renderer } from '../rendering/Renderer';
+import { EventBus, GameEvents } from '../utils/eventBus';
+import { GameStateManager } from '../managers/GameStateManager';
+import { AudioManager } from '../managers/AudioManager';
+import { ButtonComponent } from '../rendering/components/ButtonComponent';
+import { RenderLayer } from '../rendering/RenderLayer';
+import { CONFIG } from '../config';
+// ... 15 more imports
+```
+
+**After (1 import with destructuring):**
+```typescript
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    GameStateManager,
+    AudioManager,
+    ButtonComponent,
+    RenderLayer,
+    CONFIG
+} from '../imports/sceneImports';
+```
+
+**What's Available in sceneImports:**
+- Core: IScene, Renderer, Camera, RenderLayer
+- EventBus: EventBus, GameEvents
+- Managers: GameStateManager, AudioManager, InputManager, EntityManager, SpawnManager, LevelLoader, PathfindingManager, BuildingManager, CommandManager, FactionManager
+- Factories: AntFactory, QueenFactory, BossFactory, ResourceFactory, BuildingFactory, PlayerFactory, ProjectileFactory
+- UI Components: ButtonComponent, AnimatedSpriteComponent, SliderWithArrowsComponent, KeybindComponent, TextRenderable, PanelRenderable, WorldGenConfigMenu
+- World Systems: WorldGenerator, TileGrid, TileFrillSystem, updateMaterialPriorities, WorldPresetManager, WorldPreset, TILE_SIZE
+- Entities: Queen, Ant, Boss, Resource, Building, Player, Projectile, GameObject
+- Configs: CONFIG, DEV_ROOM_CONFIG, TILE_CONFIG, MAIN_MENU_LAYOUT, OPTIONS_MENU_LAYOUT, LEVEL_SELECT_LAYOUT, MENU_SCALES, MENU_ANIMATIONS, AUDIO_SETTINGS_LAYOUT, SETTINGS_SCALES, CONTROLS_LAYOUT, KeyBindings
+- Other Scenes: PauseMenuScene, MenuScene (for transitions)
+
+**When to keep separate imports:**
+- Scene-specific components not in barrel (ResourceManager, PowerManager, specialized UI components)
+- Avoiding circular dependencies (don't import the current scene's file)
+- One-off imports that are rarely used across scenes
+
 **Creating a Scene:**
 1. Implement `IScene` interface (`src/scenes/IScene.ts`)
-2. Implement lifecycle methods: `enter()`, `exit()`, `update()`, `handleMouseClick()`, `handleMouseMove()`
-3. Register UI components with Renderer in `enter()`, unregister in `exit()`
-4. Switch scenes using `SceneManager.getInstance().switchScene(scene, 'SceneName')`
+2. Import dependencies from `./sceneImports` (use destructuring for clarity)
+3. Implement lifecycle methods: `enter()`, `exit()`, `update()`, `handleMouseClick()`, `handleMouseMove()`
+4. Register UI components with Renderer in `enter()`, unregister in `exit()`
+5. Switch scenes using `SceneManager.getInstance().switchScene(scene, 'SceneName')`
 
 **Example MenuScene Pattern:**
 ```typescript
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    ButtonComponent
+} from '../imports/sceneImports';
+
 export class MenuScene implements IScene {
     private renderer: Renderer;
     private buttons: ButtonComponent[] = [];
@@ -588,11 +948,34 @@ describe('FeatureName', () => {
 - **Rendering:** Layer sorting, dirty flags, camera transforms
 - **EventBus interactions:** Events emitted/received correctly
 
-### Running Tests
+### Running Tests (Optimized Workflow)
 ```bash
-npm test           # Run all tests once
-npm run test:watch # Watch mode - runs on file changes (TDD mode)
+# FULL TEST SUITE (3-5 minutes, 140+ tests - use sparingly)
+npm test
+
+# TARGETED TESTING (50-150ms - use this during development!)
+npm test -- --grep "pattern"              # Run specific test suites
+npm test -- --grep "Resource Limits"      # Single system
+npm test -- --grep "Building|Quest"       # Multiple systems with |
+
+# VERIFY BUILD (after test completion)
+npm run build                             # TypeScript compile + esbuild bundle
 ```
+
+**TDD Workflow (Optimized):**
+1. Write tests for new feature in `test/unit/tdd_pending/` or existing test file
+2. Run targeted tests: `npm test -- --grep "YourFeature"` (~50-150ms)
+3. Implement feature in `src/`
+4. Re-run targeted tests until passing
+5. Run `npm run build` to verify no compilation errors
+6. Run full test suite ONLY at end of major phase: `npm test`
+7. Commit when all targeted tests pass + build succeeds
+
+**Benefits:**
+- 50-150ms targeted tests vs 3-5 min full suite = 100-200x faster feedback
+- Iterate rapidly on specific features
+- Catch compilation errors with `npm run build` (fast, ~2-3 seconds)
+- Full test suite only at milestones (avoids 141+ pre-existing failures noise)
 
 ### Test Examples
 ```typescript

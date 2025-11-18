@@ -17,3 +17,89 @@ canvas {
     border: 2px solid #333;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
+
+/* Loading Screen Styles */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out;
+}
+
+.loading-content {
+    text-align: center;
+    color: #fff;
+}
+
+.loading-ant {
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    animation: antWalk 1s steps(4) infinite, antBounce 0.5s ease-in-out infinite alternate;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes antWalk {
+    0% { transform: translateX(-20px) scaleX(1); }
+    50% { transform: translateX(20px) scaleX(1); }
+    51% { transform: translateX(20px) scaleX(-1); }
+    100% { transform: translateX(-20px) scaleX(-1); }
+}
+
+@keyframes antBounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+}
+
+.loading-text {
+    margin-top: 30px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #888;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.loading-bar {
+    width: 300px;
+    height: 8px;
+    background-color: #333;
+    border-radius: 4px;
+    margin: 20px auto 0;
+    overflow: hidden;
+    border: 1px solid #444;
+}
+
+.loading-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #4a9eff 0%, #66b3ff 50%, #4a9eff 100%);
+    background-size: 200% 100%;
+    animation: loadingProgress 2s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes loadingProgress {
+    0% {
+        width: 0%;
+        background-position: 0% 50%;
+    }
+    50% {
+        width: 70%;
+        background-position: 100% 50%;
+    }
+    100% {
+        width: 100%;
+        background-position: 0% 50%;
+    }
+}

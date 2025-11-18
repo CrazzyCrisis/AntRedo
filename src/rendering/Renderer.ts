@@ -101,6 +101,7 @@ export class Renderer {
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
             RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS,
             RenderLayer.UI,
             RenderLayer.DEBUG
         ];
@@ -126,19 +127,22 @@ export class Renderer {
         const layerConfig = LAYER_CONFIGS[layer];
         const renderables = this.renderables.get(layer) || [];
 
-        // Clear framebuffer if configured
-        if (layerConfig.clearEveryFrame) {
-            this.framebufferManager.clearFramebuffer(layer);
-        }
+        // Clear framebuffer when layer is dirty (being re-rendered)
+        // This is essential when camera moves - even static layers need clearing
+        // to prevent duplication with new camera transform
+        this.framebufferManager.clearFramebuffer(layer);
 
+        // Disable smoothing for pixel art layers (crisp rendering)
         // Sort renderables if layer uses depth sorting
         let sortedRenderables = renderables;
         if (layerConfig.depthSort) {
             sortedRenderables = [...renderables].sort((a, b) => a.depth - b.depth);
         }
 
-        // Apply camera transform if camera exists
-        if (this.camera) {
+        // Apply camera transform if camera exists (but NOT for UI layer)
+        // DEBUG layer DOES get camera transform so debug visuals work in world space
+        const applyCameraTransform = this.camera && layer !== RenderLayer.UI;
+        if (applyCameraTransform) {
             fb.push();
             this.camera.applyTransform(fb);
         }
@@ -148,7 +152,7 @@ export class Renderer {
             renderable.render(fb);
         });
 
-        if (this.camera) {
+        if (applyCameraTransform) {
             fb.pop();
         }
 
@@ -166,6 +170,7 @@ export class Renderer {
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
             RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS,
             RenderLayer.UI,
             RenderLayer.DEBUG
         ];

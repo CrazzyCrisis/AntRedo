@@ -87,6 +87,21 @@ export function normalizeAngle(angle: number): number {
     return angle;
 }
 
+// Get perpendicular angle (rotate by 90 degrees / π/2 radians)
+export function perpendicularAngle(angle: number): number {
+    return angle + Math.PI / 2;
+}
+
+// Calculate fade-out alpha based on progress (0-1)
+export function fadeOutAlpha(progress: number, maxAlpha: number = 255): number {
+    return maxAlpha * (1 - progress);
+}
+
+// Calculate fade-in alpha based on progress (0-1)
+export function fadeInAlpha(progress: number, maxAlpha: number = 255): number {
+    return maxAlpha * progress;
+}
+
 // Deep clone an object (simple version)
 export function deepClone<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
@@ -167,6 +182,46 @@ export function gridToWorldCenter(col: number, row: number, tileSize: number): W
     return {
         x: col * tileSize + tileSize / 2,
         y: row * tileSize + tileSize / 2
+    };
+}
+
+/**
+ * Tile position options for flexible entity placement
+ * Allows up to 9 entities per tile by placing them at different positions
+ */
+export type TilePosition = 'TL' | 'T' | 'TR' | 'L' | 'C' | 'R' | 'BL' | 'B' | 'BR';
+
+/**
+ * Convert grid coordinates to world coordinates with flexible positioning within the tile
+ * @param col - Grid column
+ * @param row - Grid row
+ * @param tileSize - Size of one tile in pixels
+ * @param position - Position within tile (TL=top-left, T=top-center, TR=top-right, L=left, C=center, R=right, BL=bottom-left, B=bottom, BR=bottom-right)
+ * @returns World position with specified offset within tile
+ */
+export function gridToWorldPosition(col: number, row: number, tileSize: number, position: TilePosition = 'C'): WorldPosition {
+    const baseX = col * tileSize;
+    const baseY = row * tileSize;
+    const quarter = tileSize / 4;
+    const half = tileSize / 2;
+    const threeQuarters = tileSize * 3 / 4;
+    
+    const offsets: Record<TilePosition, { x: number; y: number }> = {
+        'TL': { x: quarter, y: quarter },           // Top-left
+        'T':  { x: half, y: quarter },              // Top-center
+        'TR': { x: threeQuarters, y: quarter },     // Top-right
+        'L':  { x: quarter, y: half },              // Left-center
+        'C':  { x: half, y: half },                 // Center (default)
+        'R':  { x: threeQuarters, y: half },        // Right-center
+        'BL': { x: quarter, y: threeQuarters },     // Bottom-left
+        'B':  { x: half, y: threeQuarters },        // Bottom-center
+        'BR': { x: threeQuarters, y: threeQuarters } // Bottom-right
+    };
+    
+    const offset = offsets[position];
+    return {
+        x: baseX + offset.x,
+        y: baseY + offset.y
     };
 }
 
@@ -397,3 +452,906 @@ export function sumArray(array: number[]): number {
 export function averageArray(array: number[]): number {
     return array.length === 0 ? 0 : sumArray(array) / array.length;
 }
+
+// ============================================================================
+// ENTITY/POWER HELPERS (for power system and entity queries)
+// ============================================================================
+
+/**
+ * Get all entities within radius of a position
+ * @param entityManager - EntityManager instance
+ * @param centerX - Center X position
+ * @param centerY - Center Y position
+ * @param radius - Search radius
+ * @param activeOnly - Only return active entities (default true)
+ * @returns Array of entities within radius
+ */
+export function getEntitiesInRadius(
+    entityManager: any,
+    centerX: number,
+    centerY: number,
+    radius: number,
+    activeOnly: boolean = true
+): any[] {
+    return entityManager.getAllEntities().filter((entity: any) => {
+        if (activeOnly && !entity.isActive) return false;
+        const dist = distance(centerX, centerY, entity.gridX, entity.gridY);
+        return dist <= radius;
+    });
+}
+
+/**
+ * Check if entity is enemy to a faction
+ * @param entityManager - EntityManager instance
+ * @param factionManager - FactionManager instance
+ * @param entityId - Entity ID to check
+ * @param referenceFactionId - Faction ID to compare against
+ * @returns True if entity is enemy
+ */
+export function isEntityEnemy(
+    entityManager: any,
+    factionManager: any,
+    entityId: string,
+    referenceFactionId: string | null
+): boolean {
+    // If no faction system, all entities are enemies
+    if (!referenceFactionId) return true;
+
+    // Get entity from EntityManager
+    const entity = entityManager.getEntity(entityId);
+    if (!entity) return false;
+
+    // Check if entity has faction ID property
+    const entityFactionId = entity.factionId;
+    if (!entityFactionId) return true; // No faction = enemy
+
+    // Use FactionManager to check if enemy
+    return factionManager.isEnemy(referenceFactionId, entityFactionId);
+}
+
+/**
+ * Calculate falloff factor based on distance (1.0 at center, 0.0 at edge)
+ * @param currentDistance - Current distance from center
+ * @param maxDistance - Maximum distance (edge of radius)
+ * @returns Falloff factor (0.0 to 1.0)
+ */
+export function distanceFalloff(currentDistance: number, maxDistance: number): number {
+    if (maxDistance === 0) return 1;
+    return clamp(1 - (currentDistance / maxDistance), 0, 1);
+}
+
+/**
+ * Apply knockback/push force with distance falloff
+ * @param sourceX - Source X position (center of force)
+ * @param sourceY - Source Y position
+ * @param targetX - Target X position (entity being pushed)
+ * @param targetY - Target Y position
+ * @param maxForce - Maximum force at center
+ * @param radius - Radius of effect
+ * @returns {x, y} vector for force
+ */
+export function calculatePushForce(
+    sourceX: number,
+    sourceY: number,
+    targetX: number,
+    targetY: number,
+    maxForce: number,
+    radius: number
+): { x: number; y: number } {
+    const angle = angleBetween(sourceX, sourceY, targetX, targetY);
+    const dist = distance(sourceX, sourceY, targetX, targetY);
+    const falloff = distanceFalloff(dist, radius);
+    const actualForce = maxForce * falloff;
+
+    return {
+        x: Math.cos(angle) * actualForce,
+        y: Math.sin(angle) * actualForce
+    };
+}
+
+// ============================================================================
+// FACTORY PATTERN HELPERS
+// ============================================================================
+
+/**
+ * Setup automatic sprite-to-entity binding with EventBus listeners (supports animated sprites)
+ * Handles sprite registration, ENTITY_MOVED tracking, ENTITY_DESTROYED cleanup
+ * Automatically calls update() on animated sprites
+ * @param entity - GameObject to bind sprite to
+ * @param sprite - SpriteComponent or AnimatedSpriteSheetComponent to register
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for sprite
+ * @param gridToWorldFn - Function to convert grid coordinates to world coordinates
+ */
+export function setupEntitySpriteBinding(
+    entity: any,
+    sprite: any,
+    renderer: any,
+    layer: any
+): void {
+    // Import dynamically to avoid circular dependencies
+    const { EventBus, GameEvents } = require('./eventBus');
+    const { TILE_CONFIG } = require('../config/tileConfig');
+    const { VisualEffectsManager } = require('../managers/VisualEffectsManager');
+    
+    // Register sprite with renderer
+    const unregister = renderer.register(sprite);
+    
+    // Store sprite component reference on entity for particle scaling
+    entity._spriteComponent = sprite;
+    
+    // Register sprite component with VFX manager for flash effects
+    const vfxManager = VisualEffectsManager.getInstance();
+    vfxManager.registerEntitySpriteComponent(entity.id, sprite);
+    
+    // Set entity ID on sprite for combat animation tracking
+    if (sprite.setEntityId && typeof sprite.setEntityId === 'function') {
+        sprite.setEntityId(entity.id);
+    }
+    
+    // Check if this is an animated sprite (duck typing)
+    const isAnimated = 'playAnimation' in sprite && typeof sprite.update === 'function';
+    
+    // For animated sprites, wrap entity update to call sprite.update()
+    if (isAnimated && entity.update) {
+        const originalUpdate = entity.update.bind(entity);
+        entity.update = (deltaTime: number) => {
+            originalUpdate(deltaTime);
+            sprite.update(); // Advance animation frames
+        };
+    }
+    
+    // Center offset for sprite rendering (sprites use CENTER mode, world coords are top-left)
+    const centerOffset = TILE_CONFIG.SIZE / 2;
+    
+    // Listen for smooth position updates - update sprite position for smooth rendering
+    const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
+        if (entityId === entity.id) {
+            // Add center offset so sprite is centered in tile (sprites draw from CENTER)
+            sprite.setPosition(smoothX + centerOffset, smoothY + centerOffset);
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for grid position updates - update depth sorting only (not visual position)
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, _gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
+            sprite.setDepth(gridY);
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for entity destruction - cleanup sprite
+    // CRITICAL: Use EventBus.on() NOT once() because once() unsubscribes after first event,
+    // and we need to check entity.id for every ENTITY_DESTROYED event
+    const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+        if (entityId === entity.id) {
+            // Unregister from VFX manager
+            const vfxManager = VisualEffectsManager.getInstance();
+            vfxManager.unregisterEntitySpriteComponent(entity.id);
+            
+            // Cleanup animated sprite subscriptions
+            if (isAnimated && sprite.cleanup) {
+                sprite.cleanup();
+            }
+            unregister();
+            EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+            EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+            EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        }
+    });
+    
+    // Store cleanup function on entity for manual cleanup
+    entity._cleanup = () => {
+        if (isAnimated && sprite.cleanup) {
+            sprite.cleanup();
+        }
+        unregister();
+        EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+        EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+        EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+    };
+}
+
+/**
+ * Setup automatic health bar binding for entities with HealthComponent
+ * Handles health bar registration, position tracking, and cleanup
+ * Health bar automatically shows/hides based on health changes
+ * 
+ * @param entity - GameObject with HealthComponent
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for health bar (typically ABOVE_ENTITIES)
+ * @returns HealthBarComponent instance for manual control if needed
+ */
+export function setupHealthBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    // Import dynamically to avoid circular dependencies
+    const { EventBus, GameEvents } = require('./eventBus');
+    const { HealthBarComponent } = require('../rendering/components/HealthBarComponent');
+    
+    // Get health component
+    const healthComp = entity.getComponent('Health');
+    if (!healthComp) {
+        console.warn(`Entity ${entity.id} has no HealthComponent - health bar not created`);
+        return null;
+    }
+    
+    // Get initial smooth position (where sprite actually renders)
+    const smoothPos = entity.getSmoothPosition();
+    const TILE_SIZE_CONST = require('../world/TileSystem').TILE_SIZE;
+    const centerOffsetValue = TILE_SIZE_CONST / 2;
+    const worldX = smoothPos.x + centerOffsetValue;
+    const worldY = smoothPos.y + centerOffsetValue;
+    
+    // Create health bar component
+    const healthBar = new HealthBarComponent(
+        entity.id,
+        worldX,
+        worldY,
+        healthComp.getCurrentHealth(),
+        healthComp.getMaxHealth()
+    );
+    
+    // Set sprite scale if available
+    if (entity._spriteComponent && entity._spriteComponent.scale) {
+        healthBar.setSpriteScale(entity._spriteComponent.scale);
+    }
+    
+    // Register health bar with renderer
+    const unregister = renderer.register(healthBar);
+    // Listen for smooth position updates - update health bar position
+    const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
+        if (entityId === entity.id) {
+            // Add center offset to match sprite position
+            const newX = smoothX + centerOffsetValue;
+            const newY = smoothY + centerOffsetValue;
+            healthBar.setPosition(newX, newY);
+            renderer.markLayerDirty(layer); // Mark layer dirty for redraw
+        }
+    });
+    
+    // Listen for grid position updates - update depth sorting
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, _gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
+            healthBar.depth = gridY; // Update depth for proper sorting
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for entity destruction - cleanup health bar
+    const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+        if (entityId === entity.id) {
+            healthBar.destroy();
+            unregister();
+            EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+            EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+            EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        }
+    });
+    
+    // Extend entity's cleanup function to include health bar
+    const originalCleanup = entity._cleanup;
+    entity._cleanup = () => {
+        healthBar.destroy();
+        unregister();
+        EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+        EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+        EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        if (originalCleanup) originalCleanup();
+    };
+    
+    return healthBar;
+}
+
+/**
+ * Setup status bar binding for an entity with automatic rendering and cleanup.
+ * Generic version that works with any component type (health, hunger, oxygen, stamina, etc.)
+ * 
+ * This helper:
+ * 1. Creates StatusBarComponent from entity's specified component
+ * 2. Registers with renderer on specified layer
+ * 3. Listens to ENTITY_SMOOTH_POSITION_UPDATE and ENTITY_MOVED for position updates
+ * 4. Marks layer dirty on updates for proper rendering
+ * 5. Cleans up on ENTITY_DESTROYED
+ * 
+ * @param entity - Entity with component and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for status bar (typically ABOVE_ENTITIES)
+ * @param barType - Type of bar ('health', 'hunger', 'oxygen', etc.) - matches statusBarConfig.ts keys
+ * @param componentName - Name of component to read from (e.g., 'Health', 'Hunger')
+ * @param customWidth - Optional custom bar width
+ * @param customHeight - Optional custom bar height
+ * @param customOffsetY - Optional custom vertical offset
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupStatusBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any,
+    barType: string,
+    componentName: string,
+    customWidth?: number,
+    customHeight?: number,
+    customOffsetY?: number
+): any {
+    // Import dynamically to avoid circular dependencies
+    const { EventBus, GameEvents } = require('./eventBus');
+    const { StatusBarComponent } = require('../rendering/components/StatusBarComponent');
+    
+    // Get component
+    const component = entity.getComponent(componentName);
+    if (!component) {
+        console.warn(`Entity ${entity.id} has no ${componentName} component - ${barType} bar not created`);
+        return null;
+    }
+    
+    // Get initial world position (assume entity has worldX/worldY or use grid conversion)
+    let worldX = entity.worldX || 0;
+    let worldY = entity.worldY || 0;
+    
+    // If entity only has grid coordinates, convert them
+    if (worldX === 0 && worldY === 0 && entity.gridX !== undefined) {
+        const worldPos = gridToWorldCenter(entity.gridX, entity.gridY, require('../world/TileSystem').TILE_SIZE);
+        worldX = worldPos.x;
+        worldY = worldPos.y;
+    }
+    
+    // Get current and max values (try common method names)
+    let currentValue = 0;
+    let maxValue = 100;
+    
+    if (typeof component.getCurrentHealth === 'function') {
+        currentValue = component.getCurrentHealth();
+        maxValue = component.getMaxHealth();
+    } else if (typeof component.getCurrent === 'function') {
+        currentValue = component.getCurrent();
+        maxValue = component.getMax();
+    } else if (typeof component.getValue === 'function') {
+        currentValue = component.getValue();
+        maxValue = component.getMaxValue();
+    }
+    
+    // Create status bar component
+    const statusBar = new StatusBarComponent(
+        entity.id,
+        worldX,
+        worldY,
+        barType,
+        maxValue,
+        customWidth,
+        customHeight,
+        customOffsetY
+    );
+    
+    // Set initial value
+    statusBar.updateValue(currentValue, maxValue);
+    
+    // Register status bar with renderer
+    const unregister = renderer.register(statusBar);
+    
+    // Listen for smooth position updates - update status bar position
+    const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
+        if (entityId === entity.id) {
+            statusBar.setPosition(smoothX, smoothY);
+            renderer.markLayerDirty(layer); // Mark layer dirty for redraw
+        }
+    });
+    
+    // Listen for grid position updates - update depth sorting
+    const moveListener = EventBus.on(GameEvents.ENTITY_MOVED, (entityId: string, _gridX: number, gridY: number) => {
+        if (entityId === entity.id) {
+            statusBar.depth = gridY; // Update depth for proper sorting
+            renderer.markLayerDirty(layer);
+        }
+    });
+    
+    // Listen for entity destruction - cleanup status bar
+    const destroyListener = EventBus.on(GameEvents.ENTITY_DESTROYED, (entityId: string) => {
+        if (entityId === entity.id) {
+            statusBar.destroy();
+            unregister();
+            EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+            EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+            EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        }
+    });
+    
+    // Extend entity's cleanup function to include status bar
+    const originalCleanup = entity._cleanup;
+    entity._cleanup = () => {
+        statusBar.destroy();
+        unregister();
+        EventBus.off(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, smoothMoveListener);
+        EventBus.off(GameEvents.ENTITY_MOVED, moveListener);
+        EventBus.off(GameEvents.ENTITY_DESTROYED, destroyListener);
+        if (originalCleanup) originalCleanup();
+    };
+    
+    return statusBar;
+}
+
+/**
+ * Setup hunger bar binding for an entity - convenience wrapper for setupStatusBarBinding
+ * @param entity - Entity with HungerComponent and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for hunger bar (typically ABOVE_ENTITIES)
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupHungerBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    return setupStatusBarBinding(entity, renderer, layer, 'hunger', 'Hunger');
+}
+
+/**
+ * Setup oxygen bar binding for an entity - convenience wrapper for setupStatusBarBinding
+ * @param entity - Entity with OxygenComponent and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for oxygen bar (typically ABOVE_ENTITIES)
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupOxygenBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    return setupStatusBarBinding(entity, renderer, layer, 'oxygen', 'Oxygen');
+}
+
+/**
+ * Setup stamina bar binding for an entity - convenience wrapper for setupStatusBarBinding
+ * @param entity - Entity with StaminaComponent and id property
+ * @param renderer - Renderer instance
+ * @param layer - RenderLayer for stamina bar (typically ABOVE_ENTITIES)
+ * @returns StatusBarComponent instance for manual control if needed
+ */
+export function setupStaminaBarBinding(
+    entity: any,
+    renderer: any,
+    layer: any
+): any {
+    return setupStatusBarBinding(entity, renderer, layer, 'stamina', 'Stamina');
+}
+
+// ============================================================================
+// EVENTBUS EMIT HELPERS
+// ============================================================================
+
+/**
+ * Create a tile background renderable for static scenes (menus, etc.)
+ * Generates procedural tile world and returns a renderable object for the Renderer.
+ * 
+ * @param canvasWidth - Canvas width in pixels
+ * @param canvasHeight - Canvas height in pixels
+ * @param tileSprites - Map of tile type to sprite image
+ * @param _tileEdgeSprites - Map of frill path to sprite image (optional, reserved for future use)
+ * @param seed - Random seed for world generation (default: 42)
+ * @param worldGenConfig - World generation config (optional, uses DEFAULT_WORLD_GEN_CONFIG)
+ * @returns Object with renderable and unregister function
+ * 
+ * @example
+ * ```typescript
+ * const { renderable, cleanup } = createTileBackgroundRenderable(
+ *     800, 600, tileSprites, tileEdgeSprites
+ * );
+ * const unregister = renderer.register(renderable);
+ * // Later: cleanup()
+ * ```
+ */
+export function createTileBackgroundRenderable(
+    canvasWidth: number,
+    canvasHeight: number,
+    tileSprites: { [key: number]: any },
+    _tileEdgeSprites?: { [path: string]: any },
+    seed: number = Date.now(),
+    worldGenConfig?: any
+): { renderable: any; cleanup: () => void } {
+    // Dynamic imports to avoid circular dependencies
+    const { WorldGenerator } = require('../world/WorldGenerator');
+    const { TileGrid } = require('../world/TileGrid');
+    const { TILE_SIZE } = require('../world/TileSystem');
+    const { TILE_CONFIG } = require('../config/tileConfig');
+    const { DEFAULT_WORLD_GEN_CONFIG } = require('../config/worldGenConfig');
+    const { RenderLayer } = require('../rendering/RenderLayer');
+    
+    // Calculate world size to cover canvas
+    const worldWidth = Math.ceil(canvasWidth / TILE_SIZE) + 4; // Extra tiles for coverage
+    const worldHeight = Math.ceil(canvasHeight / TILE_SIZE) + 4;
+    
+    // Generate world
+    const config = worldGenConfig || DEFAULT_WORLD_GEN_CONFIG;
+    const worldGenerator = new WorldGenerator(config);
+    const gridData = worldGenerator.generate(worldWidth, worldHeight, seed);
+    const tileGrid = new TileGrid(gridData);
+    
+    // Calculate offset to center world around (0, 0)
+    const offsetX = -(worldWidth * TILE_SIZE) / 2;
+    const offsetY = -(worldHeight * TILE_SIZE) / 2;
+    
+    // Create renderable
+    const renderable = {
+        depth: 0,
+        layer: RenderLayer.GROUND,
+        render: (graphics: any) => {
+            const grid = tileGrid.getGrid();
+            for (let row = 0; row < grid.length; row++) {
+                for (let col = 0; col < grid[row].length; col++) {
+                    const tile = grid[row][col];
+                    const x = (col * TILE_SIZE) + offsetX; // Apply offset to center
+                    const y = (row * TILE_SIZE) + offsetY; // Apply offset to center
+                    
+                    if (TILE_CONFIG.USE_SPRITES && tileSprites[tile.type]) {
+                        graphics.image(tileSprites[tile.type], x, y, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+    };
+    
+    return {
+        renderable,
+        cleanup: () => {
+            // Cleanup if needed in future (currently no resources to clean)
+        }
+    };
+}
+
+/**
+ * Emit entity event with owner.id check
+ * Common pattern: if (this.owner) { EventBus.emit(..., this.owner.id, ...) }
+ * @param entity - Entity or component owner (must have .id property)
+ * @param eventName - Event name to emit
+ * @param args - Additional event arguments
+ */
+export function emitEntityEvent(
+    entity: any,
+    eventName: string,
+    ...args: any[]
+): void {
+    if (entity) {
+        const { EventBus } = require('./eventBus');
+        EventBus.emit(eventName, entity.id, ...args);
+    }
+}
+
+/**
+ * Emit destruction event and destroy entity
+ * Common pattern: EventBus.emit('X_DESTROYED', id, type); entity.destroy();
+ * @param entity - GameObject to destroy (must have .id, .type, .destroy())
+ * @param eventName - Event name to emit before destruction
+ */
+export function destroyAndEmit(entity: any, eventName: string): void {
+    const { EventBus } = require('./eventBus');
+    EventBus.emit(eventName, entity.id, entity.type);
+    entity.destroy();
+}
+
+// ============================================================================
+// UI RENDERING HELPERS
+// ============================================================================
+
+/**
+ * Draw radial cooldown overlay (counter-clockwise progress indicator)
+ * Draws a darkened icon + radial "pie slice" that shrinks as cooldown progresses
+ * Common pattern for ability/power cooldowns in games
+ * 
+ * @param graphics - p5.Graphics context to draw on
+ * @param x - Center X position of the icon
+ * @param y - Center Y position of the icon
+ * @param size - Diameter of the cooldown circle
+ * @param progress - Cooldown progress (0 = ready, 1 = full cooldown)
+ * @param darkenAlpha - Alpha value for darkening overlay (default 150)
+ * @param radialColor - Color of radial overlay (default semi-transparent black)
+ * 
+ * @example
+ * // Power on 50% cooldown
+ * drawRadialCooldown(graphics, powerX, powerY, 64, 0.5);
+ * 
+ * // Custom styling
+ * drawRadialCooldown(graphics, x, y, 48, progress, 180, '#FF0000');
+ */
+export function drawRadialCooldown(
+    graphics: any,
+    x: number,
+    y: number,
+    size: number,
+    progress: number,
+    darkenAlpha: number = 150,
+    radialColor: string = '#000000'
+): void {
+    graphics.push();
+    
+    // 1. Draw darkening overlay on entire icon
+    if (progress > 0) {
+        graphics.fill(0, 0, 0, darkenAlpha);
+        graphics.noStroke();
+        graphics.circle(x, y, size);
+    }
+    
+    // 2. Draw radial cooldown "pie slice"
+    if (progress > 0) {
+        // Convert hex color to RGB
+        const rgb = hexToRgb(radialColor);
+        if (rgb) {
+            graphics.fill(rgb.r, rgb.g, rgb.b, 180);
+        } else {
+            graphics.fill(0, 0, 0, 180);
+        }
+        graphics.noStroke();
+        
+        // Calculate angles (counter-clockwise from top)
+        const startAngle = -Math.PI / 2; // Top (270° / -90°)
+        const sweepAngle = progress * Math.PI * 2; // Full circle = 2π
+        
+        // Draw arc (PIE mode for filled wedge)
+        graphics.arc(
+            x, y,
+            size, size,
+            startAngle,
+            startAngle + sweepAngle,
+            'PIE' as any
+        );
+    }
+    
+    graphics.pop();
+}
+
+/**
+ * Draw UI panel with rounded corners and semi-transparent background
+ * Common pattern for all UI components (resource display, power bar, etc.)
+ * 
+ * @param graphics - p5.Graphics context to draw on
+ * @param x - X position (top-left corner)
+ * @param y - Y position (top-left corner)
+ * @param width - Panel width
+ * @param height - Panel height
+ * @param backgroundColor - Hex color string (default dark gray)
+ * @param alpha - Background alpha transparency (0-255, default 200)
+ * @param cornerRadius - Rounded corner radius (default 8)
+ * 
+ * @example
+ * // Standard UI panel
+ * drawUIPanel(graphics, 10, 10, 200, 100);
+ * 
+ * // Custom styling
+ * drawUIPanel(graphics, x, y, w, h, '#3C3C3C', 180, 12);
+ */
+export function drawUIPanel(
+    graphics: any,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    backgroundColor: string = '#2C2C2C',
+    alpha: number = 200,
+    cornerRadius: number = 8
+): void {
+    const rgb = hexToRgb(backgroundColor);
+    if (rgb) {
+        graphics.fill(rgb.r, rgb.g, rgb.b, alpha);
+    } else {
+        graphics.fill(44, 44, 44, alpha); // Fallback to default gray
+    }
+    graphics.noStroke();
+    graphics.rect(x, y, width, height, cornerRadius);
+}
+
+/**
+ * Format number with comma thousands separators
+ * Common pattern for displaying resource counts, population, etc.
+ * 
+ * @param num - Number to format
+ * @returns Formatted string with commas (e.g., 1000 → "1,000")
+ * 
+ * @example
+ * formatNumberWithCommas(1000) // "1,000"
+ * formatNumberWithCommas(1234567) // "1,234,567"
+ */
+export function formatNumberWithCommas(num: number): string {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * Smooth animation helper using lerp interpolation
+ * Returns new value that smoothly transitions toward target
+ * Common pattern for UI animations (expand/collapse, fade, slide)
+ * 
+ * @param current - Current value
+ * @param target - Target value
+ * @param speed - Interpolation speed (0-1, default 0.2)
+ * @param snapThreshold - Snap to target when within this distance (default 1)
+ * @returns New current value
+ * 
+ * @example
+ * // Smooth height animation
+ * this.currentHeight = smoothTransition(this.currentHeight, targetHeight, 0.2, 1);
+ * 
+ * // Faster animation
+ * this.alpha = smoothTransition(this.alpha, 255, 0.4, 2);
+ */
+export function smoothTransition(
+    current: number,
+    target: number,
+    speed: number = 0.2,
+    snapThreshold: number = 1
+): number {
+    const newValue = current + (target - current) * speed;
+    
+    // Snap to target when close enough
+    if (Math.abs(newValue - target) < snapThreshold) {
+        return target;
+    }
+    
+    return newValue;
+}
+
+// ============================================================================
+// BUTTON/INTERACTION HELPERS
+// ============================================================================
+
+/**
+ * Check if point is inside a rectangle (button bounds checking)
+ * Common pattern for all clickable UI elements
+ * 
+ * @param pointX - Mouse/point X coordinate
+ * @param pointY - Mouse/point Y coordinate
+ * @param rectX - Rectangle center X (or top-left if centerOrigin=false)
+ * @param rectY - Rectangle center Y (or top-left if centerOrigin=false)
+ * @param width - Rectangle width
+ * @param height - Rectangle height
+ * @param centerOrigin - If true, rectX/rectY are center point (default true)
+ * @returns True if point is inside rectangle
+ * 
+ * @example
+ * // Center-origin button (most common for UI)
+ * if (isPointInRect(mouseX, mouseY, buttonX, buttonY, 64, 64)) {
+ *     // Button clicked
+ * }
+ * 
+ * // Top-left origin
+ * if (isPointInRect(mouseX, mouseY, panelX, panelY, 200, 100, false)) {
+ *     // Panel clicked
+ * }
+ */
+export function isPointInRect(
+    pointX: number,
+    pointY: number,
+    rectX: number,
+    rectY: number,
+    width: number,
+    height: number,
+    centerOrigin: boolean = true
+): boolean {
+    if (centerOrigin) {
+        return (
+            pointX >= rectX - width / 2 &&
+            pointX <= rectX + width / 2 &&
+            pointY >= rectY - height / 2 &&
+            pointY <= rectY + height / 2
+        );
+    } else {
+        return (
+            pointX >= rectX &&
+            pointX <= rectX + width &&
+            pointY >= rectY &&
+            pointY <= rectY + height
+        );
+    }
+}
+
+/**
+ * Calculate button positions for horizontal button bar layout
+ * Common pattern for power bar, command buttons, etc.
+ * Returns array of x positions centered around baseX
+ * 
+ * @param baseX - Center X position for the entire button bar
+ * @param buttonCount - Number of buttons
+ * @param buttonSize - Width of each button
+ * @param spacing - Distance between button centers
+ * @returns Array of x positions for each button
+ * 
+ * @example
+ * // 4 buttons centered at x=400
+ * const positions = calculateButtonBarPositions(400, 4, 56, 70);
+ * // Returns: [265, 335, 405, 475] (buttons centered around 400)
+ */
+export function calculateButtonBarPositions(
+    baseX: number,
+    buttonCount: number,
+    buttonSize: number,
+    spacing: number
+): number[] {
+    const positions: number[] = [];
+    const totalWidth = (buttonCount * spacing) - (spacing - buttonSize);
+    const startX = baseX - totalWidth / 2 + buttonSize / 2;
+    
+    for (let i = 0; i < buttonCount; i++) {
+        positions.push(startX + (i * spacing));
+    }
+    
+    return positions;
+}
+
+/**
+ * Get button color based on state (normal/hover/selected/disabled)
+ * Common pattern for all interactive buttons
+ * Returns hex color string
+ * 
+ * @param isEnabled - Whether button is enabled
+ * @param isSelected - Whether button is selected
+ * @param isHovered - Whether button is hovered
+ * @param colors - Color scheme object with normal/hover/selected/disabled colors
+ * @returns Hex color string
+ * 
+ * @example
+ * const colors = {
+ *     normal: '#444444',
+ *     hover: '#555555',
+ *     selected: '#4CAF50',
+ *     disabled: '#222222'
+ * };
+ * const color = getButtonStateColor(enabled, selected, hovered, colors);
+ */
+export function getButtonStateColor(
+    isEnabled: boolean,
+    isSelected: boolean,
+    isHovered: boolean,
+    colors: {
+        normal: string,
+        hover: string,
+        selected: string,
+        disabled: string
+    }
+): string {
+    if (!isEnabled) return colors.disabled;
+    if (isSelected) return colors.selected;
+    if (isHovered) return colors.hover;
+    return colors.normal;
+}
+
+// ============================================================================
+// ANIMATION HELPERS
+// ============================================================================
+
+/**
+ * Create animation config object
+ * Helper factory for creating animation configurations
+ * 
+ * @param row - Grid row (0-indexed)
+ * @param startCol - Starting column (0-indexed)
+ * @param endCol - Ending column (inclusive)
+ * @param frameWidth - Frame width in pixels
+ * @param frameHeight - Frame height in pixels
+ * @param speed - Frames between animation frames (default: 5)
+ * @param loop - Loop animation (default: true)
+ * @returns Animation config object
+ * 
+ * @example
+ * const idleAnim = createAnimationData(0, 0, 1, 32, 32, 8, true);
+ * animSprite.addAnimation('idle', idleAnim);
+ */
+export function createAnimationData(
+    row: number,
+    startCol: number,
+    endCol: number,
+    frameWidth: number,
+    frameHeight: number,
+    speed: number = 5,
+    loop: boolean = true
+): any {
+    return {
+        row,
+        startCol,
+        endCol,
+        frameWidth,
+        frameHeight,
+        speed,
+        loop
+    };
+}
+

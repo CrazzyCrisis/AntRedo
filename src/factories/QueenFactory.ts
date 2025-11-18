@@ -1,0 +1,189 @@
+import {
+    Renderer,
+    RenderLayer,
+    AnimatedSpriteSheetComponent,
+    EventBus,
+    GameEvents,
+    setupEntitySpriteBinding,
+    setupHealthBarBinding,
+    TILE_SIZE,
+    EntityManager,
+    gridToWorldCenter
+} from '../imports/factoryImports';
+import { QUEEN_ANIMATIONS } from '../config/systems/animationConfig';
+import { getEntitySpritesheet } from '../sketch';
+import { Queen } from '../classes/Queen';
+import { ENTITY_CONFIG } from '../config/gameplay/entityConfig';
+import { EntityState } from '../classes/components/StateMachineComponent';
+
+/**
+ * QueenFactory - CONTROLLER
+ * Bridges Queen Model and SpriteComponent View
+ * 
+ * SINGLETON PATTERN: Only one Queen can exist at a time per faction
+ * 
+ * Responsibilities:
+ * - Create Queen models (enforces single Queen per faction)
+ * - Create and register sprite components
+ * - Wire EventBus communication between Model and View
+ * - Handle camera follow
+ * - Manage cleanup on death
+ * 
+ * Pattern: Factory hides all rendering complexity from game code
+ * Usage: const queen = QueenFactory.create(renderer, sprite, gridX, gridY, factionId);
+ */
+export class QueenFactory {
+    private static activeQueens: Map<string, Queen> = new Map();
+
+    /**
+     * Create a new Queen entity with automatic rendering
+     * ENFORCES: Only one Queen per faction can exist
+     * 
+     * @param renderer Renderer instance for sprite registration
+     * @param gridX Grid X position
+     * @param gridY Grid Y position
+     * @param factionId Faction ID for team identification
+     * @returns Queen model (rendering is hidden)
+     * @throws Error if Queen already exists for this faction
+     */
+    static create(
+        renderer: Renderer,
+        gridX: number,
+        gridY: number,
+        factionId: string
+    ): Queen {
+        // Enforce single Queen per faction
+        if (QueenFactory.activeQueens.has(factionId)) {
+            throw new Error(`Queen already exists for faction '${factionId}'. Only one Queen per faction is allowed.`);
+        }
+        // 1. Create Model (Queen with 6 components: Pathfinding, Health, Combat, Vision, Inventory, ResourceGathering)
+        const entityManager = EntityManager.getInstance();
+        const queen = new Queen(gridX, gridY, factionId, entityManager);
+        
+        // CRITICAL: Disable snapping for pathfinding-controlled entities
+        // Snapping interferes with PathfindingComponent's precise tile-to-tile movement
+        queen.enableSnapping = false;
+
+        // 2. Register Queen as active for this faction
+        QueenFactory.activeQueens.set(factionId, queen);
+
+        // 3. Get queen spritesheet
+        const spritesheet = getEntitySpritesheet('queen');
+
+        // 4. Create View (AnimatedSpriteSheetComponent) - MUST use world coordinates for initial position
+        const { x: worldX, y: worldY } = gridToWorldCenter(gridX, gridY, TILE_SIZE);
+        
+        const animatedSprite = new AnimatedSpriteSheetComponent(
+            spritesheet,
+            worldX,
+            worldY,
+            'queen'
+        );
+        
+        // Center the sprite (48x48 frames, so offset by -24, -24)
+        animatedSprite.setOffset(-24, -24);
+        
+        // Apply configured sprite scale
+        animatedSprite.scale = ENTITY_CONFIG.SPRITE_SCALES.queen;
+        
+        // Set depth for proper sorting (Y-coordinate determines depth)
+        animatedSprite.setDepth(gridY);
+        animatedSprite.setLayer(RenderLayer.ENTITIES);
+
+        // Add all queen animations
+        animatedSprite.addAnimation('idle', QUEEN_ANIMATIONS.idle);
+        animatedSprite.addAnimation('walk', QUEEN_ANIMATIONS.walk);
+        animatedSprite.addAnimation('attack', QUEEN_ANIMATIONS.attack);
+        animatedSprite.addAnimation('gather', QUEEN_ANIMATIONS.gather);
+        animatedSprite.addAnimation('build', QUEEN_ANIMATIONS.build);
+        animatedSprite.addAnimation('die', QUEEN_ANIMATIONS.die);
+
+        // Map entity states to animation names
+        const stateToAnimationMap = new Map<EntityState, string>([
+            [EntityState.IDLE, 'idle'],
+            [EntityState.FOLLOWING, 'walk'],
+            [EntityState.PATROLLING, 'walk'],
+            [EntityState.SCOUTING, 'walk'],
+            [EntityState.RETURNING, 'walk'],
+            [EntityState.ATTACKING, 'attack'],
+            [EntityState.COMBAT, 'attack'],
+            [EntityState.GATHERING, 'gather'],
+            [EntityState.BUILDING, 'build'],
+            [EntityState.HEALING, 'idle'],
+            [EntityState.FLEEING_HAZARD, 'walk']
+        ]);
+
+        // Connect animated sprite to entity's state machine
+        animatedSprite.setOwnerEntity(queen.id, stateToAnimationMap);
+
+        // Start with idle animation
+        animatedSprite.playAnimation('idle');
+
+        // Setup automatic sprite binding with helper (handles registration, movement, destruction)
+        setupEntitySpriteBinding(queen, animatedSprite, renderer, RenderLayer.ENTITIES);
+
+        // Setup health bar (automatically tracks position and cleans up)
+        setupHealthBarBinding(queen, renderer, RenderLayer.VISUAL_EFFECTS);
+
+        // 5. Register with EntityManager for update() lifecycle (MUST happen before ResourceGatheringComponent can function)
+        EntityManager.getInstance().addEntity(queen);
+        
+        // 5.5. Request camera follow (MUST happen AFTER EntityManager registration)
+        EventBus.emit(GameEvents.CAMERA_FOLLOW_ENTITY, queen.id);
+        
+        // 5.6. Emit QUEEN_CREATED for minimap
+        EventBus.emit(GameEvents.QUEEN_CREATED, queen.id, gridX, gridY);
+
+        // 6. Additional cleanup: Listen to ENTITY_DIED and extend helper's cleanup for faction tracking
+        const originalCleanup = (queen as any)._cleanup;
+        const diedListener = EventBus.once('ENTITY_DIED', (entityId: string) => {
+            if (entityId === queen.id) {
+                QueenFactory.activeQueens.delete(factionId); // Remove from active queens
+                if (originalCleanup) originalCleanup(); // Call helper's cleanup
+            }
+        });
+
+        // 7. Extend cleanup to include faction tracking (handles both destroy() and death)
+        (queen as any)._cleanup = () => {
+            QueenFactory.activeQueens.delete(factionId); // Remove from active queens
+            originalCleanup(); // Call helper's cleanup (handles ENTITY_DESTROYED)
+            EventBus.off('ENTITY_DIED', diedListener);
+        };
+
+        // 8. Return Model only (View is hidden)
+        return queen;
+    }
+
+    /**
+     * Get active Queen for a faction
+     * @param factionId Faction ID
+     * @returns Queen instance or undefined
+     */
+    static getQueen(factionId: string): Queen | undefined {
+        return QueenFactory.activeQueens.get(factionId);
+    }
+
+    /**
+     * Check if Queen exists for faction
+     * @param factionId Faction ID
+     * @returns True if Queen exists
+     */
+    static hasQueen(factionId: string): boolean {
+        return QueenFactory.activeQueens.has(factionId);
+    }
+
+    /**
+     * Get all active Queens
+     * @returns Array of all Queen instances
+     */
+    static getAllQueens(): Queen[] {
+        return Array.from(QueenFactory.activeQueens.values());
+    }
+
+    /**
+     * Clear all active Queens (for testing/cleanup)
+     */
+    static clearAll(): void {
+        QueenFactory.activeQueens.clear();
+    }
+}

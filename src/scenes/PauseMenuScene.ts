@@ -3,12 +3,15 @@
  * Allows saving and loading world presets
  */
 
-import { IScene } from './IScene';
-import { Renderer } from '../rendering/Renderer';
-import { EventBus, GameEvents } from '../utils/eventBus';
-import { RenderLayer } from '../rendering/RenderLayer';
-import { WorldPresetManager } from '../world/WorldPresetManager';
-import { InputManager } from '../managers/InputManager';
+import {
+    IScene,
+    Renderer,
+    EventBus,
+    GameEvents,
+    RenderLayer,
+    WorldPresetManager,
+    InputManager
+} from '../imports/sceneImports';
 
 export class PauseMenuScene implements IScene {
     private renderer: Renderer;
@@ -206,7 +209,7 @@ export class PauseMenuScene implements IScene {
         this.selectedPreset = null;
     }
 
-    update(): void {
+    update(_deltaTime: number): void {
         // Mark UI dirty for animations
         this.renderer.markLayerDirty(RenderLayer.UI);
     }
@@ -314,19 +317,32 @@ export class PauseMenuScene implements IScene {
     handleKeyPress(key: string | number): void {
         const keyStr = key.toString();
         
+        // Debug logging
+
+        
+        // Ctrl+S - Save World Preset (check if CONTROL key is held down)
+        if ((keyStr === 's' || keyStr === 'S')) {
+            // Check if Control key (keyCode 17) is currently pressed
+            const keyIsDown = (window as any).keyIsDown;
+            const CONTROL = 17;
+            
+            if (keyIsDown && keyIsDown(CONTROL)) {
+
+                // Show save dialog
+                const presetName = prompt('Enter a name for this world preset:');
+                if (presetName && presetName.trim()) {
+                    EventBus.emit(GameEvents.SAVE_WORLD_PRESET, presetName.trim());
+
+                }
+            } else {
+
+            }
+            return;
+        }
+        
         // Pause - Resume game
         if (this.inputManager.isKeyBoundToAction(keyStr, 'pause')) {
             EventBus.emit(GameEvents.GAME_RESUME);
-            return;
-        }
-
-        // Save World
-        if (this.inputManager.isKeyBoundToAction(keyStr, 'saveWorld')) {
-            const presetName = prompt('Enter a name for this world preset:');
-            if (presetName && presetName.trim()) {
-                EventBus.emit(GameEvents.SAVE_WORLD_PRESET, presetName.trim());
-                alert(`World "${presetName}" saved!`);
-            }
             return;
         }
 

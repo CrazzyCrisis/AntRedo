@@ -1,17 +1,34 @@
 import { IScene } from '../scenes/IScene';
 import { EventBus, GameEvents } from '../utils/eventBus';
+import { EnvironmentEffectsManager } from './EnvironmentEffectsManager';
+import { VisualEffectsManager } from './VisualEffectsManager';
+import { EntityManager } from './EntityManager';
+import { GameStateManager } from './GameStateManager';
 
 /**
  * SceneManager - Singleton for managing game scenes
  * Handles scene lifecycle (enter/exit) and forwards input events
+ * Also manages cross-scene systems like environment effects
  */
 export class SceneManager {
     private static instance: SceneManager;
     private currentScene: IScene | null = null;
     private currentSceneName: string = '';
+    private environmentEffects: EnvironmentEffectsManager;
+    private visualEffects: VisualEffectsManager;
 
     private constructor() {
         // Private constructor for singleton
+        this.environmentEffects = EnvironmentEffectsManager.getInstance();
+        this.visualEffects = VisualEffectsManager.getInstance();
+        
+        // Listen for scene changes to update environment effects TileGrid
+        EventBus.on(GameEvents.SCENE_CHANGE, () => {
+            const tileGrid = GameStateManager.getInstance().getTileGrid();
+            if (tileGrid) {
+                this.environmentEffects.setTileGrid(tileGrid);
+            }
+        });
     }
 
     /**
@@ -44,17 +61,41 @@ export class SceneManager {
         // Call enter on new scene
         this.currentScene.enter();
 
+        // Update environment effects with current TileGrid
+        const tileGrid = GameStateManager.getInstance().getTileGrid();
+        if (tileGrid) {
+            this.environmentEffects.setTileGrid(tileGrid);
+        }
+
         // Emit scene change event
         EventBus.emit(GameEvents.SCENE_CHANGE, sceneName, previousSceneName);
     }
 
     /**
      * Update current scene (call every frame)
+     * Also updates cross-scene systems like environment effects and visual effects
+     * NOTE: Cross-scene systems are paused when game is paused (only pause menu updates)
+     * @param deltaTime - Time elapsed since last frame in milliseconds
      */
-    public update(): void {
+    public update(deltaTime: number): void {
         if (this.currentScene) {
-            this.currentScene.update();
+            this.currentScene.update(deltaTime);
         }
+        
+        // Check if game is paused - if so, only the pause menu updates (handled in scene.update())
+        const isPaused = GameStateManager.getInstance().isPaused();
+        if (isPaused) {
+            return; // Don't update game systems while paused
+        }
+        
+        // Update environment effects (water damage, swimming particles, etc.)
+        const entities = EntityManager.getInstance().getAllEntities();
+        if (entities.length > 0) {
+            this.environmentEffects.update(entities);
+        }
+        
+        // Update visual effects (damage numbers, flash effects, particle animations)
+        this.visualEffects.update();
     }
 
     /**

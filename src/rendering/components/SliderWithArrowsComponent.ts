@@ -1,6 +1,9 @@
 import { Renderable } from '../Renderable';
 import { RenderLayer } from '../RenderLayer';
 
+// p5.js constants
+declare const CENTER: any;
+
 /**
  * SliderWithArrowsComponent - Enhanced slider with increment/decrement arrows
  * 
@@ -347,7 +350,7 @@ export class SliderWithArrowsComponent implements Renderable {
         // Arrow symbol (◀ or ▶)
         graphics.fill(255);
         graphics.noStroke();
-        graphics.textAlign((window as any).CENTER, (window as any).CENTER);
+        graphics.textAlign(CENTER, CENTER);
         graphics.textSize(14);
         const symbol = direction === 'left' ? '◀' : '▶';
         graphics.text(symbol, arrowX, this.y);

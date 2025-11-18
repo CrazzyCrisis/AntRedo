@@ -146,6 +146,7 @@ export const GameEvents = {
     GAME_OVER: 'game:over',
     GAME_WIN: 'game:win',
     LEVEL_START: 'level:start',
+    LEVEL_LOAD: 'level:load',
     LEVEL_COMPLETE: 'level:complete',
     LEVEL_CHANGED: 'level:changed',
     
@@ -223,7 +224,190 @@ export const GameEvents = {
     WORLDGEN_REGENERATE: 'worldgen:regenerate',
     
     // Scene events
-    SCENE_CHANGE: 'scene:change'
+    SCENE_CHANGE: 'scene:change',
+    
+    // ========================================================================
+    // ENTITY SYSTEM EVENTS
+    // ========================================================================
+    
+    // Entity lifecycle events
+    ENTITY_ADDED: 'entity:added',
+    ENTITY_REMOVED: 'entity:removed',
+    ENTITY_MOVED: 'entity:moved',
+    ENTITY_SMOOTH_POSITION_UPDATE: 'entity:smooth:position:update', // For smooth rendering
+    ENTITY_DESTROYED: 'entity:destroyed',
+    ENTITY_UPDATED: 'entity:updated',
+    ENTITY_STATE_CHANGED: 'entity:state:changed', // (entityId, oldState, newState) - for animation system
+    ENTITY_DAMAGE: 'entity:damage', // (entityId, amount, x, y, isCritical?) - for visual effects
+    ENTITY_HEALED: 'entity:healed', // (entityId, amount, x, y) - for visual effects
+    ENTITY_ENTER_WATER: 'entity:enter:water', // (entityId, gridX, gridY) - for swimming effects
+    ENTITY_EXIT_WATER: 'entity:exit:water', // (entityId) - for swimming effects
+    CLEANUP_ALL_ENTITIES: 'cleanup:all:entities', // Broadcast to destroy all entities
+    
+    // Ant events
+    ANT_CREATED: 'ant:created',
+    ANT_SPAWNED: 'ant:spawned',
+    ANT_STATE_CHANGED: 'ant:state:changed',
+    ANT_DIED: 'ant:died',
+    ENTITY_DIED: 'entity:died',
+    ANT_ATTACKED: 'ant:attacked',
+    ANT_JOB_CHANGED: 'ant:job:changed',
+    ANT_HUNGER_CHANGED: 'ant:hunger:changed',
+    ANT_HUNGER_CRITICAL: 'ant:hunger:critical',
+    ANT_STARVED: 'ant:starved',
+    ANT_TARGET_ACQUIRED: 'ant:target:acquired',
+    ANT_TARGET_LOST: 'ant:target:lost',
+    ANT_PATH_UPDATED: 'ant:path:updated',
+    ANT_TYPE_COUNT_CHANGED: 'ant:type:count:changed',
+    
+    // Population events
+    POPULATION_CHANGED: 'population:changed',
+    UI_POPULATION_TOGGLED: 'ui:population:toggled',
+    
+    // Queen events
+    QUEEN_CREATED: 'queen:created',
+    QUEEN_SPAWNED: 'queen:spawned',
+    QUEEN_COMMAND_ISSUED: 'queen:command:issued',
+    QUEEN_COMMAND_SELECTED: 'queen:command:selected',
+    QUEEN_COMMAND_DESELECTED: 'queen:command:deselected',
+    QUEEN_COMMAND_CANCELLED: 'queen:command:cancelled',
+    QUEEN_COMMAND_AVAILABLE: 'queen:command:available',
+    QUEEN_DEATH: 'queen:death',
+    QUEEN_DIED: 'queen:died',
+    QUEEN_POWER_USED: 'queen:power:used',
+    QUEEN_POWER_UNLOCKED: 'queen:power:unlocked',
+    QUEEN_POWER_UPGRADED: 'queen:power:upgraded',
+    QUEEN_POWER_COOLDOWN_READY: 'queen:power:cooldown:ready',
+    QUEEN_INTERACTED: 'queen:interacted',
+    POWER_USED: 'power:used',
+    POWER_COOLDOWN_TICK: 'power:cooldown:tick',
+    POWER_UNLOCKED: 'power:unlocked',
+    POWER_LOCKED: 'power:locked',
+    CAMERA_FOLLOW_ENTITY: 'camera:follow:entity',
+    CAMERA_STOP_FOLLOWING: 'camera:stop:following',     // Stop following entity (minimap click)
+    CAMERA_RESUME_FOLLOWING: 'camera:resume:following', // Resume following entity (timer expired)
+    ENTITY_HEALTH_CHANGED: 'entity:health:changed',
+    
+    // Boss events
+    BOSS_CREATED: 'boss:created',
+    BOSS_SPAWNED: 'boss:spawned',
+    BOSS_ATTACKED: 'boss:attacked',
+    BOSS_DIED: 'boss:died',
+    BOSS_TARGET_CHANGED: 'boss:target:changed',
+    BOSS_PROJECTILE_FIRED: 'boss:projectile:fired',
+    BOSS_STATE_CHANGED: 'boss:state:changed',
+    BOSS_VISION_DETECTED: 'boss:vision:detected',
+    
+    // Resource events (extended)
+    RESOURCE_CREATED: 'resource:created',
+    RESOURCE_SPAWNED: 'resource:spawned',
+    RESOURCE_COLLECTED: 'resource:collected',
+    RESOURCE_DEPOSITED: 'resource:deposited',
+    RESOURCE_DEPLETED: 'resource:depleted',
+    RESOURCE_SMELLED: 'resource:smelled',
+    RESOURCE_UPDATED: 'resource:updated', // For UI updates
+    
+    // Building events
+    BUILDING_PLACED: 'building:placed',
+    BUILDING_PLACEMENT_STARTED: 'building:placement:started',
+    BUILDING_PLACEMENT_CANCELLED: 'building:placement:cancelled',
+    BUILDING_PLACEMENT_VALIDATE: 'building:placement:validate',
+    BUILDING_PLACEMENT_REQUESTED: 'building:placement:requested',
+    BUILDING_PLACEMENT_INVALID: 'building:placement:invalid',
+    BUILDING_PLACEMENT_FAILED: 'building:placement:failed',
+    BUILDING_CONSTRUCTION_STARTED: 'building:construction:started',
+    BUILDING_CONSTRUCTION_PROGRESS: 'building:construction:progress',
+    BUILDING_COMPLETED: 'building:completed',
+    BUILDING_DESTROYED: 'building:destroyed',
+    BUILDING_LEVELED_UP: 'building:leveled_up',
+    BUILDING_DAMAGED: 'building:damaged',
+    BUILDING_SELECTED: 'building:selected',
+    BUILDING_MENU_TOGGLED: 'building:menu:toggled',
+    BUILDING_UNLOCKED: 'building:unlocked',
+    CONSTRUCTION_SITE_CREATED: 'building:construction_site:created',
+    CONSTRUCTION_WORK_AVAILABLE: 'building:construction:work_available',
+    CONSTRUCTION_TASK_ASSIGNED: 'building:construction:task_assigned',
+    ANT_REQUESTING_TASK: 'ant:requesting_task',
+    ANT_BUILD_ANIMATION: 'ant:build_animation',
+    BUILDING_PATHFINDING_BLOCK: 'building:pathfinding:block',
+    BUILDING_PATHFINDING_UNBLOCK: 'building:pathfinding:unblock',
+    
+    // Phase 3: Building function events
+    SPAWNER_ANT_SPAWNED: 'building:spawner:ant_spawned',      // (buildingId, antId, antType)
+    DEFENSE_TOWER_FIRED: 'building:defense:tower_fired',      // (buildingId, buildingX, buildingY, targetId, targetX, targetY, damage, speed)
+    BEACON_BOOST_APPLIED: 'building:beacon:boost_applied',    // (antId, speedBoost, attackBoost, attackSpeedBoost, gatherSpeedBoost, terrainNullifier)
+    BEACON_BOOST_REMOVED: 'building:beacon:boost_removed',    // (antId)
+    
+    // Legacy barracks event (for backwards compatibility)
+    BARRACKS_PLACED: 'building:barracks:placed',
+    
+    // Projectile events
+    PROJECTILE_SPAWNED: 'projectile:spawned',
+    PROJECTILE_HIT: 'projectile:hit',
+    PROJECTILE_DESTROYED: 'projectile:destroyed',
+    
+    // Power effect events
+    LIGHTNING_STRIKE: 'power:lightning:strike',
+    FIREBALL_EXPLODE: 'power:fireball:explode',
+    BLACKHOLE_ACTIVATED: 'power:blackhole:activated',
+    BLACKHOLE_PULL: 'power:blackhole:pull',
+    TIDALWAVE_ACTIVATED: 'power:tidalwave:activated',
+    TIDALWAVE_PUSH: 'power:tidalwave:push',
+    FINALFLASH_ACTIVATED: 'power:finalflash:activated',
+    SOOT_STAIN_CREATED: 'power:soot:created',
+    BURN_EFFECT_APPLIED: 'power:burn:applied',
+    
+    // Combat events
+    ENTITY_ATTACKED: 'entity:attacked',
+    COMBAT_DAMAGE_DEALT: 'combat:damage:dealt',
+    COMBAT_KNOCKBACK_APPLIED: 'combat:knockback:applied',
+    COMBAT_KILL: 'combat:kill',
+    COMBAT_CHARGE_START: 'combat:charge:start',      // Visual: entity pulls back to charge
+    COMBAT_LUNGE_START: 'combat:lunge:start',        // Visual: entity lunges toward target
+    COMBAT_LUNGE_END: 'combat:lunge:end',            // Visual: entity returns to original tile
+    
+    // Combat visual effects
+    SPRITE_OFFSET_CHANGED: 'sprite:offset:changed',  // Sprite position offset for animations
+    PARTICLE_SPAWN: 'particle:spawn',                // Spawn particle effect
+    CAMERA_SHAKE: 'camera:shake',                    // Camera shake effect
+    
+    // Inventory events
+    ITEM_ADDED: 'item:added',
+    ITEM_REMOVED: 'item:removed',
+    INVENTORY_FULL: 'inventory:full',
+    
+    // Vision events
+    ENTITY_DETECTED: 'entity:detected',
+    ENTITY_LOST: 'entity:lost',
+    
+    // AI behavior events
+    AI_STATE_CHANGED: 'ai:state:changed',
+    AI_BEHAVIOR_CHANGED: 'ai:behavior:changed',
+    AI_BEHAVIOR_COMPLETE: 'ai:behavior:complete',
+    AI_TARGET_ACQUIRED: 'ai:target:acquired',
+    AI_TARGET_LOST: 'ai:target:lost',
+    
+    // Job system events
+    JOB_ASSIGNED: 'job:assigned',
+    JOB_PRIORITIES_CHANGED: 'job:priorities:changed',
+    TASK_ASSIGNED: 'task:assigned',
+    TASK_COMPLETED: 'task:completed',
+    
+    // Hunger events
+    ENTITY_HUNGRY: 'entity:hungry',
+    ENTITY_STARVING: 'entity:starving',
+    ENTITY_ATE: 'entity:ate',
+    STARVATION_DAMAGE: 'starvation:damage',
+    
+    // Minimap UI events
+    MINIMAP_CLICKED: 'minimap:clicked',
+    MINIMAP_HOVER_START: 'minimap:hover:start',
+    MINIMAP_HOVER_END: 'minimap:hover:end',
+    
+    // Safe zone events
+    SAFE_ZONE_EXPIRED: 'safezone:expired',
+    SAFE_ZONE_FULLY_CONTRACTED: 'safezone:fully_contracted',
+    SAFE_ZONE_DEACTIVATED: 'safezone:deactivated'
 } as const;
 
 // Type for event names

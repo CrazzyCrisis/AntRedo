@@ -4,8 +4,9 @@
  */
 
 import { Tile, TileType, TileData } from './TileSystem';
-import { WorldGenConfig, DEFAULT_WORLD_GEN_CONFIG } from '../config/worldGenConfig';
+import { WorldGenConfig, DEFAULT_WORLD_GEN_CONFIG } from '../config/world/worldGenConfig';
 import { PerlinNoise } from '../utils/PerlinNoise';
+import { EventBus, GameEvents } from '../utils/eventBus';
 
 /**
  * WorldGenerator creates procedural tile-based worlds
@@ -13,6 +14,10 @@ import { PerlinNoise } from '../utils/PerlinNoise';
 export class WorldGenerator {
     private noiseScale: number = 0.1;
     private config: WorldGenConfig;
+    private lastWidth: number = 0;
+    private lastHeight: number = 0;
+    private lastSeed?: number;
+    private eventUnsubscribe?: () => void;
 
     constructor(config?: WorldGenConfig) {
         this.config = config || { ...DEFAULT_WORLD_GEN_CONFIG };
@@ -52,6 +57,42 @@ export class WorldGenerator {
     }
 
     /**
+     * Enable event-driven regeneration.
+     * When enabled, WorldGenerator listens for WORLDGEN_REGENERATE events
+     * and automatically regenerates terrain using the last generation parameters.
+     * 
+     * @param width Width in tiles (stored for regeneration)
+     * @param height Height in tiles (stored for regeneration)
+     * @param seed Optional seed (stored for regeneration)
+     */
+    enableEventDrivenRegeneration(width: number, height: number, seed?: number): void {
+        this.lastWidth = width;
+        this.lastHeight = height;
+        this.lastSeed = seed;
+        
+        // Clean up existing listener if any
+        if (this.eventUnsubscribe) {
+            this.eventUnsubscribe();
+        }
+        
+        // Listen for regeneration requests
+        this.eventUnsubscribe = EventBus.on(GameEvents.WORLDGEN_REGENERATE, () => {
+            const newGrid = this.generate(this.lastWidth, this.lastHeight, this.lastSeed);
+            EventBus.emit(GameEvents.WORLD_GENERATED, newGrid);
+        });
+    }
+    
+    /**
+     * Disable event-driven regeneration and clean up listener
+     */
+    disableEventDrivenRegeneration(): void {
+        if (this.eventUnsubscribe) {
+            this.eventUnsubscribe();
+            this.eventUnsubscribe = undefined;
+        }
+    }
+
+    /**
      * Generate a procedural world
      * @param width Width in tiles
      * @param height Height in tiles
@@ -59,6 +100,13 @@ export class WorldGenerator {
      * @returns 2D array of TileData [row][col]
      */
     generate(width: number, height: number, seed?: number): TileData[][] {
+        // Store parameters for potential event-driven regeneration
+        this.lastWidth = width;
+        this.lastHeight = height;
+        if (seed !== undefined) {
+            this.lastSeed = seed;
+        }
+        
         // Use provided seed or generate random one
         const actualSeed = seed !== undefined ? seed : Math.floor(Math.random() * 1000000);
         

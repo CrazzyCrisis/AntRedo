@@ -1,3 +1,4 @@
+import { BaseManager } from './BaseManager';
 /**
  * GameStateManager - Central game state authority
  * Single source of truth for game state, emits EventBus notifications on changes
@@ -5,14 +6,14 @@
  * Pattern: Manager owns state, EventBus notifies observers
  */
 
-import { EventBus, GameEvents } from '../utils/eventBus';
+import { GameEvents } from '../utils/eventBus';
 import { TileGrid } from '../world/TileGrid';
 
 /**
  * GameStateManager manages core game state
  * Singleton pattern ensures single source of truth
  */
-export class GameStateManager {
+export class GameStateManager extends BaseManager {
     private static instance: GameStateManager | null = null;
 
     private playing: boolean = false;
@@ -21,6 +22,7 @@ export class GameStateManager {
     private tileGrid: TileGrid | null = null;
 
     private constructor() {
+        super(); // Initialize BaseManager
         // Private constructor for singleton
     }
 
@@ -83,7 +85,7 @@ export class GameStateManager {
     startGame(): void {
         this.playing = true;
         this.paused = false;
-        EventBus.emit(GameEvents.GAME_START);
+        this.emit(GameEvents.GAME_START);
     }
 
     /**
@@ -91,7 +93,7 @@ export class GameStateManager {
      */
     pauseGame(): void {
         this.paused = true;
-        EventBus.emit(GameEvents.GAME_PAUSE);
+        this.emit(GameEvents.GAME_PAUSE);
     }
 
     /**
@@ -99,7 +101,7 @@ export class GameStateManager {
      */
     resumeGame(): void {
         this.paused = false;
-        EventBus.emit(GameEvents.GAME_RESUME);
+        this.emit(GameEvents.GAME_RESUME);
     }
 
     /**
@@ -109,7 +111,7 @@ export class GameStateManager {
     setLevel(level: number): void {
         if (this.currentLevel !== level) {
             this.currentLevel = level;
-            EventBus.emit(GameEvents.LEVEL_CHANGED, level);
+            this.emit(GameEvents.LEVEL_CHANGED, level);
         }
     }
 
@@ -119,7 +121,7 @@ export class GameStateManager {
      */
     setTileGrid(grid: TileGrid): void {
         this.tileGrid = grid;
-        EventBus.emit(GameEvents.WORLD_LOADED, grid);
+        this.emit(GameEvents.WORLD_LOADED, grid);
     }
 
     /**
@@ -151,6 +153,14 @@ export class GameStateManager {
         this.paused = false;
         this.currentLevel = 0;
         this.tileGrid = null;
-        EventBus.emit(GameEvents.GAME_RESET);
+        this.emit(GameEvents.GAME_RESET);
+    }
+
+    /**
+     * Cleanup - unsubscribe from all events
+     */
+    public cleanup(): void {
+        this.cleanupSubscriptions();
+        this.reset();
     }
 }

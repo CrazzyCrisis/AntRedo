@@ -3,7 +3,7 @@ import { EventBus } from '../../src/utils/eventBus';
 import { GameEvents } from '../../src/utils/eventBus';
 import { InputManager } from '../../src/managers/InputManager';
 import { SettingsManager } from '../../src/managers/SettingsManager';
-import { DEFAULT_SETTINGS } from '../../src/config/defaultSettings';
+import { DEFAULT_SETTINGS } from '../../src/config/systems/defaultSettings';
 
 // Mock localStorage for Node.js environment
 class LocalStorageMock {

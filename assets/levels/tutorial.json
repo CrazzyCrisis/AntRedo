@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "id": "tutorial_01",
+    "name": "Tutorial: Welcome to the Colony",
+    "description": "Learn the basics of colony management with a safe starting zone and gentle difficulty curve.",
+    "difficulty": "easy",
+    "author": "AntRedo Team",
+    "version": 1,
+    "tags": ["tutorial", "beginner", "safe"]
+  },
+  "spawnConfig": {
+    "queen": {
+      "position": { "x": 50, "y": 50 },
+      "factionId": "player"
+    },
+    "starterAnts": {
+      "builders": 5,
+      "gatherers": 8,
+      "scouts": 3
+    },
+    "resourceVeins": [
+      {
+        "bounds": { "x": 10, "y": 10, "width": 80, "height": 80 },
+        "resourceType": "food",
+        "noiseLayer": "resources",
+        "threshold": { "min": 0.5, "max": 1.0 },
+        "density": 0.5
+      },
+      {
+        "bounds": { "x": 10, "y": 10, "width": 80, "height": 80 },
+        "resourceType": "wood",
+        "noiseLayer": "resources",
+        "threshold": { "min": 0.2, "max": 0.5 },
+        "density": 0.4
+      }
+    ],
+    "enemyNests": [
+      {
+        "center": { "x": 90, "y": 90 },
+        "bossType": "scorpion",
+        "antCount": 3,
+        "factionId": "enemy"
+      }
+    ],
+    "safeZone": {
+      "center": { "x": 50, "y": 50 },
+      "radius": 35,
+      "duration": 120
+    },
+    "waves": {
+      "enabled": true,
+      "baseDelay": 45,
+      "baseAntCount": 2,
+      "antCountMultiplier": 1.2,
+      "bossInterval": 10
+    },
+    "noiseLayers": {
+      "resources": { "scale": 0.05, "seed": 12345 },
+      "enemies": { "scale": 0.08, "seed": 54321 },
+      "decorations": { "scale": 0.1, "seed": 99999 }
+    }
+  },
+  "worldSeed": 12345
+}

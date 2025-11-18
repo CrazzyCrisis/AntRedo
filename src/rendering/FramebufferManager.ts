@@ -22,7 +22,7 @@ export class FramebufferManager {
     }
 
     /**
-     * Create framebuffers for all 7 layers
+     * Create framebuffers for all 8 layers
      */
     private initializeFramebuffers(): void {
         const layers = [
@@ -31,12 +31,33 @@ export class FramebufferManager {
             RenderLayer.GROUND_DECORATIONS,
             RenderLayer.ENTITIES,
             RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS,
             RenderLayer.UI,
             RenderLayer.DEBUG
         ];
 
+        // Pixel art layers that need noSmooth (set once during creation)
+        const pixelArtLayers = [
+            RenderLayer.BACKGROUND,
+            RenderLayer.GROUND,
+            RenderLayer.GROUND_DECORATIONS,
+            RenderLayer.ENTITIES,
+            RenderLayer.ABOVE_ENTITIES,
+            RenderLayer.VISUAL_EFFECTS
+        ];
+
         layers.forEach(layer => {
             const fb = this.p5Instance.createGraphics(this.width, this.height);
+            
+            // Apply noSmooth for pixel art layers by directly setting the canvas property
+            // This avoids the p5.js setAttributes() warning on 2D contexts
+            if (pixelArtLayers.includes(layer)) {
+                const ctx = fb.drawingContext;
+                if (ctx) {
+                    ctx.imageSmoothingEnabled = false;
+                }
+            }
+            
             this.framebuffers.set(layer, fb);
             this.dirtyFlags.set(layer, true); // All layers start dirty
         });
@@ -105,13 +126,22 @@ export class FramebufferManager {
         this.width = width;
         this.height = height;
         
-        // Remove old framebuffers
+        // Remove old framebuffers safely
         this.framebuffers.forEach(fb => {
-            fb.remove();
+            if (fb && fb.remove) {
+                try {
+                    fb.remove();
+                } catch (e) {
+                    // Silently ignore p5.Graphics removal errors
+                }
+            }
         });
         this.framebuffers.clear();
         
         // Recreate with new dimensions
         this.initializeFramebuffers();
+        
+        // Mark all layers dirty since we recreated framebuffers
+        this.markAllDirty();
     }
 }
