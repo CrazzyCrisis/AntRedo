@@ -173,7 +173,7 @@ describe('AntFactory', () => {
     });
 
     describe('Component Integration', () => {
-        it('should create ant with all 9 components', () => {
+        it('should create ant with all 11 components', () => {
             const ant = AntFactory.create(renderer, 0, 0, 'faction_1');
 
             expect(ant.getComponent('StateMachine')).to.exist;
@@ -185,6 +185,8 @@ describe('AntFactory', () => {
             expect(ant.getComponent('AIBehavior')).to.exist;
             expect(ant.getComponent('AntJob')).to.exist;
             expect(ant.getComponent('Hunger')).to.exist;
+            expect(ant.getComponent('RandomMovement')).to.exist;
+            expect(ant.getComponent('HazardAvoidance')).to.exist;
         });
 
         it('should create autonomous ant by default', () => {

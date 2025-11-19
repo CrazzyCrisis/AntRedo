@@ -45,15 +45,21 @@ describe('Queen', () => {
             expect(queen.getCommandRadius()).to.be.greaterThan(0);
         });
 
-        it('should emit CAMERA_FOLLOW_ENTITY on creation', (done) => {
+        it('should emit CAMERA_FOLLOW_ENTITY on creation', () => {
+            let eventEmitted = false;
+            let receivedId = '';
+            
             // Setup listener BEFORE creating queen
             EventBus.once(GameEvents.CAMERA_FOLLOW_ENTITY, (entityId: string) => {
-                expect(entityId).to.include('queen_'); // Just verify it's a queen ID
-                done();
+                eventEmitted = true;
+                receivedId = entityId;
             });
 
             // Create new queen to trigger event
             new Queen(0, 0, 'player');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedId).to.include('queen_'); // Just verify it's a queen ID
         });
     });
 
@@ -79,14 +85,22 @@ describe('Queen', () => {
             expect(power?.isUnlocked).to.be.true;
         });
 
-        it('should emit QUEEN_POWER_UNLOCKED when power unlocked', (done) => {
+        it('should emit QUEEN_POWER_UNLOCKED when power unlocked', () => {
+            let eventEmitted = false;
+            let receivedQueenId = '';
+            let receivedPowerName = '';
+            
             EventBus.once(GameEvents.QUEEN_POWER_UNLOCKED, (queenId: string, powerName: string) => {
-                expect(queenId).to.equal(queen.id);
-                expect(powerName).to.equal('fireball');
-                done();
+                eventEmitted = true;
+                receivedQueenId = queenId;
+                receivedPowerName = powerName;
             });
 
             queen.unlockPower('fireball');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedQueenId).to.equal(queen.id);
+            expect(receivedPowerName).to.equal('fireball');
         });
 
         it('should upgrade a power level', () => {
@@ -104,17 +118,27 @@ describe('Queen', () => {
             expect(power?.level).to.equal(1);
         });
 
-        it('should emit QUEEN_POWER_UPGRADED when power upgraded', (done) => {
+        it('should emit QUEEN_POWER_UPGRADED when power upgraded', () => {
             queen.unlockPower('fireball');
+            
+            let eventEmitted = false;
+            let receivedQueenId = '';
+            let receivedPowerName = '';
+            let receivedLevel = 0;
 
             EventBus.once(GameEvents.QUEEN_POWER_UPGRADED, (queenId: string, powerName: string, level: number) => {
-                expect(queenId).to.equal(queen.id);
-                expect(powerName).to.equal('fireball');
-                expect(level).to.equal(2);
-                done();
+                eventEmitted = true;
+                receivedQueenId = queenId;
+                receivedPowerName = powerName;
+                receivedLevel = level;
             });
 
             queen.upgradePower('fireball');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedQueenId).to.equal(queen.id);
+            expect(receivedPowerName).to.equal('fireball');
+            expect(receivedLevel).to.equal(2);
         });
 
         it('should not upgrade beyond max level', () => {
@@ -145,14 +169,22 @@ describe('Queen', () => {
             expect(result).to.be.false;
         });
 
-        it('should emit QUEEN_POWER_USED when power used', (done) => {
+        it('should emit QUEEN_POWER_USED when power used', () => {
+            let eventEmitted = false;
+            let receivedQueenId = '';
+            let receivedPowerName = '';
+            
             EventBus.once(GameEvents.QUEEN_POWER_USED, (queenId: string, powerName: string) => {
-                expect(queenId).to.equal(queen.id);
-                expect(powerName).to.equal('fireball');
-                done();
+                eventEmitted = true;
+                receivedQueenId = queenId;
+                receivedPowerName = powerName;
             });
 
             queen.usePower('fireball', 20, 25);
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedQueenId).to.equal(queen.id);
+            expect(receivedPowerName).to.equal('fireball');
         });
 
         it('should respect cooldown', () => {
@@ -208,15 +240,25 @@ describe('Queen', () => {
             expect(result).to.be.a('number');
         });
 
-        it('should emit QUEEN_COMMAND_ISSUED when commanding', (done) => {
+        it('should emit QUEEN_COMMAND_ISSUED when commanding', () => {
+            let eventEmitted = false;
+            let receivedQueenId = '';
+            let receivedCommand = '';
+            let receivedRadius = 0;
+            
             EventBus.once(GameEvents.QUEEN_COMMAND_ISSUED, (queenId: string, command: string, radius: number) => {
-                expect(queenId).to.equal(queen.id);
-                expect(command).to.equal('attack');
-                expect(radius).to.equal(15);
-                done();
+                eventEmitted = true;
+                receivedQueenId = queenId;
+                receivedCommand = command;
+                receivedRadius = radius;
             });
 
             queen.commandAnts(15, 'attack');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedQueenId).to.equal(queen.id);
+            expect(receivedCommand).to.equal('attack');
+            expect(receivedRadius).to.equal(15);
         });
 
         it('should return 0 if no ants in radius', () => {
@@ -244,13 +286,19 @@ describe('Queen', () => {
             expect(queen.interact).to.be.a('function');
         });
 
-        it('should emit event on interact', (done) => {
+        it('should emit event on interact', () => {
+            let eventEmitted = false;
+            let receivedQueenId = '';
+            
             EventBus.once(GameEvents.QUEEN_INTERACTED, (queenId: string) => {
-                expect(queenId).to.equal(queen.id);
-                done();
+                eventEmitted = true;
+                receivedQueenId = queenId;
             });
 
             queen.interact();
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedQueenId).to.equal(queen.id);
         });
     });
 
@@ -320,26 +368,40 @@ describe('Queen', () => {
             expect(queen.isActive).to.be.false;
         });
 
-        it('should emit ENTITY_DESTROYED on destroy', (done) => {
+        it('should emit ENTITY_DESTROYED on destroy', () => {
+            let eventEmitted = false;
+            let receivedEntityId = '';
+            
             // Listen for string literal (GameObject legacy behavior)
             EventBus.once('ENTITY_DESTROYED', (entityId: string) => {
-                expect(entityId).to.equal(queen.id);
-                done();
+                eventEmitted = true;
+                receivedEntityId = entityId;
             });
 
             queen.destroy();
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedEntityId).to.equal(queen.id);
         });
 
-        it('should emit QUEEN_DEATH on death', (done) => {
+        it('should emit QUEEN_DEATH on death', () => {
+            let eventEmitted = false;
+            let receivedQueenId = '';
+            let receivedFactionId = '';
+            
             EventBus.once(GameEvents.QUEEN_DEATH, (queenId: string, factionId: string) => {
-                expect(queenId).to.equal(queen.id);
-                expect(factionId).to.equal('player');
-                done();
+                eventEmitted = true;
+                receivedQueenId = queenId;
+                receivedFactionId = factionId;
             });
 
             // Kill queen via health
             const health = queen.getComponent('Health') as HealthComponent;
             health?.takeDamage(9999, 'attacker_1');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedQueenId).to.equal(queen.id);
+            expect(receivedFactionId).to.equal('player');
         });
 
         it('should become inactive after death', () => {
@@ -351,16 +413,20 @@ describe('Queen', () => {
     });
 
     describe('Power Keybind System', () => {
-        it('should listen for power keybinds', (done) => {
+        it('should listen for power keybinds', () => {
             queen.unlockPower('fireball');
+            
+            let eventEmitted = false;
 
             // Simulate keybind press
             EventBus.once(GameEvents.QUEEN_POWER_USED, () => {
-                done();
+                eventEmitted = true;
             });
 
             // Emit keybind event (1 = first power)
             EventBus.emit(GameEvents.INPUT_KEY_PRESS, '1');
+            
+            expect(eventEmitted).to.be.true;
         });
     });
 

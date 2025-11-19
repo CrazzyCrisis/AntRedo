@@ -67,11 +67,11 @@ describe('Scene System Integration', () => {
             expect(sceneManager.getCurrentSceneName()).to.equal('Menu');
 
             // PHASE 3: Update Loop (Animation)
-            menuScene.update(); // Should update title + button animations
-            menuScene.update(); // Should continue updating
+            menuScene.update(16); // Should update title + button animations
+            menuScene.update(16); // Should continue updating
             
             // Should not throw errors
-            expect(() => sceneManager.update()).to.not.throw();
+            expect(() => sceneManager.update(16)).to.not.throw();
 
             // PHASE 4: User Interaction (Mouse Input)
             // Use test config for proper button position (normalized coordinates)
@@ -210,7 +210,7 @@ describe('Scene System Integration', () => {
             
             // Title should update animation each frame
             for (let i = 0; i < 10; i++) {
-                expect(() => menuScene.update()).to.not.throw();
+                expect(() => menuScene.update(16)).to.not.throw();
             }
         });
 
@@ -222,7 +222,7 @@ describe('Scene System Integration', () => {
             
             // Update should apply pulse animation
             for (let i = 0; i < 5; i++) {
-                expect(() => menuScene.update()).to.not.throw();
+                expect(() => menuScene.update(16)).to.not.throw();
             }
         });
     });
@@ -303,7 +303,7 @@ describe('Scene System Integration', () => {
             
             // Should still work
             expect(sceneManager.getCurrentSceneName()).to.equal('Empty');
-            expect(() => sceneManager.update()).to.not.throw();
+            expect(() => sceneManager.update(16)).to.not.throw();
         });
 
         it('should handle clicks outside button bounds gracefully', () => {
@@ -327,7 +327,7 @@ describe('Scene System Integration', () => {
 
         it('should handle update loop without active scene', () => {
             // No scene set
-            expect(() => sceneManager.update()).to.not.throw();
+            expect(() => sceneManager.update(16)).to.not.throw();
             
             // No scene for mouse events
             expect(() => sceneManager.handleMouseClick(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y)).to.not.throw();
@@ -343,7 +343,7 @@ describe('Scene System Integration', () => {
             
             // Simulate 60 frames
             for (let i = 0; i < 60; i++) {
-                sceneManager.update();
+                sceneManager.update(16);
                 renderer.render();
             }
             
@@ -380,7 +380,7 @@ describe('Scene System Integration', () => {
             
             // 2. Player hovers over buttons
             menuScene.handleMouseMove(MAIN_MENU_BUTTONS.PLAY.x, MAIN_MENU_BUTTONS.PLAY.y);
-            menuScene.update(); // Pulse animation
+            menuScene.update(16); // Pulse animation
             
             // 3. Player clicks play
             let shouldStartGame = false;

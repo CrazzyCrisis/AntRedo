@@ -940,6 +940,65 @@ describe('FeatureName', () => {
 });
 ```
 
+### Timeout Issues - Convert Async to Sync (CRITICAL)
+**When tests timeout waiting for events (5000ms exceeded):**
+
+❌ **BAD - Async test with done() callback:**
+```typescript
+it('should emit event', (done) => {
+    EventBus.once(GameEvents.SOME_EVENT, (data) => {
+        expect(data).to.equal('value');
+        done(); // Waits 5+ seconds if event never fires
+    });
+    
+    triggerEvent();
+});
+```
+
+✅ **GOOD - Synchronous test with immediate assertion:**
+```typescript
+it('should emit event', () => {
+    let emitted = false;
+    let eventData: any = null;
+    
+    EventBus.once(GameEvents.SOME_EVENT, (data) => {
+        emitted = true;
+        eventData = data;
+    });
+    
+    triggerEvent();
+    
+    // Events fire synchronously - assert immediately
+    expect(emitted).to.be.true;
+    expect(eventData).to.equal('value');
+});
+```
+
+**Why this works:**
+- EventBus.emit() fires synchronously in our codebase
+- No need to wait for async callbacks
+- Tests fail fast (300ms timeout) instead of hanging (5000ms)
+- 120x faster test execution (1s vs 2 minutes)
+
+**When to use done() callback:**
+- Actual async operations (HTTP requests, timers)
+- File I/O operations
+- Not for EventBus events in our codebase
+
+**Pattern for converting timeout tests:**
+1. Remove `(done)` parameter from `it()` function
+2. Add tracking variables before event subscription
+3. Subscribe to event and set tracking variables
+4. Perform action that triggers event
+5. Assert tracking variables immediately after
+6. Remove `done()` calls from event handlers
+
+**Set fast timeout globally:**
+```typescript
+// In test file or mocha config
+--timeout 300  // Tests must pass within 300ms or fail fast
+```
+
 ### What to Test
 - **Models:** Data integrity, state changes, event emissions
 - **Controllers:** Logic flows, event handling, coordination between systems

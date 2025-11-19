@@ -30,10 +30,12 @@ export * from './world/environmentEffectsConfig';
 // ============================================================================
 // SYSTEMS CONFIGS
 // ============================================================================
+export * from './systems/coreConfig';
 export * from './systems/animationConfig';
 export * from './systems/audioConfig';
 export * from './systems/spriteMapping';
 export * from './systems/defaultSettings';
+export * from './systems/cameraConfig';
 
 // ============================================================================
 // BUILDINGS (Selective exports to avoid conflicts with entityConfig)

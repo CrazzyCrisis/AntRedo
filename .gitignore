@@ -147,3 +147,26 @@ test/**/*.d.ts
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+release
+.DS_Store
+
+# Test output files and directories
+test-results/
+test-results.json
+test-build/
+test-*.txt
+coverage-results/
+reports/
+
+# Test framework directories
+.vitest
+.c8
+nyc
+test-coverage/
+jest-coverage/
+jest-results/
+jest-report/
+mocha-coverage/
+mocha-results/
+mocha-report/

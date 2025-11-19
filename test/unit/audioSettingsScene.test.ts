@@ -6,34 +6,7 @@ import { RenderLayer } from '../../src/rendering/RenderLayer';
 import { AudioManager } from '../../src/managers/AudioManager';
 import { SettingsManager } from '../../src/managers/SettingsManager';
 import { AUDIO_SETTINGS_LAYOUT } from '../../src/config/ui/menuLayout';
-
-// Mock p5.Graphics
-const createMockGraphics = () => ({
-    background: () => {},
-    fill: () => {},
-    rect: () => {},
-    ellipse: () => {},
-    stroke: () => {},
-    strokeWeight: () => {},
-    noStroke: () => {},
-    push: () => {},
-    pop: () => {},
-    textAlign: () => {},
-    textSize: () => {},
-    text: () => {},
-    circle: () => {},
-    arc: () => {},
-    triangle: () => {},
-    createGraphics: (_w: number, _h: number) => createMockGraphics(),
-    CENTER: 'center',
-    LEFT: 'left',
-    RIGHT: 'right',
-    TOP: 'top',
-    BOTTOM: 'bottom',
-    HALF_PI: Math.PI / 2,
-    PI: Math.PI,
-    CHORD: 'chord'
-});
+import { createMockP5 } from '../helpers/renderingMocks';
 
 describe('AudioSettingsScene', () => {
     let scene: AudioSettingsScene;
@@ -63,9 +36,12 @@ describe('AudioSettingsScene', () => {
             length: 0
         } as any;
         
-        // Create renderer with mock graphics
-        renderer = new Renderer(() => createMockGraphics() as any, canvasWidth, canvasHeight);
-        scene = new AudioSettingsScene(renderer, canvasWidth, canvasHeight,() => Image);
+        // Mock button image with dimensions
+        const mockButtonImage = { width: 100, height: 40 };
+        
+        // Create renderer with mock p5 instance
+        renderer = new Renderer(createMockP5(canvasWidth, canvasHeight) as any, canvasWidth, canvasHeight);
+        scene = new AudioSettingsScene(renderer, canvasWidth, canvasHeight, mockButtonImage);
     });
 
     afterEach(() => {
@@ -190,7 +166,13 @@ describe('AudioSettingsScene', () => {
         it('should sync components when SETTING_AUDIO_CHANGED is emitted', () => {
             // Change settings externally
             audioManager.setMasterVolume(0.6);
-            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED);
+            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED, {
+                masterVolume: 0.6,
+                bgmVolume: audioManager.getBGMVolume(),
+                sfxVolume: audioManager.getSFXVolume(),
+                voiceVolume: audioManager.getVoiceVolume(),
+                systemVolume: audioManager.getSystemVolume()
+            });
             
             expect(scene.masterVolumeSlider.getValue()).to.equal(0.6);
         });
@@ -199,7 +181,13 @@ describe('AudioSettingsScene', () => {
             audioManager.setMasterVolume(0.4);
             audioManager.setBGMVolume(0.5);
             audioManager.setSFXVolume(0.6);
-            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED);
+            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED, {
+                masterVolume: 0.4,
+                bgmVolume: 0.5,
+                sfxVolume: 0.6,
+                voiceVolume: audioManager.getVoiceVolume(),
+                systemVolume: audioManager.getSystemVolume()
+            });
             
             expect(scene.masterVolumeSlider.getValue()).to.equal(0.4);
             expect(scene.bgmVolumeSlider.getValue()).to.equal(0.5);
@@ -222,12 +210,11 @@ describe('AudioSettingsScene', () => {
         });
 
         it('should handle hover on sliders', () => {
-            const x = scene.masterVolumeSlider.x;
-            const y = scene.masterVolumeSlider.y;
-            
-            scene.handleMouseMove(x, y);
-            
-            expect(scene.masterVolumeSlider['isMouseOverTrack']).to.be.true;
+            const slider = scene.masterVolumeSlider;
+
+            scene.handleMouseMove(slider.x, slider.y);
+
+            expect(slider['trackHover']).to.be.true;
         });
 
         it('should handle slider drag', () => {
@@ -267,7 +254,7 @@ describe('AudioSettingsScene', () => {
             scene.backButton.setHovered(true);
             const initialPulse = scene.backButton['pulseTime'];
             
-            scene.update();
+            scene.update(16);
             
             expect(scene.backButton['pulseTime']).to.not.equal(initialPulse);
         });
@@ -319,7 +306,13 @@ describe('AudioSettingsScene', () => {
             scene.masterVolumeSlider.setValue(0.5);
             
             settingsManager.resetSettings();
-            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED);
+            EventBus.emit(GameEvents.SETTING_AUDIO_CHANGED, {
+                masterVolume: audioManager.getMasterVolume(),
+                bgmVolume: audioManager.getBGMVolume(),
+                sfxVolume: audioManager.getSFXVolume(),
+                voiceVolume: audioManager.getVoiceVolume(),
+                systemVolume: audioManager.getSystemVolume()
+            });
             
             expect(scene.masterVolumeSlider.getValue()).to.equal(audioManager.getMasterVolume());
         });

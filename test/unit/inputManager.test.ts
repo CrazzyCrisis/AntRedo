@@ -149,17 +149,25 @@ describe('InputManager', () => {
             expect(inputManager.isKeyBoundToAction('w', 'moveUp')).to.be.false;
         });
 
-        it('should emit SETTING_KEYBIND_CHANGED event on successful rebind', (done) => {
+        it('should emit SETTING_KEYBIND_CHANGED event on successful rebind', () => {
+            let eventEmitted = false;
+            let receivedAction = '';
+            let receivedKeys: string[] = [];
+            
             EventBus.on(GameEvents.SETTING_KEYBIND_CHANGED, (action: string, keys: string[]) => {
-                expect(action).to.equal('moveUp');
-                expect(keys).to.deep.equal(['t']);
-                done();
+                eventEmitted = true;
+                receivedAction = action;
+                receivedKeys = keys;
             });
 
             inputManager.rebindKey('moveUp', 't');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedAction).to.equal('moveUp');
+            expect(receivedKeys).to.deep.equal(['t']);
         });
 
-        it('should not emit event on failed rebind', (done) => {
+        it('should not emit event on failed rebind', () => {
             let eventEmitted = false;
 
             EventBus.on(GameEvents.SETTING_KEYBIND_CHANGED, () => {
@@ -169,11 +177,7 @@ describe('InputManager', () => {
             // Try to bind conflicting key
             inputManager.rebindKey('moveDown', 'w');
 
-            // Wait a bit to ensure event doesn't fire
-            setTimeout(() => {
-                expect(eventEmitted).to.be.false;
-                done();
-            }, 10);
+            expect(eventEmitted).to.be.false;
         });
 
         it('should save to SettingsManager on successful rebind', () => {
@@ -231,24 +235,40 @@ describe('InputManager', () => {
             expect(inputManager.isKeyBoundToAction('ArrowUp', 'moveUp')).to.be.true;
         });
 
-        it('should emit event when adding key', (done) => {
+        it('should emit event when adding key', () => {
+            let eventEmitted = false;
+            let receivedAction = '';
+            let receivedKeys: string[] = [];
+            
             EventBus.on(GameEvents.SETTING_KEYBIND_CHANGED, (action: string, keys: string[]) => {
-                expect(action).to.equal('moveUp');
-                expect(keys).to.include('q');
-                done();
+                eventEmitted = true;
+                receivedAction = action;
+                receivedKeys = keys;
             });
 
             inputManager.addKeyBinding('moveUp', 'q');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedAction).to.equal('moveUp');
+            expect(receivedKeys).to.include('q');
         });
 
-        it('should emit event when removing key', (done) => {
+        it('should emit event when removing key', () => {
+            let eventEmitted = false;
+            let receivedAction = '';
+            let receivedKeys: string[] = [];
+            
             EventBus.on(GameEvents.SETTING_KEYBIND_CHANGED, (action: string, keys: string[]) => {
-                expect(action).to.equal('moveUp');
-                expect(keys).to.not.include('w');
-                done();
+                eventEmitted = true;
+                receivedAction = action;
+                receivedKeys = keys;
             });
 
             inputManager.removeKeyBinding('moveUp', 'w');
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedAction).to.equal('moveUp');
+            expect(receivedKeys).to.not.include('w');
         });
     });
 
@@ -439,7 +459,11 @@ describe('InputManager', () => {
                 openInventory: ['Tab'],
                 saveWorld: ['s'],
                 loadWorld: ['l'],
-                deleteWorld: ['d']
+                deleteWorld: ['d'],
+                cameraMoveUp: ['ArrowUp'],
+                cameraMoveDown: ['ArrowDown'],
+                cameraMoveLeft: ['ArrowLeft'],
+                cameraMoveRight: ['ArrowRight']
             };
 
             inputManager.importKeybinds(customBindings);
@@ -459,7 +483,11 @@ describe('InputManager', () => {
                 openInventory: ['Tab'],
                 saveWorld: ['s'],
                 loadWorld: ['l'],
-                deleteWorld: ['d']
+                deleteWorld: ['d'],
+                cameraMoveUp: ['ArrowUp'],
+                cameraMoveDown: ['ArrowDown'],
+                cameraMoveLeft: ['ArrowLeft'],
+                cameraMoveRight: ['ArrowRight']
             };
 
             const emittedActions: string[] = [];

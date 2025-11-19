@@ -14,6 +14,7 @@ import { Camera } from '../../src/rendering/Camera';
 import { TileGrid } from '../../src/world/TileGrid';
 import { TileType } from '../../src/world/TileSystem';
 import { RenderLayer } from '../../src/rendering/RenderLayer';
+import { GAME_UI_CONFIG } from '../../src/config/ui/gameUIConfig';
 
 describe('Building System Integration Tests', () => {
     let renderer: Renderer;
@@ -84,7 +85,8 @@ describe('Building System Integration Tests', () => {
         questManager.unlockBuilding('barracks');
         questManager.unlockBuilding('tower');
         
-        // Give player resources
+        // Initialize faction and give player resources
+        resourceManager.initializeFaction('player'); // CRITICAL: Must initialize faction first
         resourceManager.setResource('player', 'wood', 100);
         resourceManager.setResource('player', 'stone', 100);
         resourceManager.setResource('player', 'food', 100);
@@ -152,22 +154,28 @@ describe('Building System Integration Tests', () => {
     });
     
     describe('Building Selection Flow', () => {
-        it('should emit BUILDING_SELECTED when unlocked button is clicked', (done) => {
+        it('should emit BUILDING_SELECTED when unlocked button is clicked', () => {
             buildingMenu.visible = true;
+            
+            let emitted = false;
+            let emittedType: string | null = null;
             
             // Subscribe to BUILDING_SELECTED
             EventBus.on(GameEvents.BUILDING_SELECTED, (buildingType: string) => {
                 console.log(`[Test] BUILDING_SELECTED received: ${buildingType}`);
-                expect(buildingType).to.equal('warehouse');
-                done();
+                emitted = true;
+                emittedType = buildingType;
             });
             
             // Simulate click on warehouse button (mock coordinates)
             // First button should be at approximately x: 250-350, y: 470-550
             buildingMenu.handleClick(300, 510);
+            
+            expect(emitted).to.be.true;
+            expect(emittedType).to.equal('warehouse');
         });
         
-        it('should not emit BUILDING_SELECTED for locked buildings', (done) => {
+        it('should not emit BUILDING_SELECTED for locked buildings', () => {
             // Lock warehouse
             (questManager as any).unlockedBuildings.delete('warehouse');
             
@@ -181,19 +189,19 @@ describe('Building System Integration Tests', () => {
             // Try to click warehouse button
             buildingMenu.handleClick(300, 510);
             
-            setTimeout(() => {
-                expect(emitted).to.be.false;
-                done();
-            }, 10);
+            expect(emitted).to.be.false;
         });
     });
     
     describe('Ghost Sprite Activation', () => {
-        it('should activate ghost sprite when BUILDING_SELECTED is emitted', (done) => {
+        it('should activate ghost sprite when BUILDING_SELECTED is emitted', () => {
+            let emitted = false;
+            let emittedType: string | null = null;
+            
             EventBus.on(GameEvents.BUILDING_PLACEMENT_STARTED, (buildingType: string) => {
                 console.log(`[Test] BUILDING_PLACEMENT_STARTED: ${buildingType}`);
-                expect(buildingType).to.equal('warehouse');
-                done();
+                emitted = true;
+                emittedType = buildingType;
             });
             
             // Emit BUILDING_SELECTED
@@ -201,6 +209,9 @@ describe('Building System Integration Tests', () => {
             
             // Manager should activate placement
             buildingPlacementManager.activatePlacement('warehouse' as any);
+            
+            expect(emitted).to.be.true;
+            expect(emittedType).to.equal('warehouse');
         });
         
         it('should create ghost sprite with correct sprite reference', () => {
@@ -262,16 +273,16 @@ describe('Building System Integration Tests', () => {
         });
         
         it('should update validation state based on position', () => {
-            // Valid position (grass tile)
-            buildingPlacementManager.updateGhostPosition(100, 100);
+            // Valid position (grass tile at 3,3)
+            buildingPlacementManager.updateGhostPosition(96, 96);
             let validationState = (buildingPlacementManager as any).validationState;
             expect(validationState).to.equal('valid');
             
-            // Invalid position (change tile to water)
+            // Invalid position (change tile 5,5 to water)
             const grid = tileGrid.getGrid();
-            grid[3][3] = { type: TileType.WATER, walkable: false, movementCost: 100, spriteIndex: 5 };
+            grid[5][5] = { type: TileType.WATER, walkable: false, movementCost: 100, spriteIndex: 5 };
             
-            buildingPlacementManager.updateGhostPosition(96, 96); // Grid (3, 3) at 32px tile size
+            buildingPlacementManager.updateGhostPosition(160, 160); // Grid (5, 5) at 32px tile size
             validationState = (buildingPlacementManager as any).validationState;
             expect(validationState).to.equal('invalid_terrain');
         });
@@ -283,30 +294,42 @@ describe('Building System Integration Tests', () => {
             buildingPlacementManager.updateGhostPosition(100, 100);
         });
         
-        it('should emit BUILDING_PLACED on valid placement', (done) => {
+        it('should emit BUILDING_PLACED on valid placement', () => {
+            let emitted = false;
+            let emittedType: string | null = null;
+            
             EventBus.on(GameEvents.BUILDING_PLACED, (buildingType: string, x: number, y: number) => {
                 console.log(`[Test] BUILDING_PLACED: ${buildingType} at (${x}, ${y})`);
-                expect(buildingType).to.equal('warehouse');
-                done();
+                emitted = true;
+                emittedType = buildingType;
             });
             
             buildingPlacementManager.attemptPlacement();
+            
+            expect(emitted).to.be.true;
+            expect(emittedType).to.equal('warehouse');
         });
         
-        it('should emit BUILDING_PLACEMENT_INVALID on invalid terrain', (done) => {
+        it('should emit BUILDING_PLACEMENT_INVALID on invalid terrain', () => {
             // Change tile to water
             const grid = tileGrid.getGrid();
             grid[3][3] = { type: TileType.WATER, walkable: false, movementCost: 100, spriteIndex: 5 };
             
             buildingPlacementManager.updateGhostPosition(96, 96); // Grid (3, 3)
             
-            EventBus.on(GameEvents.BUILDING_PLACEMENT_INVALID, (reason: string) => {
-                console.log(`[Test] BUILDING_PLACEMENT_INVALID: ${reason}`);
-                expect(reason).to.include('terrain');
-                done();
+            let invalidEmitted = false;
+            let eventData: any = null;
+            EventBus.on(GameEvents.BUILDING_PLACEMENT_INVALID, (data: any) => {
+                console.log(`[Test] BUILDING_PLACEMENT_INVALID:`, data);
+                invalidEmitted = true;
+                eventData = data;
             });
             
             buildingPlacementManager.attemptPlacement();
+            
+            expect(invalidEmitted).to.be.true;
+            expect(eventData).to.have.property('reason');
+            expect(eventData.reason).to.include('terrain');
         });
         
         it('should deduct resources on successful placement', () => {
@@ -334,28 +357,58 @@ describe('Building System Integration Tests', () => {
     describe('Hover Detection', () => {
         beforeEach(() => {
             buildingMenu.visible = true;
+            // Calculate proper category button position
+            const halfWidth = 800 / 2;
+            const halfHeight = 600 / 2;
+            const centerX = 800 / 2;
+            const centerY = 600 / 2;
+            const menuCenterX = centerX + (GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetX * halfWidth);
+            const menuCenterY = centerY - (GAME_UI_CONFIG.LAYOUT.BUILDING_MENU.offsetY * halfHeight);
+            const categoryOffsetPixels = GAME_UI_CONFIG.BUILDING_MENU.CATEGORY_ROW_OFFSET_Y * halfHeight;
+            const categoryCenterY = menuCenterY - categoryOffsetPixels;
+            
+            const categoryWidth = GAME_UI_CONFIG.BUILDING_MENU.CATEGORY_BUTTON_WIDTH;
+            const categorySpacing = GAME_UI_CONFIG.BUILDING_MENU.CATEGORY_SPACING;
+            const totalWidth = 4 * categoryWidth + 3 * categorySpacing;
+            const startX = menuCenterX - (totalWidth / 2);
+            const storageX = startX + categoryWidth / 2; // First category (index 0)
+            
+            // Click STORAGE category button
+            buildingMenu.handleClick(storageX, categoryCenterY);
         });
         
         it('should detect hover over warehouse button', () => {
-            buildingMenu.handleMouseMove(300, 510);
-            
-            const hoveredButton = (buildingMenu as any).hoveredButton;
-            expect(hoveredButton).to.equal('warehouse');
+            // Get filtered buttons (now populated after category selection)
+            const filteredButtons = (buildingMenu as any).filteredButtons;
+            if (filteredButtons.length > 0) {
+                const warehouseBtn = filteredButtons[0]; // First STORAGE building is warehouse
+                buildingMenu.handleMouseMove(warehouseBtn.x + 10, warehouseBtn.y + 10);
+                
+                const hoveredButton = (buildingMenu as any).hoveredButton;
+                expect(hoveredButton).to.equal('warehouse');
+            } else {
+                throw new Error('No filtered buttons after category selection');
+            }
         });
         
         it('should clear hover when mouse moves away', () => {
-            buildingMenu.handleMouseMove(300, 510); // Over button
-            let hoveredButton = (buildingMenu as any).hoveredButton;
-            expect(hoveredButton).to.equal('warehouse');
-            
-            buildingMenu.handleMouseMove(100, 100); // Away from buttons
-            hoveredButton = (buildingMenu as any).hoveredButton;
-            expect(hoveredButton).to.be.null;
+            const filteredButtons = (buildingMenu as any).filteredButtons;
+            if (filteredButtons.length > 0) {
+                buildingMenu.handleMouseMove(filteredButtons[0].x + 10, filteredButtons[0].y + 10); // Over button
+                let hoveredButton = (buildingMenu as any).hoveredButton;
+                expect(hoveredButton).to.equal('warehouse');
+                
+                buildingMenu.handleMouseMove(100, 100); // Away from buttons
+                hoveredButton = (buildingMenu as any).hoveredButton;
+                expect(hoveredButton).to.be.null;
+            } else {
+                throw new Error('No filtered buttons after category selection');
+            }
         });
     });
     
     describe('Full Workflow Integration', () => {
-        it('should complete entire building placement flow', (done) => {
+        it('should complete entire building placement flow', () => {
             const events: string[] = [];
             
             // Track all building-related events
@@ -382,14 +435,11 @@ describe('Building System Integration Tests', () => {
             // Step 5: Confirm placement
             buildingPlacementManager.attemptPlacement();
             
-            setTimeout(() => {
-                console.log('[Test] Event flow:', events);
-                expect(events).to.include('MENU_TOGGLED');
-                expect(events).to.include('SELECTED:warehouse');
-                expect(events).to.include('STARTED:warehouse');
-                expect(events).to.include('PLACED:warehouse');
-                done();
-            }, 10);
+            console.log('[Test] Event flow:', events);
+            expect(events).to.include('MENU_TOGGLED');
+            expect(events).to.include('SELECTED:warehouse');
+            expect(events).to.include('STARTED:warehouse');
+            expect(events).to.include('PLACED:warehouse');
         });
     });
     

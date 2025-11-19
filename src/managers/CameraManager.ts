@@ -3,6 +3,8 @@ import { Camera } from '../rendering/Camera';
 import { EntityManager } from './EntityManager';
 import { Renderer } from '../rendering/Renderer';
 import { RenderLayer } from '../rendering/RenderLayer';
+import { CAMERA_CONFIG } from '../config/systems/cameraConfig';
+import { InputManager } from './InputManager';
 
 /**
  * CameraManager - Centralized camera control and following system
@@ -25,9 +27,8 @@ export class CameraManager {
     private isFollowing: boolean = false;
     private wasPreviouslyFollowing: boolean = false;
     
-    // Timer system for temporary camera movement (minimap clicks)
+    // Timer system for temporary camera movement (minimap clicks, arrow keys)
     private followResumeTimer: number = 0;
-    private followResumeDelay: number = 5000; // 5 seconds in milliseconds
     
     private constructor() {
         // Listen for camera follow requests
@@ -112,15 +113,17 @@ export class CameraManager {
     }
     
     /**
-     * Temporarily stop following (for minimap clicks)
+     * Temporarily stop following (for minimap clicks, arrow keys)
      * Will automatically resume after timer expires
+     * @param customDelay Optional custom delay in milliseconds (defaults to config value)
      */
-    stopFollowingTemporarily(): void {
+    stopFollowingTemporarily(customDelay?: number): void {
         if (this.isFollowing) {
             this.wasPreviouslyFollowing = true;
             this.isFollowing = false;
-            this.followResumeTimer = this.followResumeDelay;
-            console.log('[CameraManager] Stopped following temporarily - will resume in 5s');
+            this.followResumeTimer = customDelay ?? CAMERA_CONFIG.FOLLOW_RESUME_DELAY;
+            const seconds = this.followResumeTimer / 1000;
+            console.log(`[CameraManager] Stopped following temporarily - will resume in ${seconds}s`);
         }
     }
     
@@ -143,6 +146,9 @@ export class CameraManager {
      */
     update(): void {
         if (!this.camera) return;
+        
+        // Handle camera movement with held keys (before updating follow timer)
+        this.handleCameraMovement();
         
         // Update follow resume timer (16.67ms per frame at 60fps)
         if (this.followResumeTimer > 0) {
@@ -203,6 +209,57 @@ export class CameraManager {
     setDeadzone(width: number, height: number): void {
         if (this.camera) {
             this.camera.setDeadzone(width, height);
+        }
+    }
+    
+    /**
+     * Handle camera movement with held keys via InputManager
+     * Allows smooth camera panning when keys are held
+     * Separate from queen movement to avoid conflicts
+     */
+    private handleCameraMovement(): void {
+        if (!this.camera) return;
+        
+        const inputManager = InputManager.getInstance();
+        const moveSpeed = CAMERA_CONFIG.ARROW_MOVE_SPEED;
+        
+        let moveX = 0;
+        let moveY = 0;
+        
+        // Check camera movement keys (separate from moveUp/Down/Left/Right)
+        if (inputManager.isActionPressed('cameraMoveUp')) {
+            moveY = -moveSpeed;
+        }
+        if (inputManager.isActionPressed('cameraMoveDown')) {
+            moveY = moveSpeed;
+        }
+        if (inputManager.isActionPressed('cameraMoveLeft')) {
+            moveX = -moveSpeed;
+        }
+        if (inputManager.isActionPressed('cameraMoveRight')) {
+            moveX = moveSpeed;
+        }
+        
+        // Move camera if any camera movement keys are pressed
+        if (moveX !== 0 || moveY !== 0) {
+            this.camera.moveTo(this.camera.x + moveX, this.camera.y + moveY);
+            
+            // Reset timer while keys are held (prevents snap back during continuous movement)
+            if (this.wasPreviouslyFollowing) {
+                this.followResumeTimer = CAMERA_CONFIG.ARROW_MOVE_DELAY;
+            } else {
+                // First time moving camera - stop following and set timer
+                this.stopFollowingTemporarily(CAMERA_CONFIG.ARROW_MOVE_DELAY);
+            }
+            
+            // Mark layers dirty to force redraw after camera move
+            if (this.renderer) {
+                this.renderer.markLayerDirty(RenderLayer.GROUND);
+                this.renderer.markLayerDirty(RenderLayer.GROUND_DECORATIONS);
+                this.renderer.markLayerDirty(RenderLayer.ENTITIES);
+                this.renderer.markLayerDirty(RenderLayer.ABOVE_ENTITIES);
+                this.renderer.markLayerDirty(RenderLayer.VISUAL_EFFECTS);
+            }
         }
     }
     

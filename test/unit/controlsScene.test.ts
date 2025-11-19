@@ -405,7 +405,7 @@ describe('ControlsScene', () => {
             scene.handleMouseMove(backButton.x, backButton.y);
             
             const scaleBefore = backButton.getPulseScale();
-            scene.update();
+            scene.update(16);
             const scaleAfter = backButton.getPulseScale();
             
             expect(scaleAfter).to.not.equal(scaleBefore);
@@ -437,7 +437,11 @@ describe('ControlsScene', () => {
                 jump: [' '],
                 saveWorld: ['s'],
                 loadWorld: ['l'],
-                deleteWorld: ['d']
+                deleteWorld: ['d'],
+                cameraMoveUp: ['ArrowUp'],
+                cameraMoveDown: ['ArrowDown'],
+                cameraMoveLeft: ['ArrowLeft'],
+                cameraMoveRight: ['ArrowRight']
             });
 
             // Reload InputManager to pick up changes

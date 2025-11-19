@@ -84,7 +84,7 @@ describe('SettingsManager', () => {
             expect(video.particleEffects).to.be.true;
             expect(video.screenShake).to.be.true;
             expect(video.cameraSmoothing).to.equal(0.1);
-            expect(video.showFPS).to.be.false;
+            // expect(video.showFPS).to.be.false; // Property removed from VideoSettings
         });
 
         it('should have default key bindings', () => {
@@ -238,8 +238,8 @@ describe('SettingsManager', () => {
             settingsManager.setVideoSettings({
                 particleEffects: false,
                 screenShake: false,
-                cameraSmoothing: 0.5,
-                showFPS: true
+                cameraSmoothing: 0.5
+                // showFPS removed from VideoSettings
             });
             
             expect(eventEmitted).to.be.true;
@@ -348,8 +348,8 @@ describe('SettingsManager', () => {
             settingsManager.setVideoSettings({
                 particleEffects: true,
                 screenShake: true,
-                cameraSmoothing: 2.5,
-                showFPS: false
+                cameraSmoothing: 2.5
+                // showFPS removed from VideoSettings
             });
             
             const video = settingsManager.getVideoSettings();

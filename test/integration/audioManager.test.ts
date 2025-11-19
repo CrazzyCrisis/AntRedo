@@ -11,10 +11,13 @@ describe('AudioManager Integration Tests', () => {
     let audioManager: AudioManager;
 
     beforeEach(() => {
-        // Clear EventBus
+        // Reset singleton to get fresh instance with new event listeners
+        (AudioManager as any).instance = null;
+        
+        // Clear EventBus BEFORE creating new instance
         EventBus.clear();
         
-        // Get fresh instances
+        // Get fresh instance (will subscribe to events in constructor)
         audioManager = AudioManager.getInstance();
         
         // Reset to default settings
@@ -200,9 +203,13 @@ describe('AudioManager Integration Tests', () => {
             const mockSound = { 
                 isPlaying: () => false, 
                 setBGMVolume: () => {}, 
+                setVolume: () => {},
                 loop: () => {},
                 play: () => {}
             };
+            
+            // Enable audio context so playBGM doesn't queue
+            (audioManager as any).audioContextStarted = true;
             
             audioManager.loadSound('MENU_THEME', mockSound);
             audioManager.playBGM('MENU_THEME', true);

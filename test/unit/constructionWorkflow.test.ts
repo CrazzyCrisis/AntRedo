@@ -27,14 +27,14 @@ describe('Construction Workflow', () => {
     
     describe('BuildingManager Event Handling', () => {
         
-        it('should listen to BUILDING_CONSTRUCTION_STARTED event', (done) => {
+        it('should listen to BUILDING_CONSTRUCTION_STARTED event', () => {
+            let eventReceived = false;
+            let eventData: any = null;
+            
             // Subscribe before emitting
             EventBus.once(GameEvents.BUILDING_CONSTRUCTION_STARTED, (data: any) => {
-                expect(data.buildingType).to.equal('warehouse');
-                expect(data.gridX).to.equal(5);
-                expect(data.gridY).to.equal(5);
-                expect(data.factionId).to.equal('test-faction');
-                done();
+                eventReceived = true;
+                eventData = data;
             });
             
             // Emit event
@@ -44,20 +44,25 @@ describe('Construction Workflow', () => {
                 gridY: 5,
                 factionId: 'test-faction'
             });
+            
+            expect(eventReceived).to.be.true;
+            expect(eventData.buildingType).to.equal('warehouse');
+            expect(eventData.gridX).to.equal(5);
+            expect(eventData.gridY).to.equal(5);
+            expect(eventData.factionId).to.equal('test-faction');
         });
         
-        it('should create construction site building on BUILDING_CONSTRUCTION_STARTED', (done) => {
+        it('should create construction site building on BUILDING_CONSTRUCTION_STARTED', () => {
             // Mock BuildingFactory.create to verify it's called
-            // let factoryCalled = false;
+            let factoryCalled = false;
             const originalCreate = BuildingFactory.create;
             
             (BuildingFactory as any).create = function(...args: any[]) {
-                // factoryCalled = true;
+                factoryCalled = true;
                 expect(args[3]).to.equal(5); // gridX
                 expect(args[4]).to.equal(5); // gridY
                 expect(args[5]).to.equal('warehouse'); // buildingType
                 expect(args[6]).to.equal('test-faction'); // factionId
-                done();
                 return null as any;
             };
             
@@ -67,6 +72,8 @@ describe('Construction Workflow', () => {
                 gridY: 5,
                 factionId: 'test-faction'
             });
+            
+            expect(factoryCalled).to.be.true;
             
             // Restore original
             (BuildingFactory as any).create = originalCreate;
@@ -92,16 +99,13 @@ describe('Construction Workflow', () => {
             expect(true).to.be.true; // Placeholder for implementation test
         });
         
-        it('should emit CONSTRUCTION_SITE_CREATED with factionId', (done) => {
+        it('should emit CONSTRUCTION_SITE_CREATED with factionId', () => {
+            let emitted = false;
+            let eventData: any = null;
+            
             EventBus.once(GameEvents.CONSTRUCTION_SITE_CREATED, (data: any) => {
-                expect(data.buildingId).to.be.a('string');
-                expect(data.gridX).to.be.a('number');
-                expect(data.gridY).to.be.a('number');
-                expect(data.buildingType).to.be.a('string');
-                expect(data.sizeWidth).to.be.a('number');
-                expect(data.sizeHeight).to.be.a('number');
-                expect(data.factionId).to.equal('test-faction');
-                done();
+                emitted = true;
+                eventData = data;
             });
             
             // Emit construction started (will trigger factory which emits CONSTRUCTION_SITE_CREATED)
@@ -111,6 +115,15 @@ describe('Construction Workflow', () => {
                 gridY: 3,
                 factionId: 'test-faction'
             });
+            
+            expect(emitted).to.be.true;
+            expect(eventData.buildingId).to.be.a('string');
+            expect(eventData.gridX).to.be.a('number');
+            expect(eventData.gridY).to.be.a('number');
+            expect(eventData.buildingType).to.be.a('string');
+            expect(eventData.sizeWidth).to.be.a('number');
+            expect(eventData.sizeHeight).to.be.a('number');
+            expect(eventData.factionId).to.equal('test-faction');
         });
     });
     
@@ -184,15 +197,23 @@ describe('Construction Workflow', () => {
             expect(mockBuilding.constructionProgress).to.equal(100);
         });
         
-        it('should emit BUILDING_CONSTRUCTION_PROGRESS event', (done) => {
+        it('should emit BUILDING_CONSTRUCTION_PROGRESS event', () => {
+            let eventReceived = false;
+            let receivedId = '';
+            let receivedProgress = 0;
+            
             EventBus.once(GameEvents.BUILDING_CONSTRUCTION_PROGRESS, (buildingId: string, progress: number) => {
-                expect(buildingId).to.equal('building-1');
-                expect(progress).to.be.a('number');
-                done();
+                eventReceived = true;
+                receivedId = buildingId;
+                receivedProgress = progress;
             });
             
             // Emit progress event
             EventBus.emit(GameEvents.BUILDING_CONSTRUCTION_PROGRESS, 'building-1', 50);
+            
+            expect(eventReceived).to.be.true;
+            expect(receivedId).to.equal('building-1');
+            expect(receivedProgress).to.be.a('number');
         });
         
         it('should complete construction at 100% progress', () => {
@@ -240,14 +261,20 @@ describe('Construction Workflow', () => {
     
     describe('Building Completion Sprite Swap', () => {
         
-        it('should swap sprite on BUILDING_COMPLETED event', (done) => {
+        it('should swap sprite on BUILDING_COMPLETED event', () => {
+            let eventReceived = false;
+            let receivedId = '';
+            
             EventBus.once(GameEvents.BUILDING_COMPLETED, (buildingId: string) => {
-                expect(buildingId).to.be.a('string');
-                done();
+                eventReceived = true;
+                receivedId = buildingId;
             });
             
             // Emit completion event
             EventBus.emit(GameEvents.BUILDING_COMPLETED, 'building-1');
+            
+            expect(eventReceived).to.be.true;
+            expect(receivedId).to.be.a('string');
         });
         
         it('should update sprite from construction to completed', () => {
@@ -281,11 +308,13 @@ describe('Construction Workflow', () => {
     
     describe('Pathfinding Integration', () => {
         
-        it('should emit BUILDING_PATHFINDING_BLOCK on construction start', (done) => {
+        it('should emit BUILDING_PATHFINDING_BLOCK on construction start', () => {
+            let eventReceived = false;
+            let receivedTiles: any[] = [];
+            
             EventBus.once(GameEvents.BUILDING_PATHFINDING_BLOCK, (tiles: any[]) => {
-                expect(tiles).to.be.an('array');
-                expect(tiles.length).to.be.at.least(4); // 2x2 minimum
-                done();
+                eventReceived = true;
+                receivedTiles = tiles;
             });
             
             // Emit construction started (factory should emit pathfinding block)
@@ -295,12 +324,19 @@ describe('Construction Workflow', () => {
                 gridY: 5,
                 factionId: 'test-faction'
             });
+            
+            expect(eventReceived).to.be.true;
+            expect(receivedTiles).to.be.an('array');
+            expect(receivedTiles.length).to.be.at.least(4); // 2x2 minimum
         });
         
-        it('should emit BUILDING_PATHFINDING_UNBLOCK on building destroyed', (done) => {
+        it('should emit BUILDING_PATHFINDING_UNBLOCK on building destroyed', () => {
+            let eventReceived = false;
+            let receivedTiles: any[] = [];
+            
             EventBus.once(GameEvents.BUILDING_PATHFINDING_UNBLOCK, (tiles: any[]) => {
-                expect(tiles).to.be.an('array');
-                done();
+                eventReceived = true;
+                receivedTiles = tiles;
             });
             
             // Emit destruction event
@@ -308,6 +344,9 @@ describe('Construction Workflow', () => {
                 { gridX: 5, gridY: 5 },
                 { gridX: 6, gridY: 5 }
             ]);
+            
+            expect(eventReceived).to.be.true;
+            expect(receivedTiles).to.be.an('array');
         });
     });
     
@@ -350,12 +389,13 @@ describe('Construction Workflow', () => {
             expect(true).to.be.true;
         });
         
-        it('should emit CONSTRUCTION_SITE_CREATED after placement', (done) => {
+        it('should emit CONSTRUCTION_SITE_CREATED after placement', () => {
+            let eventReceived = false;
+            let eventData: any = null;
+            
             EventBus.once(GameEvents.CONSTRUCTION_SITE_CREATED, (data: any) => {
-                expect(data.buildingId).to.exist;
-                expect(data.buildingType).to.be.a('string');
-                expect(data.factionId).to.be.a('string');
-                done();
+                eventReceived = true;
+                eventData = data;
             });
             
             EventBus.emit(GameEvents.BUILDING_CONSTRUCTION_STARTED, {
@@ -364,6 +404,11 @@ describe('Construction Workflow', () => {
                 gridY: 10,
                 factionId: 'player-faction'
             });
+            
+            expect(eventReceived).to.be.true;
+            expect(eventData.buildingId).to.exist;
+            expect(eventData.buildingType).to.be.a('string');
+            expect(eventData.factionId).to.be.a('string');
         });
     });
     

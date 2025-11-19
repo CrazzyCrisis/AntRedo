@@ -26,6 +26,7 @@ import { TILE_SPRITE_MAP, TILE_SPRITE_BASE_PATH, ENTITY_SPRITES, getEntitySprite
 import { TileType } from './world/TileSystem';
 import { TileFrillSystem } from './world/TileEdgeSystem';
 import { AUDIO_SOUNDS, SoundKey } from './config/systems/audioConfig';
+import { CAMERA_CONFIG } from './config/systems/cameraConfig';
 //import { FPSCounter } from './utils/helpers';
 
 // Declare p5.js global functions and variables
@@ -202,8 +203,8 @@ function setup() {
     // Initialize camera
     camera = new Camera(0, 0, window.innerWidth, window.innerHeight);
     
-    // Set camera deadzone (bounding box) - 200x150 pixels
-    camera.setDeadzone(200, 150);
+    // Set camera deadzone (bounding box) from config
+    camera.setDeadzone(CAMERA_CONFIG.DEADZONE_WIDTH, CAMERA_CONFIG.DEADZONE_HEIGHT);
     
     // Initialize FPS counter
     //fpsCounter = new FPSCounter();

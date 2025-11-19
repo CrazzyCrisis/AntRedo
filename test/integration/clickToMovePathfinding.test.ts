@@ -65,126 +65,180 @@ describe('Click-to-Move Pathfinding Integration', () => {
     });
 
     describe('Pathfinding to Adjacent Tiles', () => {
-        it('should find path to tile directly above', (done) => {
+        it('should find path to tile directly above', () => {
             const targetX = 5;
             const targetY = 4; // One tile up
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(0);
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(0);
+            expect(pathfinding.hasPath()).to.be.true;
         });
 
-        it('should find path to tile directly below', (done) => {
+        it('should find path to tile directly below', () => {
             const targetX = 5;
             const targetY = 6; // One tile down
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(0);
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(0);
+            expect(pathfinding.hasPath()).to.be.true;
         });
 
-        it('should find path to tile directly left', (done) => {
+        it('should find path to tile directly left', () => {
             const targetX = 4;
             const targetY = 5; // One tile left
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(0);
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(0);
+            expect(pathfinding.hasPath()).to.be.true;
         });
 
-        it('should find path to tile directly right', (done) => {
+        it('should find path to tile directly right', () => {
             const targetX = 6;
             const targetY = 5; // One tile right
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(0);
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(0);
+            expect(pathfinding.hasPath()).to.be.true;
         });
 
-        it('should find path to diagonal tile', (done) => {
+        it('should find path to diagonal tile', () => {
             const targetX = 6;
             const targetY = 6; // Diagonal
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(0);
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(0);
+            expect(pathfinding.hasPath()).to.be.true;
         });
     });
 
     describe('Pathfinding to Distant Tiles', () => {
-        it('should find path to corner (0, 0)', (done) => {
+        it('should find path to corner (0, 0)', () => {
             const targetX = 0;
             const targetY = 0;
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(5); // At least 5 tiles away
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(5); // At least 5 tiles away
+            expect(pathfinding.hasPath()).to.be.true;
         });
 
-        it('should find path to corner (9, 9)', (done) => {
+        it('should find path to corner (9, 9)', () => {
             const targetX = 9;
             const targetY = 9;
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(5); // At least 5 tiles away
-                expect(pathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             pathfinding.findPath(targetX, targetY, tileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(5); // At least 5 tiles away
+            expect(pathfinding.hasPath()).to.be.true;
         });
     });
 
     describe('Pathfinding Failure Cases', () => {
-        it('should fail to find path to unwalkable tile', (done) => {
+        it('should fail to find path to unwalkable tile', () => {
             // Make target tile unwalkable
             const grid = tileGrid.getGrid();
             grid[7][7].walkable = false;
+            
+            let pathFailed = false;
+            let failureReason = '';
 
             EventBus.once('PATH_FAILED', (_entityId: string, reason: string) => {
-                expect(reason).to.include('not walkable');
-                expect(pathfinding.hasPath()).to.be.false;
-                done();
+                pathFailed = true;
+                failureReason = reason;
             });
 
             pathfinding.findPath(7, 7, grid);
+            
+            expect(pathFailed).to.be.true;
+            expect(failureReason).to.include('not walkable');
+            expect(pathfinding.hasPath()).to.be.false;
         });
 
-        it('should fail to find path to out-of-bounds tile', (done) => {
+        it('should fail to find path to out-of-bounds tile', () => {
+            let pathFailed = false;
+            let failureReason = '';
+            
             EventBus.once('PATH_FAILED', (_entityId: string, reason: string) => {
-                expect(reason).to.include('Out of bounds');
-                expect(pathfinding.hasPath()).to.be.false;
-                done();
+                pathFailed = true;
+                failureReason = reason;
             });
 
             pathfinding.findPath(15, 15, tileGrid.getGrid());
+            
+            expect(pathFailed).to.be.true;
+            expect(failureReason).to.include('Out of bounds');
+            expect(pathfinding.hasPath()).to.be.false;
         });
 
-        it('should fail to find path when surrounded by walls', (done) => {
+        it('should fail to find path when surrounded by walls', () => {
             // Surround target with walls
             const grid = tileGrid.getGrid();
             const targetX = 7;
@@ -201,19 +255,25 @@ describe('Click-to-Move Pathfinding Integration', () => {
                     }
                 }
             }
+            
+            let pathFailed = false;
+            let failureReason = '';
 
             EventBus.once('PATH_FAILED', (_entityId: string, reason: string) => {
-                expect(reason).to.include('No path found');
-                expect(pathfinding.hasPath()).to.be.false;
-                done();
+                pathFailed = true;
+                failureReason = reason;
             });
 
             pathfinding.findPath(targetX, targetY, grid);
+            
+            expect(pathFailed).to.be.true;
+            expect(failureReason).to.include('No path found');
+            expect(pathfinding.hasPath()).to.be.false;
         });
     });
 
     describe('Real-World Scenario: Large World Grid', () => {
-        it('should handle pathfinding in 200x200 grid', (done) => {
+        it('should handle pathfinding in 200x200 grid', () => {
             // Create larger grid like DevRoom (200x200)
             const largeGridData: TileData[][] = [];
             for (let row = 0; row < 200; row++) {
@@ -235,17 +295,23 @@ describe('Click-to-Move Pathfinding Integration', () => {
             // Try to path to nearby tile
             const targetX = 101;
             const targetY = 101;
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(0);
-                expect(largePathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             largePathfinding.findPath(targetX, targetY, largeTileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(0);
+            expect(largePathfinding.hasPath()).to.be.true;
         }).timeout(5000); // Allow extra time for large grid
 
-        it('should handle pathfinding to edge of 200x200 grid', (done) => {
+        it('should handle pathfinding to edge of 200x200 grid', () => {
             // Create larger grid
             const largeGridData: TileData[][] = [];
             for (let row = 0; row < 200; row++) {
@@ -267,14 +333,20 @@ describe('Click-to-Move Pathfinding Integration', () => {
             // Try to path to edge
             const targetX = 199;
             const targetY = 199;
+            
+            let pathFound = false;
+            let foundPathLength = 0;
 
             EventBus.once('PATH_FOUND', (_entityId: string, pathLength: number) => {
-                expect(pathLength).to.be.greaterThan(50); // Should be ~140 tiles away
-                expect(largePathfinding.hasPath()).to.be.true;
-                done();
+                pathFound = true;
+                foundPathLength = pathLength;
             });
 
             largePathfinding.findPath(targetX, targetY, largeTileGrid.getGrid());
+            
+            expect(pathFound).to.be.true;
+            expect(foundPathLength).to.be.greaterThan(50); // Should be ~140 tiles away
+            expect(largePathfinding.hasPath()).to.be.true;
         }).timeout(5000);
     });
 });

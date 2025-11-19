@@ -571,7 +571,6 @@ export function setupEntitySpriteBinding(
 ): void {
     // Import dynamically to avoid circular dependencies
     const { EventBus, GameEvents } = require('./eventBus');
-    const { TILE_CONFIG } = require('../config/tileConfig');
     const { VisualEffectsManager } = require('../managers/VisualEffectsManager');
     
     // Register sprite with renderer
@@ -601,14 +600,12 @@ export function setupEntitySpriteBinding(
         };
     }
     
-    // Center offset for sprite rendering (sprites use CENTER mode, world coords are top-left)
-    const centerOffset = TILE_CONFIG.SIZE / 2;
-    
     // Listen for smooth position updates - update sprite position for smooth rendering
+    // NOTE: GameObject now emits world positions already centered in tiles (since v1.1)
     const smoothMoveListener = EventBus.on(GameEvents.ENTITY_SMOOTH_POSITION_UPDATE, (entityId: string, smoothX: number, smoothY: number) => {
         if (entityId === entity.id) {
-            // Add center offset so sprite is centered in tile (sprites draw from CENTER)
-            sprite.setPosition(smoothX + centerOffset, smoothY + centerOffset);
+            // GameObject handles centering - use position as-is
+            sprite.setPosition(smoothX, smoothY);
             renderer.markLayerDirty(layer);
         }
     });

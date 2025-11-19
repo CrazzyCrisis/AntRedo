@@ -59,15 +59,25 @@ describe('ResourceManager', () => {
             expect(manager.getResourceCount(testFactionId, 'food')).to.equal(150);
         });
 
-        it('should emit RESOURCE_UPDATED event when adding', (done) => {
+        it('should emit RESOURCE_UPDATED event when adding', () => {
+            let eventEmitted = false;
+            let receivedFactionId = '';
+            let receivedType = '';
+            let receivedAmount = 0;
+            
             EventBus.once('RESOURCE_UPDATED', (factionId, type, newAmount) => {
-                expect(factionId).to.equal(testFactionId);
-                expect(type).to.equal('wood');
-                expect(newAmount).to.equal(100);
-                done();
+                eventEmitted = true;
+                receivedFactionId = factionId;
+                receivedType = type;
+                receivedAmount = newAmount;
             });
             
             manager.addResource(testFactionId, 'wood', 50);
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedFactionId).to.equal(testFactionId);
+            expect(receivedType).to.equal('wood');
+            expect(receivedAmount).to.equal(100);
         });
 
         it('should handle multiple resource additions', () => {
@@ -111,15 +121,25 @@ describe('ResourceManager', () => {
             expect(manager.getResourceCount(testFactionId, 'food')).to.equal(75);
         });
 
-        it('should emit RESOURCE_UPDATED event when removing', (done) => {
+        it('should emit RESOURCE_UPDATED event when removing', () => {
+            let eventEmitted = false;
+            let receivedFactionId = '';
+            let receivedType = '';
+            let receivedAmount = 0;
+            
             EventBus.once('RESOURCE_UPDATED', (factionId, type, newAmount) => {
-                expect(factionId).to.equal(testFactionId);
-                expect(type).to.equal('wood');
-                expect(newAmount).to.equal(30);
-                done();
+                eventEmitted = true;
+                receivedFactionId = factionId;
+                receivedType = type;
+                receivedAmount = newAmount;
             });
             
             manager.removeResource(testFactionId, 'wood', 20);
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedFactionId).to.equal(testFactionId);
+            expect(receivedType).to.equal('wood');
+            expect(receivedAmount).to.equal(30);
         });
 
         it('should fail when insufficient resources', () => {
@@ -128,16 +148,28 @@ describe('ResourceManager', () => {
             expect(manager.getResourceCount(testFactionId, 'food')).to.equal(100);
         });
 
-        it('should emit RESOURCE_INSUFFICIENT event when failing', (done) => {
+        it('should emit RESOURCE_INSUFFICIENT event when failing', () => {
+            let eventEmitted = false;
+            let receivedFactionId = '';
+            let receivedType = '';
+            let receivedCurrent = 0;
+            let receivedNeeded = 0;
+            
             EventBus.once('RESOURCE_INSUFFICIENT', (factionId, type, current, needed) => {
-                expect(factionId).to.equal(testFactionId);
-                expect(type).to.equal('wood');
-                expect(current).to.equal(50);
-                expect(needed).to.equal(100);
-                done();
+                eventEmitted = true;
+                receivedFactionId = factionId;
+                receivedType = type;
+                receivedCurrent = current;
+                receivedNeeded = needed;
             });
             
             manager.removeResource(testFactionId, 'wood', 100);
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedFactionId).to.equal(testFactionId);
+            expect(receivedType).to.equal('wood');
+            expect(receivedCurrent).to.equal(50);
+            expect(receivedNeeded).to.equal(100);
         });
 
         it('should fail for unknown faction', () => {
@@ -264,15 +296,25 @@ describe('ResourceManager', () => {
             expect(manager.getResourceCount(testFactionId, 'food')).to.equal(500);
         });
 
-        it('should emit RESOURCE_UPDATED event when setting', (done) => {
+        it('should emit RESOURCE_UPDATED event when setting', () => {
+            let eventEmitted = false;
+            let receivedFactionId = '';
+            let receivedType = '';
+            let receivedAmount = 0;
+            
             EventBus.once('RESOURCE_UPDATED', (factionId, type, newAmount) => {
-                expect(factionId).to.equal(testFactionId);
-                expect(type).to.equal('magicCrystal');
-                expect(newAmount).to.equal(999);
-                done();
+                eventEmitted = true;
+                receivedFactionId = factionId;
+                receivedType = type;
+                receivedAmount = newAmount;
             });
             
             manager.setResource(testFactionId, 'magicCrystal', 999);
+            
+            expect(eventEmitted).to.be.true;
+            expect(receivedFactionId).to.equal(testFactionId);
+            expect(receivedType).to.equal('magicCrystal');
+            expect(receivedAmount).to.equal(999);
         });
 
         it('should allow setting to 0', () => {

@@ -31,7 +31,7 @@ This document demonstrates the complete **Model-View-Controller** architecture f
 │  Ant.ts              │      │  SpriteComponent.ts      │
 │  - Position (x, y)   │      │  - sprite: p5.Image      │
 │  - Faction ID        │      │  - position (x, y)       │
-│  - 9 Components:     │      │  - layer: ENTITIES       │
+│  - 11 Components:    │      │  - layer: ENTITIES       │
 │    • StateMachine    │      │  - depth: Y for sorting  │
 │    • Pathfinding     │      │  - render(graphics)      │
 │    • Health          │      │                          │
@@ -41,6 +41,8 @@ This document demonstrates the complete **Model-View-Controller** architecture f
 │    • AIBehavior      │      │  - Dirty flags           │
 │    • AntJob          │      │  - Framebuffers          │
 │    • Hunger          │      │                          │
+│    • RandomMovement  │      │                          │
+│    • HazardAvoidance │      │                          │
 │  - Methods:          │      │                          │
 │    • setJob()        │      │                          │
 │    • setAutonomous() │      │                          │
@@ -85,7 +87,7 @@ ant.setJob(AntJobComponent.JOB_WARRIOR);
 ant.setAutonomous(true);
 
 // Update loop
-ant.update(deltaTime); // Updates all 9 components
+ant.update(deltaTime); // Updates all 11 components
 
 // Check state
 if (ant.isWarrior()) {
@@ -111,7 +113,7 @@ const ant = AntFactory.create(renderer, antSprite, 5, 10, 'player_faction');
 
 // Step 1: Create Model
 const ant = new Ant(5, 10, 'player_faction');
-// ✅ Ant has all 9 components attached
+// ✅ Ant has all 11 components attached
 // ✅ Default GATHERER job set
 // ✅ Autonomous mode enabled
 
@@ -173,7 +175,7 @@ export class Ant extends GameObject {
     }
     
     private initializeComponents(): void {
-        // Attach all 9 components
+        // Attach all 11 components
         this.addComponent('StateMachine', new StateMachineComponent(EntityState.IDLE));
         this.addComponent('Pathfinding', new PathfindingComponent(2.0));
         this.addComponent('Health', new HealthComponent(100));
@@ -183,6 +185,8 @@ export class Ant extends GameObject {
         this.addComponent('AIBehavior', new AIBehaviorComponent(true));
         this.addComponent('AntJob', new AntJobComponent([1,1,1,1], AntJobComponent.JOB_GATHERER));
         this.addComponent('Hunger', new HungerComponent(100));
+        this.addComponent('RandomMovement', new RandomMovementComponent()); // Random directional movement
+        this.addComponent('HazardAvoidance', new HazardAvoidanceComponent('ant')); // Flee from hazards
     }
     
     // Job Management
@@ -205,7 +209,17 @@ export class Ant extends GameObject {
     
     // Update all components
     update(deltaTime: number): void {
-        super.update(deltaTime); // Updates all 9 components
+        // Coordinate movement behaviors (hazard avoidance has priority)
+        const hazardAvoidance = this.getComponent('HazardAvoidance');
+        const randomMovement = this.getComponent('RandomMovement');
+        
+        if (hazardAvoidance?.isFleeing()) {
+            randomMovement?.setEnabled(false); // Disable random while fleeing
+        } else {
+            randomMovement?.setEnabled(true); // Re-enable when safe
+        }
+        
+        super.update(deltaTime); // Updates all 11 components
     }
 }
 ```
@@ -458,7 +472,7 @@ ant.setJob(AntJobComponent.JOB_BUILDER);
 
 // Update every frame
 function gameLoop() {
-    ant.update(deltaTime); // Updates all 9 components
+    ant.update(deltaTime); // Updates all 11 components
     renderer.render(); // Draws all sprites
 }
 ```
@@ -634,6 +648,122 @@ renderables.sort((a, b) => a.depth - b.depth);
 - Loose coupling between layers
 - Easy to add new listeners
 - Clear event flow
+
+---
+
+## Component Details
+
+### Core Components (1-9)
+
+**StateMachine** - Manages entity behavior states (IDLE, MOVING, ATTACKING, FLEEING_HAZARD, etc.)
+- Used by all game systems to check/change entity state
+- Emits events on state changes
+
+**Pathfinding** - A* pathfinding for grid-based movement
+- Calculates shortest path around obstacles
+- Respects tile movement costs
+- Updates position automatically when following path
+
+**Health** - Hit points, damage, healing, death
+- Tracks current/max health
+- Emits HEALTH_CHANGED events
+- Tracks last hazard damage for avoidance system
+
+**Combat** - Attack damage, range, cooldown
+- Handles damage dealing to targets
+- Cooldown system prevents spam
+- Integrates with StateMachine for combat states
+
+**Inventory** - Item carrying capacity
+- Used for resource gathering
+- Max capacity configurable per entity
+- Emits events on item add/remove
+
+**Vision** - Detection radius and field of view
+- Circular or cone-based vision
+- Used by AI for target detection
+- Range and angle configurable
+
+**AIBehavior** - Autonomous vs player-controlled
+- Toggle between AI control and manual control
+- Used by PlayerManager to switch control
+- Emits AI_STATE_CHANGED events
+
+**AntJob** - Job types and resource gathering priorities
+- 4 job types: GATHERER, BUILDER, WARRIOR, SCOUT
+- Priority array [wood, food, stone, metal] for gathering
+- Emits JOB_ASSIGNED events
+
+**Hunger** - Food consumption and starvation
+- Depletes over time
+- Can be refilled by eating food from inventory
+- Affects health when starving
+
+### New Movement Components (10-11)
+
+**RandomMovement** (Component #10) - Random directional movement for testing
+- Picks random direction every 2-4 seconds
+- Moves in chosen direction for 500-1500ms
+- Can be enabled/disabled dynamically
+- Used for collision testing and idle wandering behavior
+
+```typescript
+// Usage
+const randomMovement = ant.getComponent('RandomMovement');
+randomMovement.setEnabled(false); // Stop random movement
+randomMovement.setEnabled(true);  // Resume random movement
+randomMovement.reset();           // Reset timers, pick new direction
+```
+
+**HazardAvoidance** (Component #11) - Intelligent hazard fleeing behavior
+- Automatically flees when ant takes hazard tile damage
+- Calculates safe position based on FLEE_DISTANCE config
+- Prioritizes over other movement behaviors
+- Timeout system prevents infinite fleeing
+- Respects MIN_HEALTH_TO_FLEE threshold (ants always flee)
+
+```typescript
+// Usage
+const hazardAvoidance = ant.getComponent('HazardAvoidance');
+if (hazardAvoidance.isFleeing()) {
+    console.log('Ant is fleeing hazard!');
+    const direction = hazardAvoidance.getFleeDirection();
+}
+```
+
+**Configuration** (`src/config/gameplay/entityConfig.ts`):
+```typescript
+HAZARD_AVOIDANCE: {
+    ant: {
+        ENABLED: true,                      // Toggle system on/off
+        RECENT_DAMAGE_THRESHOLD_MS: 500,    // Only flee if damaged within last 500ms
+        MIN_HEALTH_TO_FLEE: 1.0,            // Always flee (100% threshold)
+        FLEE_DISTANCE: 5,                   // Run 5 tiles away from hazard
+        FLEE_TIMEOUT_MS: 5000               // Stop fleeing after 5 seconds max
+    }
+}
+```
+
+**Behavior Priority:**
+1. **HazardAvoidance** (Highest) - Overrides all other movement when fleeing
+2. **RandomMovement** (Lowest) - Only active when not fleeing
+
+This is coordinated in `Ant.update()`:
+```typescript
+update(deltaTime: number): void {
+    const hazardAvoidance = this.getComponent('HazardAvoidance');
+    const randomMovement = this.getComponent('RandomMovement');
+    
+    // Hazard avoidance has higher priority
+    if (hazardAvoidance?.isFleeing()) {
+        randomMovement?.setEnabled(false); // Disable random while fleeing
+    } else {
+        randomMovement?.setEnabled(true);  // Re-enable when safe
+    }
+    
+    super.update(deltaTime); // Update all components
+}
+```
 
 ---
 

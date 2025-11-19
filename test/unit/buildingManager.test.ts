@@ -101,24 +101,31 @@ describe('BuildingManager', () => {
             expect(building).to.be.null;
         });
 
-        it('should emit BUILDING_PLACEMENT_FAILED event on failure', (done) => {
+        it('should emit BUILDING_PLACEMENT_FAILED event on failure', () => {
             resourceManager.setResource(testFactionId, 'food', 0);
             resourceManager.setResource(testFactionId, 'wood', 0);
             
+            let emitted = false;
+            let emittedFactionId = '';
+            let emittedBuildingType = '';
+            let emittedReason = '';
+            
             EventBus.once('BUILDING_PLACEMENT_FAILED', (factionId, buildingType, reason) => {
-                expect(factionId).to.equal(testFactionId);
-                expect(buildingType).to.equal('warehouse');
-                expect(reason).to.equal('insufficient_resources');
-                done();
+                emitted = true;
+                emittedFactionId = factionId;
+                emittedBuildingType = buildingType;
+                emittedReason = reason;
             });
             
             const building = manager.placeConstructionSite(testFactionId, 'warehouse', 10, 10);
             
-            if (building !== null) {
-                done(new Error('Building should not be placed with insufficient resources'));
-            }
+            expect(building).to.be.null;
+            expect(emitted).to.be.true;
+            expect(emittedFactionId).to.equal(testFactionId);
+            expect(emittedBuildingType).to.equal('warehouse');
+            expect(emittedReason).to.equal('insufficient_resources');
         });
-
+        
         it('should track placed building', () => {
             const building = manager.placeConstructionSite(testFactionId, 'warehouse', 10, 10);
             

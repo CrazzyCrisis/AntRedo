@@ -189,8 +189,8 @@ describe('VideoSettingsScene', () => {
             settingsManager.setVideoSettings({
                 cameraSmoothing: 0.3,
                 screenShake: false,
-                particleEffects: true,
-                showFPS: false
+                particleEffects: true
+                // showFPS removed
             });
             EventBus.emit(GameEvents.SETTING_VIDEO_CHANGED);
             
@@ -201,8 +201,8 @@ describe('VideoSettingsScene', () => {
             settingsManager.setVideoSettings({
                 cameraSmoothing: 0.7,
                 screenShake: true,
-                particleEffects: true,
-                showFPS: false
+                particleEffects: true
+                // showFPS removed
             });
             EventBus.emit(GameEvents.SETTING_VIDEO_CHANGED);
             
@@ -213,8 +213,8 @@ describe('VideoSettingsScene', () => {
             settingsManager.setVideoSettings({
                 cameraSmoothing: 0.5,
                 screenShake: false,
-                particleEffects: true,
-                showFPS: false
+                particleEffects: true
+                // showFPS removed
             });
             EventBus.emit(GameEvents.SETTING_VIDEO_CHANGED);
             
@@ -301,7 +301,7 @@ describe('VideoSettingsScene', () => {
             scene.backButton.setHovered(true);
             const initialPulse = scene.backButton['pulseTime'];
             
-            scene.update();
+            scene.update(16);
             
             expect(scene.backButton['pulseTime']).to.not.equal(initialPulse);
         });
@@ -374,8 +374,8 @@ describe('VideoSettingsScene', () => {
             settingsManager.setVideoSettings({
                 cameraSmoothing: 0.5,
                 screenShake: false,
-                particleEffects: false,
-                showFPS: false
+                particleEffects: false
+                // showFPS removed
             });
             scene.cameraSmoothingSlider.setValue(0.5);
             

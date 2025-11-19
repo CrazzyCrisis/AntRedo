@@ -53,20 +53,30 @@ export interface KeyBindings {
     saveWorld: string[];
     loadWorld: string[];
     deleteWorld: string[];
+    // Camera controls (separate from player movement)
+    cameraMoveUp: string[];
+    cameraMoveDown: string[];
+    cameraMoveLeft: string[];
+    cameraMoveRight: string[];
 }
 
 export const DEFAULT_KEY_BINDINGS: KeyBindings = {
-    moveUp: ['w', 'ArrowUp'],
-    moveDown: ['s', 'ArrowDown'],
-    moveLeft: ['a', 'ArrowLeft'],
-    moveRight: ['d', 'ArrowRight'],
-    jump: [' ', 'w', 'ArrowUp'],
+    moveUp: ['w'],
+    moveDown: ['s'],
+    moveLeft: ['a'],
+    moveRight: ['d'],
+    jump: [' ', 'w'],
     interact: ['e', 'Enter'],
     pause: ['Escape', 'p'],
     openInventory: ['i', 'Tab'],
     saveWorld: ['s'],
     loadWorld: ['l'],
-    deleteWorld: ['d']
+    deleteWorld: ['d'],
+    // Camera controls (arrow keys control camera only, WASD controls queen)
+    cameraMoveUp: ['ArrowUp'],
+    cameraMoveDown: ['ArrowDown'],
+    cameraMoveLeft: ['ArrowLeft'],
+    cameraMoveRight: ['ArrowRight']
 };
 
 /**

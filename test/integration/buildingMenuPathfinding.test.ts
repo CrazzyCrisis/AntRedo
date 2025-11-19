@@ -103,19 +103,19 @@ describe('Building Menu + Pathfinding Integration', () => {
     });
 
     describe('Building Placement Mode Interference', () => {
-        it('should track when placement mode is active', (done) => {
+        it('should track when placement mode is active', () => {
             let placementActive = false;
             
             // Listen for BUILDING_SELECTED to track placement mode
             EventBus.once(GameEvents.BUILDING_SELECTED, (buildingType: string) => {
                 placementActive = true;
                 expect(buildingType).to.equal('warehouse');
-                expect(placementActive).to.be.true;
-                done();
             });
             
             buildingMenu.visible = true;
             buildingMenu.handleClick(115 + 90, 300 + 30);
+            
+            expect(placementActive).to.be.true;
         });
 
         it('should prevent pathfinding clicks during placement mode', () => {
@@ -137,8 +137,9 @@ describe('Building Menu + Pathfinding Integration', () => {
             // (DevRoomScene should return early, not call handleWorldClick)
         });
 
-        it('should allow pathfinding clicks after placement is cancelled', (done) => {
+        it('should allow pathfinding clicks after placement is cancelled', () => {
             let placementActive = false;
+            let cancelled = false;
             
             // Start placement
             EventBus.once(GameEvents.BUILDING_SELECTED, () => {
@@ -152,17 +153,17 @@ describe('Building Menu + Pathfinding Integration', () => {
             // Cancel placement
             EventBus.once(GameEvents.BUILDING_PLACEMENT_CANCELLED, () => {
                 placementActive = false;
-                
-                // Now pathfinding clicks should work again
-                expect(placementActive).to.be.false;
-                done();
+                cancelled = true;
             });
             
             EventBus.emit(GameEvents.BUILDING_PLACEMENT_CANCELLED);
+            expect(cancelled).to.be.true;
+            expect(placementActive).to.be.false;
         });
 
-        it('should allow pathfinding clicks after construction starts', (done) => {
+        it('should allow pathfinding clicks after construction starts', () => {
             let placementActive = false;
+            let constructionStarted = false;
             
             // Start placement
             EventBus.once(GameEvents.BUILDING_SELECTED, () => {
@@ -176,13 +177,13 @@ describe('Building Menu + Pathfinding Integration', () => {
             // Complete placement
             EventBus.once(GameEvents.BUILDING_CONSTRUCTION_STARTED, () => {
                 placementActive = false;
-                
-                // Now pathfinding clicks should work again
-                expect(placementActive).to.be.false;
-                done();
+                constructionStarted = true;
             });
             
             EventBus.emit(GameEvents.BUILDING_CONSTRUCTION_STARTED, 'warehouse', 10, 10, 'player');
+            
+            expect(constructionStarted).to.be.true;
+            expect(placementActive).to.be.false;
         });
     });
 
@@ -203,16 +204,19 @@ describe('Building Menu + Pathfinding Integration', () => {
             expect(buildingMenu.visible).to.be.true;
         });
 
-        it('should hide menu when building is selected', (done) => {
+        it('should hide menu when building is selected', () => {
             buildingMenu.visible = true;
             expect(buildingMenu.visible).to.be.true;
             
+            let emitted = false;
             EventBus.once(GameEvents.BUILDING_SELECTED, () => {
-                expect(buildingMenu.visible).to.be.false;
-                done();
+                emitted = true;
             });
             
             buildingMenu.handleClick(115 + 90, 300 + 30);
+            
+            expect(emitted).to.be.true;
+            expect(buildingMenu.visible).to.be.false;
         });
     });
 

@@ -2,16 +2,36 @@
   "name": "antredo",
   "version": "1.0.0",
   "description": "Ant game with p5.js and TypeScript",
-  "main": "dist/index.js",
+  "main": "electron.js",
   "scripts": {
     "build": "tsc && esbuild dist/sketch.js --bundle --outfile=dist/bundle.js --format=iife --global-name=AntGame",
     "watch": "tsc --watch & esbuild dist/sketch.js --bundle --outfile=dist/bundle.js --format=iife --global-name=AntGame --watch",
     "dev": "npm run watch",
+    "electron": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
     "test": "mocha",
     "test:watch": "mocha --watch",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug"
+  },
+  "build": {
+    "appId": "com.antredo.game",
+    "productName": "AntRedo",
+    "files": [
+      "electron.js",
+      "index.html",
+      "dist/**",
+      "assets/**",
+      "css/**"
+    ],
+    "win": {
+      "target": "dir",
+      "icon": "assets/images/icon.png"
+    },
+    "directories": {
+      "output": "release"
+    }
   },
   "keywords": [
     "game",
@@ -27,6 +47,8 @@
     "@types/node": "^20.0.0",
     "@types/p5": "^1.7.0",
     "chai": "^4.5.0",
+    "electron": "^39.2.1",
+    "electron-builder": "^26.0.12",
     "esbuild": "^0.27.0",
     "mocha": "^10.8.2",
     "ts-node": "^10.9.2",

@@ -281,11 +281,18 @@ describe('Building Menu Integration Tests', () => {
             selectCategory(buildingMenu, BuildingUICategory.STORAGE);
             
             // Step 3: Select building
+            let buildingSelected = false;
             EventBus.once(GameEvents.BUILDING_SELECTED, (buildingType: string) => {
+                buildingSelected = true;
                 expect(buildingType).to.equal('warehouse');
+            });
+            
+            // Wait briefly to let event fire
+            setTimeout(() => {
+                expect(buildingSelected).to.be.true;
                 expect(buildingMenu.visible).to.be.false; // Menu should hide
                 done();
-            });
+            }, 50);
             
             // Step 4: Click button
             const buttonWidth = GAME_UI_CONFIG.SIZES.BUILDING_MENU_BUTTON_WIDTH;

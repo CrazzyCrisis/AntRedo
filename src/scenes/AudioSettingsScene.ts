@@ -80,6 +80,7 @@ export class AudioSettingsScene implements IScene {
         // Check back button
         if (this.backButton.isMouseOver(x, y)) {
             this.backButton.handleClick(x, y);
+            EventBus.emit(GameEvents.MENU_BACK_CLICKED);
             return;
         }
         

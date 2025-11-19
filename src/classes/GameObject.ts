@@ -120,8 +120,10 @@ export class GameObject {
      * Update world position based on grid position
      */
     private updateWorldPosition(): void {
-        this.worldX = this.gridX * TILE_CONFIG.SIZE;
-        this.worldY = this.gridY * TILE_CONFIG.SIZE;
+        // Position entities at tile center (sprites render from CENTER imageMode)
+        const centerOffset = TILE_CONFIG.SIZE / 2;
+        this.worldX = this.gridX * TILE_CONFIG.SIZE + centerOffset;
+        this.worldY = this.gridY * TILE_CONFIG.SIZE + centerOffset;
     }
 
     /**
@@ -270,11 +272,9 @@ export class GameObject {
         
         // Sync grid position to match smooth position (sprite is source of truth)
         // This ensures logical position always matches visual position
-        const centerOffset = TILE_CONFIG.SIZE / 2;
-        const spriteWorldX = this.smoothWorldX + centerOffset;
-        const spriteWorldY = this.smoothWorldY + centerOffset;
-        const spriteGridX = Math.floor(spriteWorldX / TILE_CONFIG.SIZE);
-        const spriteGridY = Math.floor(spriteWorldY / TILE_CONFIG.SIZE);
+        // Note: smoothWorldX/Y are already centered positions (since updateWorldPosition sets to center)
+        const spriteGridX = Math.floor(this.smoothWorldX / TILE_CONFIG.SIZE);
+        const spriteGridY = Math.floor(this.smoothWorldY / TILE_CONFIG.SIZE);
         
         // If sprite crossed into a new tile, update grid position
         if (spriteGridX !== this.gridX || spriteGridY !== this.gridY) {
@@ -286,11 +286,9 @@ export class GameObject {
                 const occupant = EntityManager.getInstance().getTileOccupant(spriteGridX, spriteGridY);
                 if (occupant && occupant.type === 'ant' && occupant.id !== this.id) {
                     canMove = false; // Tile occupied by another ant - collision!
-                    // Stop smooth movement at tile boundary
-                    const blockedWorldX = this.gridX * TILE_CONFIG.SIZE;
-                    const blockedWorldY = this.gridY * TILE_CONFIG.SIZE;
-                    this.smoothWorldX = blockedWorldX;
-                    this.smoothWorldY = blockedWorldY;
+                    // Stop smooth movement at current tile center
+                    this.smoothWorldX = this.worldX;
+                    this.smoothWorldY = this.worldY;
                 }
             }
             
@@ -312,14 +310,15 @@ export class GameObject {
      * Uses rounding to snap to the nearest tile center
      */
     private calculateSnapTarget(): void {
-        // Snap to the nearest tile center (not just floor)
-        // This handles edge cases where entity is at tile boundary (e.g., 319.9 or 320.1)
+        // Snap to the nearest tile center
+        // smoothWorldX/Y are already centered, so round to nearest tile
         const currentTileX = Math.round(this.smoothWorldX / TILE_CONFIG.SIZE);
         const currentTileY = Math.round(this.smoothWorldY / TILE_CONFIG.SIZE);
         
         // Calculate center of nearest tile
-        const tileCenterX = (currentTileX * TILE_CONFIG.SIZE);
-        const tileCenterY = (currentTileY * TILE_CONFIG.SIZE);
+        const centerOffset = TILE_CONFIG.SIZE / 2;
+        const tileCenterX = (currentTileX * TILE_CONFIG.SIZE) + centerOffset;
+        const tileCenterY = (currentTileY * TILE_CONFIG.SIZE) + centerOffset;
         
         // Set snap target to nearest tile center
         this.snapTargetX = tileCenterX;
